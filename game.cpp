@@ -25,6 +25,9 @@
 #include "collision.h"
 #include "debugproc.h"
 
+//ステージギミック用
+#include "SG_wind.h"
+
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
@@ -45,7 +48,7 @@ static int	g_ViewPortType_Game = TYPE_FULL_SCREEN;
 
 static BOOL	g_bPause = TRUE;	// ポーズON/OFF
 
-
+WIND wind;
 //=============================================================================
 // 初期化処理
 //=============================================================================
@@ -97,6 +100,10 @@ HRESULT InitGame(void)
 	// パーティクルの初期化
 	InitParticle();
 
+	wind.InitSGwind();
+	wind.SetSGwind();
+
+
 	// BGM再生
 	PlaySound(SOUND_LABEL_BGM_sample001);
 
@@ -134,6 +141,8 @@ void UninitGame(void)
 
 	// 影の終了処理
 	UninitShadow();
+
+	wind.UninitSGwind();
 
 }
 
@@ -189,6 +198,9 @@ void UpdateGame(void)
 
 	// スコアの更新処理
 	UpdateScore();
+
+	wind.UpdateSGwind();
+
 }
 
 //=============================================================================

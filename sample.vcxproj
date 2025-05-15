@@ -159,6 +159,7 @@
     <ClInclude Include="shadow.h" />
     <ClInclude Include="sound.h" />
     <ClInclude Include="sprite.h" />
+    <ClInclude Include="SG_wind.h" />
     <ClInclude Include="title.h" />
     <ClInclude Include="tree.h" />
   </ItemGroup>
@@ -184,6 +185,7 @@
     <ClCompile Include="shadow.cpp" />
     <ClCompile Include="sound.cpp" />
     <ClCompile Include="sprite.cpp" />
+    <ClCompile Include="SG_wind.cpp" />
     <ClCompile Include="title.cpp" />
     <ClCompile Include="tree.cpp" />
   </ItemGroup>

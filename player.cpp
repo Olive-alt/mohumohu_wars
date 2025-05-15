@@ -9,7 +9,6 @@
 #include "light.h"
 #include "input.h"
 #include "camera.h"
-#include "model.h"
 #include "player.h"
 #include "shadow.h"
 #include "bullet.h"
