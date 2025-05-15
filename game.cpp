@@ -332,7 +332,14 @@ void CheckHit(void)
 			// 敵キャラクターは倒される
 			enemy[i].use = FALSE;
 			ReleaseShadow(enemy[i].shadowIdx);
-
+			// 巨大化
+			player->scl.x *= 1.2f;
+			player->scl.y *= 1.2f;
+			player->scl.z *= 1.2f;
+			//最大値を制限する
+			player->scl.x = min(player->scl.x, 4.0f);
+			player->scl.y = min(player->scl.y, 4.0f);
+			player->scl.z = min(player->scl.z, 4.0f);
 			// スコアを足す
 			AddScore(100);
 		}
