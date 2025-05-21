@@ -27,10 +27,12 @@
 
 //ステージギミック用
 #include "SG_wind.h"
+#include "SG_warpgate.h"
 
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
+//ステージギミック用
 
 
 
@@ -48,7 +50,11 @@ static int	g_ViewPortType_Game = TYPE_FULL_SCREEN;
 
 static BOOL	g_bPause = TRUE;	// ポーズON/OFF
 
+
+//ステージギミック用
 WIND wind;
+WARPGATE warpgate[2];
+
 //=============================================================================
 // 初期化処理
 //=============================================================================
@@ -100,8 +106,16 @@ HRESULT InitGame(void)
 	// パーティクルの初期化
 	InitParticle();
 
+	//風の初期化
 	wind.InitSGwind();
 	wind.SetSGwind();
+
+	//ワープゲートの初期化
+	for (int i = 0; i < MAX_WG; i++)
+	{
+		warpgate[i].InitSGwarpgate();
+		warpgate[i].SetSGwarpgate(XMFLOAT3(0.0f + (300.0f * i), 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(1.0f, 1.0f, 1.0f));
+	}
 
 
 	// BGM再生
@@ -142,7 +156,14 @@ void UninitGame(void)
 	// 影の終了処理
 	UninitShadow();
 
+	// 風の終了処理
 	wind.UninitSGwind();
+
+	// ワープゲートの終了処理
+	for (int i = 0; i < MAX_WG; i++)
+	{
+		warpgate[i].UninitSGwarpgate();
+	}
 
 }
 
@@ -199,7 +220,14 @@ void UpdateGame(void)
 	// スコアの更新処理
 	UpdateScore();
 
+	// 風の更新処理
 	wind.UpdateSGwind();
+
+	// ワープゲートの更新処理
+	for (int i = 0; i < MAX_WG; i++)
+	{
+		warpgate[i].UpdateSGwarpgate();
+	}
 
 }
 
@@ -229,6 +257,12 @@ void DrawGame0(void)
 
 	// 木の描画処理
 	DrawTree();
+
+	// ワープゲートの描画処理
+	for (int i = 0; i < MAX_WG; i++)
+	{
+		warpgate[i].DrawSGwarpgate();
+	}
 
 	// パーティクルの描画処理
 	DrawParticle();
@@ -376,6 +410,28 @@ void CheckHit(void)
 			}
 		}
 
+	}
+
+	// ワープ処理
+	for (int j = 0; j < MAX_WG; j++)
+	{
+		bool use = warpgate[j].IsUsed();
+		//敵の有効フラグをチェックする
+		if (use == FALSE)
+			continue;
+
+		XMFLOAT3 wg_pos = warpgate[j].GetPosition();
+		XMFLOAT3 wg_hitscl = warpgate[j].GetHitScl();
+
+		//BCの当たり判定
+		if (CollisionBB(player->pos, wg_pos, XMFLOAT3(50.0f, 50.0f, 50.0f), wg_hitscl) && player->gateUse == FALSE)
+		{
+			int n = j + 1;
+			if (n > MAX_WG)n = 0;
+			player->pos = warpgate[n].GetPosition();
+			player->gateUse = TRUE;
+			PrintDebugProc("warpgateHIT!!!:No%d\n", j);
+		}
 	}
 
 
