@@ -100,6 +100,9 @@ HRESULT InitPlayer(void)
 	g_Player.use = TRUE;			// TRUE:生きてる
 	g_Player.size = PLAYER_SIZE;	// 当たり判定の大きさ
 
+	g_Player.gateUse = FALSE;
+	g_Player.gateCoolTime = 0;
+
 	// ここでプレイヤー用の影を作成している
 	XMFLOAT3 pos = g_Player.pos;
 	pos.y -= (PLAYER_OFFSET_Y - 0.1f);
@@ -232,6 +235,17 @@ void UpdatePlayer(void)
 	}
 #endif
 
+	//ワープゲート用処理
+	if (g_Player.gateUse)
+	{
+		g_Player.gateCoolTime += 1;
+
+		if (g_Player.gateCoolTime >= 300)
+		{
+			g_Player.gateCoolTime = 0;
+			g_Player.gateUse = FALSE;
+		}
+	}
 
 	{	// 押した方向にプレイヤーを移動させる
 		// 押した方向にプレイヤーを向かせている所

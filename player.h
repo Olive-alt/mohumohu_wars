@@ -33,6 +33,11 @@ struct PLAYER
 
 	int					shadowIdx;			// 影のインデックス番号
 
+	//ワープゲートクールタイム用
+	BOOL				gateUse;
+	int					gateCoolTime;
+
+
 	BOOL				use;
 
 	float				size;
