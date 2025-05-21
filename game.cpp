@@ -105,7 +105,7 @@ HRESULT InitGame(void)
 
 
 	// BGMçƒê∂
-	PlaySound(SOUND_LABEL_BGM_sample001);
+	//PlaySound(SOUND_LABEL_BGM_sample001);
 
 	return S_OK;
 }

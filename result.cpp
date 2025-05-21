@@ -86,7 +86,7 @@ HRESULT InitResult(void)
 	g_TexNo = 0;
 
 	// BGMçƒê∂
-	PlaySound(SOUND_LABEL_BGM_sample002);
+	//PlaySound(SOUND_LABEL_BGM_sample002);
 
 	g_Load = TRUE;
 	return S_OK;

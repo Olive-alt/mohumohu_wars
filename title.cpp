@@ -92,7 +92,7 @@ HRESULT InitTitle(void)
 	flag_alpha = TRUE;
 
 	// BGMçƒê∂
-	PlaySound(SOUND_LABEL_BGM_sample000);
+	//PlaySound(SOUND_LABEL_BGM_sample000);
 
 	g_Load = TRUE;
 	return S_OK;
