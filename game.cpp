@@ -14,6 +14,7 @@
 #include "fade.h"
 
 #include "player.h"
+#include "player2.h"
 #include "enemy.h"
 #include "meshfield.h"
 #include "meshwall.h"
@@ -70,6 +71,7 @@ HRESULT InitGame(void)
 
 	// プレイヤーの初期化
 	InitPlayer();
+	InitPlayer2();
 
 	// エネミーの初期化
 	InitEnemy();
@@ -152,6 +154,7 @@ void UninitGame(void)
 
 	// プレイヤーの終了処理
 	UninitPlayer();
+	UninitPlayer2();
 
 	// 影の終了処理
 	UninitShadow();
@@ -195,6 +198,7 @@ void UpdateGame(void)
 
 	// プレイヤーの更新処理
 	UpdatePlayer();
+	UpdatePlayer2();
 
 	// エネミーの更新処理
 	UpdateEnemy();
@@ -248,6 +252,7 @@ void DrawGame0(void)
 
 	// プレイヤーの描画処理
 	DrawPlayer();
+	DrawPlayer2();
 
 	// 弾の描画処理
 	DrawBullet();
