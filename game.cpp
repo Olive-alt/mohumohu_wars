@@ -25,6 +25,7 @@
 #include "particle.h"
 #include "collision.h"
 #include "debugproc.h"
+#include "player_select.h"
 
 //ステージギミック用
 #include "SG_wind.h"

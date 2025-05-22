@@ -18,6 +18,7 @@
 #include "title.h"
 #include "result.h"
 #include "debugproc.h"
+#include "player_select.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -303,6 +304,10 @@ void Update(void)
 		UpdateTitle();
 		break;
 
+	case MODE_PLAYER_SELECT:		// プレヤー選択の画面
+		UpdatePlayerSelect();
+		break;
+
 	case MODE_GAME:			// ゲーム画面の更新
 		UpdateGame();
 		break;
@@ -348,6 +353,10 @@ void Draw(void)
 
 		// Z比較あり
 		SetDepthEnable(TRUE);
+		break;
+
+	case MODE_PLAYER_SELECT:		// ゲーム画面の更新
+		DrawPlayerSelect();
 		break;
 
 	case MODE_GAME:			// ゲーム画面の描画
@@ -451,6 +460,10 @@ void SetMode(int mode)
 	case MODE_TITLE:
 		// タイトル画面の初期化
 		InitTitle();
+		break;
+
+	case MODE_PLAYER_SELECT:		// キャラクター選択の更新
+		InitPlayerSelect();
 		break;
 
 	case MODE_GAME:
