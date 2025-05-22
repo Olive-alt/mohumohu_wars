@@ -24,7 +24,7 @@ public:
 	void UpdateSGwarpgate(void);
 	void DrawSGwarpgate(void) const;
 
-	void WARPGATE::SetSGwarpgate(XMFLOAT3 set_pos, XMFLOAT3 set_rot, XMFLOAT3 set_scl);
+	void SetSGwarpgate(XMFLOAT3 set_pos, XMFLOAT3 set_rot, XMFLOAT3 set_scl);
 	bool IsUsed() const { return use; }
 	XMFLOAT3 GetPosition() const { return pos; }
 	XMFLOAT3 GetHitScl() const { return hit_scl; }
