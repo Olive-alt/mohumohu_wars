@@ -29,12 +29,14 @@
 //ステージギミック用
 #include "SG_wind.h"
 #include "SG_warpgate.h"
+//アイテム用
+#include "IT_giant.h"
 
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
 //ステージギミック用
-
+//アイテム用
 
 
 //*****************************************************************************
@@ -55,6 +57,8 @@ static BOOL	g_bPause = TRUE;	// ポーズON/OFF
 //ステージギミック用
 WIND wind;
 WARPGATE warpgate[2];
+//アイテム用
+GIANT giant;
 
 //=============================================================================
 // 初期化処理
@@ -119,6 +123,9 @@ HRESULT InitGame(void)
 		warpgate[i].SetSGwarpgate(XMFLOAT3(0.0f + (300.0f * i), 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(1.0f, 1.0f, 1.0f));
 	}
 
+	//巨大化アイテムの初期化
+	giant.InitITgiant();
+	giant.SetITgiant(XMFLOAT3(100.0f, 0.0f, 100.0f));
 
 	// BGM再生
 	//PlaySound(SOUND_LABEL_BGM_sample001);
@@ -167,6 +174,9 @@ void UninitGame(void)
 	{
 		warpgate[i].UninitSGwarpgate();
 	}
+
+	// 巨大化アイテムの終了処理
+	giant.UninitITgiant();
 
 }
 
@@ -233,6 +243,9 @@ void UpdateGame(void)
 		warpgate[i].UpdateSGwarpgate();
 	}
 
+	// 巨大化アイテムの更新処理
+	giant.UpdateITgiant();
+
 }
 
 //=============================================================================
@@ -256,6 +269,9 @@ void DrawGame0(void)
 
 	// 弾の描画処理
 	DrawBullet();
+
+	// 巨大化アイテムの描画処理
+	giant.DrawITgiant();
 
 	// 壁の描画処理
 	DrawMeshWall();
@@ -439,6 +455,18 @@ void CheckHit(void)
 		}
 	}
 
+	// 巨大化アイテム
+	if (bool use = giant.IsUsedITgiant())
+	{
+		XMFLOAT3 gi_pos = giant.GetPositionITgiant();
+
+		//BCの当たり判定
+		if (CollisionBC(player->pos, gi_pos, player->size, GIANT_SIZE))
+		{
+			giant.HitITgiant();
+		}
+
+	}
 
 	// エネミーが全部死亡したら状態遷移
 	int enemy_count = 0;
