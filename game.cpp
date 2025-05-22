@@ -31,6 +31,7 @@
 #include "SG_warpgate.h"
 //アイテム用
 #include "IT_giant.h"
+#include "IT_invisible.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -59,6 +60,7 @@ WIND wind;
 WARPGATE warpgate[2];
 //アイテム用
 GIANT giant;
+INVISIBLE invisible;
 
 //=============================================================================
 // 初期化処理
@@ -127,6 +129,10 @@ HRESULT InitGame(void)
 	giant.InitITgiant();
 	giant.SetITgiant(XMFLOAT3(100.0f, 0.0f, 100.0f));
 
+	//透明化アイテムの初期化
+	invisible.InitITinvisible();
+	invisible.SetITinvisible(XMFLOAT3(200.0f, 0.0f, 100.0f));
+
 	// BGM再生
 	//PlaySound(SOUND_LABEL_BGM_sample001);
 
@@ -177,6 +183,9 @@ void UninitGame(void)
 
 	// 巨大化アイテムの終了処理
 	giant.UninitITgiant();
+
+	// 透明化アイテムの終了処理
+	invisible.UninitITinvisible();
 
 }
 
@@ -246,6 +255,9 @@ void UpdateGame(void)
 	// 巨大化アイテムの更新処理
 	giant.UpdateITgiant();
 
+	// 透明化アイテムの更新処理
+	invisible.UpdateITinvisible();
+
 }
 
 //=============================================================================
@@ -272,6 +284,9 @@ void DrawGame0(void)
 
 	// 巨大化アイテムの描画処理
 	giant.DrawITgiant();
+
+	// 透明化アイテムの描画処理
+	invisible.DrawITinvisible();
 
 	// 壁の描画処理
 	DrawMeshWall();
@@ -466,6 +481,18 @@ void CheckHit(void)
 			giant.HitITgiant();
 		}
 
+	}
+
+	//透明化
+	if (bool use = invisible.IsUsedITinvisible())
+	{
+		XMFLOAT3 invi_pos = invisible.GetPositionITinvisible();
+
+		//BCの当たり判定
+		if (CollisionBC(player->pos, invi_pos, player->size, INVISIBLE_SIZE))
+		{
+			invisible.HitITinvisible();
+		}
 	}
 
 	// エネミーが全部死亡したら状態遷移

@@ -100,6 +100,9 @@ HRESULT InitPlayer(void)
 	g_Player.use = TRUE;			// TRUE:生きてる
 	g_Player.size = PLAYER_SIZE;	// 当たり判定の大きさ
 
+	// モデルのディフューズを保存しておく。色変え対応の為。
+	GetModelDiffuse(&g_Player.model, &g_Player.diffuse[0]);
+
 	g_Player.gateUse = FALSE;
 	g_Player.gateCoolTime = 0;
 

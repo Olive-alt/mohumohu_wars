@@ -30,6 +30,7 @@ struct PLAYER
 	
 	BOOL				load;
 	DX11_MODEL			model;				// モデル情報
+	XMFLOAT4			diffuse[MODEL_MAX_MATERIAL];	// モデルの色
 
 	int					shadowIdx;			// 影のインデックス番号
 
