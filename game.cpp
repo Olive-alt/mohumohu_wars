@@ -117,7 +117,7 @@ HRESULT InitGame(void)
 
 	//風の初期化
 	wind.InitSGwind();
-	wind.SetSGwind();
+	//wind.SetSGwind();
 
 	//ワープゲートの初期化
 	for (int i = 0; i < MAX_WG; i++)

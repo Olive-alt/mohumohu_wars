@@ -30,5 +30,5 @@ void WIND::UpdateSGwind(void)
 
 void WIND::SetSGwind(void)
 {
-    use = FALSE;
+    use = TRUE;
 }
