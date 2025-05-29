@@ -7,6 +7,8 @@
 #include "fade.h"
 #include "sound.h"
 #include "sprite.h"
+//#include "pet.h"   
+
 
 #define MAX_PLAYERS 4
 #define TEXTURE_WIDTH_LOGO (480)
