@@ -112,8 +112,8 @@ HRESULT InitGame(void)
 	// スコアの初期化
 	InitScore();
 
-	// パーティクルの初期化
-	InitParticle();
+	//// パーティクルの初期化
+	//InitParticle();
 
 	//風の初期化
 	wind.InitSGwind();
@@ -145,8 +145,8 @@ HRESULT InitGame(void)
 //=============================================================================
 void UninitGame(void)
 {
-	// パーティクルの終了処理
-	UninitParticle();
+	//// パーティクルの終了処理
+	//UninitParticle();
 
 	// スコアの終了処理
 	UninitScore();
@@ -232,8 +232,8 @@ void UpdateGame(void)
 	// 弾の更新処理
 	UpdateBullet();
 
-	// パーティクルの更新処理
-	UpdateParticle();
+	//// パーティクルの更新処理
+	//UpdateParticle();
 
 	// 影の更新処理
 	UpdateShadow();
@@ -301,8 +301,8 @@ void DrawGame0(void)
 		warpgate[i].DrawSGwarpgate();
 	}
 
-	// パーティクルの描画処理
-	DrawParticle();
+	//// パーティクルの描画処理
+	//DrawParticle();
 
 
 	// 2Dの物を描画する処理
@@ -336,9 +336,6 @@ void DrawGame(void)
 #endif
 
 	// プレイヤー視点
-	pos = GetPlayer()->pos;
-	pos.y = 0.0f;			// カメラ酔いを防ぐためにクリアしている
-	SetCameraAT(pos);
 	SetCamera();
 
 	switch(g_ViewPortType_Game)

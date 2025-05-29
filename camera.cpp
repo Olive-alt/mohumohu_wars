@@ -13,15 +13,15 @@
 // マクロ定義
 //*****************************************************************************
 #define	POS_X_CAM			(0.0f)			// カメラの初期位置(X座標)
-#define	POS_Y_CAM			(50.0f)			// カメラの初期位置(Y座標)
-#define	POS_Z_CAM			(-140.0f)		// カメラの初期位置(Z座標)
+#define	POS_Y_CAM			(180.0f)			// カメラの初期位置(Y座標)
+#define	POS_Z_CAM			(-160.0f)		// カメラの初期位置(Z座標)
 
 //#define	POS_X_CAM		(0.0f)			// カメラの初期位置(X座標)
-//#define	POS_Y_CAM		(200.0f)		// カメラの初期位置(Y座標)
+//#define	POS_Y_CAM		(150.0f)		// カメラの初期位置(Y座標)
 //#define	POS_Z_CAM		(-400.0f)		// カメラの初期位置(Z座標)
 
 
-#define	VIEW_ANGLE		(XMConvertToRadians(45.0f))						// ビュー平面の視野角
+#define	VIEW_ANGLE		(XMConvertToRadians(60.0f))						// ビュー平面の視野角
 #define	VIEW_ASPECT		((float)SCREEN_WIDTH / (float)SCREEN_HEIGHT)	// ビュー平面のアスペクト比	
 #define	VIEW_NEAR_Z		(10.0f)											// ビュー平面のNearZ値
 #define	VIEW_FAR_Z		(10000.0f)										// ビュー平面のFarZ値
