@@ -15,6 +15,7 @@
 #define	POS_X_CAM			(0.0f)			// カメラの初期位置(X座標)
 #define	POS_Y_CAM			(180.0f)			// カメラの初期位置(Y座標)
 #define	POS_Z_CAM			(-160.0f)		// カメラの初期位置(Z座標)
+#define ORIGINAL_CAMERA_Y   (180.0f)
 
 //#define	POS_X_CAM		(0.0f)			// カメラの初期位置(X座標)
 //#define	POS_Y_CAM		(150.0f)		// カメラの初期位置(Y座標)
@@ -292,3 +293,59 @@ void SetCameraAT(XMFLOAT3 pos)
 
 }
 
+
+void EnsureCameraFramesTargets(XMFLOAT3 target1, XMFLOAT3 target2) {
+	const float step = 5.0f;
+	const float maxY = 300.0f;
+	const float startY = ORIGINAL_CAMERA_Y; // カメラの初期Y座標
+	int tries = 0;
+
+	SetCamera();
+
+	// 対象（プレイヤー・敵）座標をXMVECTOR型に変換
+	XMVECTOR v1 = XMLoadFloat3(&target1);
+	XMVECTOR v2 = XMLoadFloat3(&target2);
+
+	// ワールド座標をNDC座標に変換するラムダ関数
+	auto WorldToNDC = [&](XMVECTOR pos) {
+		XMMATRIX view = XMLoadFloat4x4(&g_Camera.mtxView);
+		XMMATRIX proj = XMLoadFloat4x4(&g_Camera.mtxProjection);
+		return XMVector3TransformCoord(pos, view * proj);
+		};
+
+	// NDC座標が画面外か判定するラムダ関数
+	auto IsOutOfNDC = [](XMVECTOR v) {
+		float x = XMVectorGetX(v);
+		float y = XMVectorGetY(v);
+		float z = XMVectorGetZ(v);
+		return (x < -1.0f || x > 1.0f || y < -1.0f || y > 1.0f || z < 0.0f || z > 1.0f);
+		};
+
+	// 両方のターゲットが画面内か判定
+	bool bothInView = !IsOutOfNDC(WorldToNDC(v1)) && !IsOutOfNDC(WorldToNDC(v2));
+
+	if (!bothInView) {
+		// --- どちらかが画面外の場合、カメラを上昇させる ---
+		if (g_Camera.pos.y < maxY) {
+			// カメラ高さが最大未満なら、少しずつ上げる
+			float raise = min(step * 0.25f, maxY - g_Camera.pos.y);
+			g_Camera.pos.y += raise;
+			// 必要に応じてカメラの注視点（at）も一緒に上げる場合はこちらを使う
+			// g_Camera.at.y += raise;
+		}
+		// 最大値に到達したらそのまま
+	}
+	else {
+		// --- 両方が画面内に戻った場合、カメラを元の高さまで下げる ---
+		if (g_Camera.pos.y > startY) {
+			float lower = min(step * 0.25f, g_Camera.pos.y - startY);
+			g_Camera.pos.y -= lower;
+			// 必要に応じてカメラの注視点（at）も一緒に下げる場合はこちらを使う
+			// g_Camera.at.y -= lower;
+		}
+		// 初期位置以下にはならない
+	}
+
+	// デバッグ出力
+	PrintDebugProc("CameraHeight: %f\n", g_Camera.pos.y);
+}

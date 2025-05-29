@@ -335,6 +335,10 @@ void DrawGame(void)
 
 #endif
 
+	XMFLOAT3 playerPos = GetPlayer()->pos;
+	XMFLOAT3 player2Pos = GetPlayer2()->pos;
+	EnsureCameraFramesTargets(playerPos, player2Pos);
+
 	// プレイヤー視点
 	SetCamera();
 
