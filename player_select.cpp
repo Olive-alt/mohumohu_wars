@@ -9,18 +9,26 @@
 #include "sprite.h"
 //#include "pet.h"   
 
-
 #define MAX_PLAYERS 4
+#define MAX_PET 4
 #define TEXTURE_WIDTH_LOGO (480)
 #define TEXTURE_HEIGHT_LOGO (80)
+#define TEXTURE_WIDTH_PET_LOGO (320)
+#define TEXTURE_HEIGHT_PET_LOGO (64)
 
 static int g_SelectedPlayers = 1;
+static int g_SelectedPet = 1;
+
 static ID3D11Buffer* g_VertexBuffer = NULL;
 static ID3D11ShaderResourceView* g_Texture[2] = { NULL };
-static char* g_TexturName[2] = {
+static ID3D11ShaderResourceView* g_PetTexture = NULL;
+
+static const char* g_TexturName[2] = {
     "data/TEXTURE/bg000.jpg",
     "data/TEXTURE/copy.png"
 };
+
+static const char* g_PetTextureName = "data/TEXTURE/pet_logo.png";
 
 static float alpha;
 static BOOL flag_alpha;
@@ -30,7 +38,7 @@ HRESULT InitPlayerSelect(void)
 {
     ID3D11Device* pDevice = GetDevice();
 
-    // テクスチャ生成
+    // テクスチャ生成（背景とロゴ）
     for (int i = 0; i < 2; i++)
     {
         g_Texture[i] = NULL;
@@ -42,6 +50,14 @@ HRESULT InitPlayerSelect(void)
             NULL);
     }
 
+    // ペットロゴのテクスチャ読み込み
+    D3DX11CreateShaderResourceViewFromFile(GetDevice(),
+        g_PetTextureName,
+        NULL,
+        NULL,
+        &g_PetTexture,
+        NULL);
+
     // 頂点バッファ生成
     D3D11_BUFFER_DESC bd;
     ZeroMemory(&bd, sizeof(bd));
@@ -52,6 +68,7 @@ HRESULT InitPlayerSelect(void)
     GetDevice()->CreateBuffer(&bd, NULL, &g_VertexBuffer);
 
     g_SelectedPlayers = 1;
+    g_SelectedPet = 1;
     alpha = 1.0f;
     flag_alpha = TRUE;
     g_Load = TRUE;
@@ -78,12 +95,18 @@ void UninitPlayerSelect(void)
         }
     }
 
+    if (g_PetTexture)
+    {
+        g_PetTexture->Release();
+        g_PetTexture = NULL;
+    }
+
     g_Load = FALSE;
 }
 
 void UpdatePlayerSelect(void)
 {
-    // プレイヤー数選択
+    // プレイヤー数選択（1～4）
     if (GetKeyboardTrigger(DIK_1))
     {
         g_SelectedPlayers = 1;
@@ -100,8 +123,21 @@ void UpdatePlayerSelect(void)
     {
         g_SelectedPlayers = 4;
     }
+
+    // ペット選択（← → キー）
+    if (GetKeyboardTrigger(DIK_LEFT))
+    {
+        g_SelectedPet--;
+        if (g_SelectedPet < 1) g_SelectedPet = MAX_PET;
+    }
+    else if (GetKeyboardTrigger(DIK_RIGHT))
+    {
+        g_SelectedPet++;
+        if (g_SelectedPet > MAX_PET) g_SelectedPet = 1;
+    }
+
     // 決定キー
-    else if (GetKeyboardTrigger(DIK_RETURN))
+    if (GetKeyboardTrigger(DIK_RETURN))
     {
         SetFade(FADE_OUT, MODE_GAME);
     }
@@ -169,6 +205,20 @@ void DrawPlayerSelect(void)
             0.0f, 0.0f, 1.0f, 1.0f, XMFLOAT4(1.0f, 1.0f, 1.0f, alpha));
         GetDeviceContext()->Draw(4, 0);
     }
+
+    // ペットロゴ描画
+    {
+        if (g_PetTexture)
+        {
+            GetDeviceContext()->PSSetShaderResources(0, 1, &g_PetTexture);
+            SetSpriteColor(g_VertexBuffer, SCREEN_WIDTH / 2, SCREEN_HEIGHT * 2 / 3,
+                TEXTURE_WIDTH_PET_LOGO, TEXTURE_HEIGHT_PET_LOGO,
+                0.0f, 0.0f, 1.0f, 1.0f,
+                XMFLOAT4(1.0f, 1.0f, 1.0f, alpha));
+            GetDeviceContext()->Draw(4, 0);
+        }
+    }
+
     // 深度テストとライティングを有効化
     SetLightEnable(TRUE);
     SetDepthEnable(TRUE);
