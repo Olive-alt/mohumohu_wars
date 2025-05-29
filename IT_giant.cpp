@@ -126,7 +126,7 @@ void GIANT::FinishITgiant(void)
 	player->scl = old_scl;
 }
 
-void GIANT::HitITgiant(void)
+void GIANT::PickITgiant(void)
 {
 	giantUse = TRUE;
 	use = FALSE;

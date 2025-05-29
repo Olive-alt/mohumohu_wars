@@ -127,7 +127,7 @@ void INVISIBLE::FinishITinvisible(void)
 	}
 }
 
-void INVISIBLE::HitITinvisible(void)
+void INVISIBLE::PickITinvisible(void)
 {
 	invisibleUse = TRUE;
 	use = FALSE;

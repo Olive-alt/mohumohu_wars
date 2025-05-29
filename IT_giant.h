@@ -36,7 +36,7 @@ public:
 
 	void SetITgiant(XMFLOAT3 set_pos);
 	void FinishITgiant(void);
-	void HitITgiant(void);
+	void PickITgiant(void);
 
 	bool IsUsedITgiant() const { return use; }
 	XMFLOAT3 GetPositionITgiant() const { return pos; }
