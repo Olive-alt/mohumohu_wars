@@ -476,7 +476,7 @@ void CheckHit(void)
 		//BC‚Ì“–‚½‚è”»’è
 		if (CollisionBC(player->pos, gi_pos, player->size, GIANT_SIZE))
 		{
-			giant.HitITgiant();
+			giant.PickITgiant();
 		}
 
 	}
@@ -489,7 +489,7 @@ void CheckHit(void)
 		//BC‚Ì“–‚½‚è”»’è
 		if (CollisionBC(player->pos, invi_pos, player->size, INVISIBLE_SIZE))
 		{
-			invisible.HitITinvisible();
+			invisible.PickITinvisible();
 		}
 	}
 

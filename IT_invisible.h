@@ -36,7 +36,7 @@ public:
 
 	void SetITinvisible(XMFLOAT3 set_pos);
 	void FinishITinvisible(void);
-	void HitITinvisible(void);
+	void PickITinvisible(void);
 
 	bool IsUsedITinvisible() const { return use; }
 	XMFLOAT3 GetPositionITinvisible() const { return pos; }
