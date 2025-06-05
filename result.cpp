@@ -35,9 +35,9 @@ static ID3D11Buffer				*g_VertexBuffer = NULL;		// 頂点情報
 static ID3D11ShaderResourceView	*g_Texture[TEXTURE_MAX] = { NULL };	// テクスチャ情報
 
 static char *g_TexturName[TEXTURE_MAX] = {
-	"data/TEXTURE/bg001.jpg",
-	"data/TEXTURE/result_logo.png",
-	"data/TEXTURE/number16x32.png",
+	"data/TEXTURE/sample_ui_score_win_1280x720.jpg",
+	"data/TEXTURE/ui_score_scXX.png",
+	"data/TEXTURE/number16x32XX.png",
 };
 
 
@@ -45,7 +45,6 @@ static BOOL						g_Use;						// TRUE:使っている  FALSE:未使用
 static float					g_w, g_h;					// 幅と高さ
 static XMFLOAT3					g_Pos;						// ポリゴンの座標
 static int						g_TexNo;					// テクスチャ番号
-
 static BOOL						g_Load = FALSE;
 
 //=============================================================================

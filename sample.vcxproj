@@ -199,9 +199,6 @@
     <ClCompile Include="title.cpp" />
     <ClCompile Include="tree.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="ice.vs" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
