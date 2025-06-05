@@ -196,7 +196,7 @@ void DrawResult(void)
 		GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[2]);
 
 		// Œ…”•ªˆ—‚·‚é
-		int number = GetScore();
+		int number = GetScore(0);
 		for (int i = 0; i < SCORE_DIGIT; i++)
 		{
 			// ¡‰ñ•\¦‚·‚éŒ…‚Ì”š

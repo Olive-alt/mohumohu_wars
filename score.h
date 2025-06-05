@@ -24,7 +24,10 @@ void UninitScore(void);
 void UpdateScore(void);
 void DrawScore(void);
 
-void AddScore(int add);
-int GetScore(void);
+void AddScore(int playerIndex, int add);
+
+int GetScore(int playerIndex);
+
+
 
 

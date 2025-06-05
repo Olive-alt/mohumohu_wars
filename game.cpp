@@ -414,7 +414,7 @@ void CheckHit(void)
 			player->scl.y = min(player->scl.y, 4.0f);
 			player->scl.z = min(player->scl.z, 4.0f);
 			// スコアを足す
-			AddScore(100);
+			AddScore(0, 100);
 		}
 	}
 
@@ -438,7 +438,7 @@ void CheckHit(void)
 			bullet[i].use = FALSE;                        // 弾を消す
 			ReleaseShadow(bullet[i].shadowIdx);
 
-			AddScore(10);
+			AddScore(1 ,10);
 		}
 
 		// 2-2. プレイヤー１の弾 (owner == 1) がプレイヤー２に当たったら
@@ -456,7 +456,7 @@ void CheckHit(void)
 			bullet[i].use = FALSE;                        // 弾を消す
 			ReleaseShadow(bullet[i].shadowIdx);
 
-			AddScore(10);
+			AddScore(0,10);
 		}
 	}
 
