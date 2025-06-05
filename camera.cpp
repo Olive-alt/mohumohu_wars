@@ -293,10 +293,15 @@ void SetCameraAT(XMFLOAT3 pos)
 
 }
 
+//=============================================================================
+//==============================================================================
+// ターゲットが画面外に出る前にカメラを上昇させる関数
+//==============================================================================
 
-void EnsureCameraFramesTargets(XMFLOAT3 target1, XMFLOAT3 target2) {
+void EnsureCameraFramesTargets(XMFLOAT3 target1, XMFLOAT3 target2, float viewEdgeBuffer = 0.15f)
+{
 	const float step = 5.0f;
-	const float maxY = 300.0f;
+	const float maxY = 400.0f;
 	const float startY = ORIGINAL_CAMERA_Y; // カメラの初期Y座標
 	int tries = 0;
 
@@ -313,37 +318,35 @@ void EnsureCameraFramesTargets(XMFLOAT3 target1, XMFLOAT3 target2) {
 		return XMVector3TransformCoord(pos, view * proj);
 		};
 
-	// NDC座標が画面外か判定するラムダ関数
-	auto IsOutOfNDC = [](XMVECTOR v) {
+	// 画面端のバッファを考慮したNDC判定ラムダ
+	auto IsNearEdgeNDC = [viewEdgeBuffer](XMVECTOR v) {
 		float x = XMVectorGetX(v);
 		float y = XMVectorGetY(v);
 		float z = XMVectorGetZ(v);
-		return (x < -1.0f || x > 1.0f || y < -1.0f || y > 1.0f || z < 0.0f || z > 1.0f);
+		// バッファ分だけ判定を内側に
+		return (x < -1.0f + viewEdgeBuffer || x > 1.0f - viewEdgeBuffer ||
+			y < -1.0f + viewEdgeBuffer || y > 1.0f - viewEdgeBuffer ||
+			z < 0.0f || z > 1.0f);
 		};
 
-	// 両方のターゲットが画面内か判定
-	bool bothInView = !IsOutOfNDC(WorldToNDC(v1)) && !IsOutOfNDC(WorldToNDC(v2));
+	// 両方のターゲットが画面の「バッファ内」にいるか判定
+	bool bothInSafeZone = !IsNearEdgeNDC(WorldToNDC(v1)) && !IsNearEdgeNDC(WorldToNDC(v2));
 
-	if (!bothInView) {
-		// --- どちらかが画面外の場合、カメラを上昇させる ---
+	if (!bothInSafeZone) {
+		// --- バッファ外（端に近い、または出た）ならカメラを上昇 ---
 		if (g_Camera.pos.y < maxY) {
-			// カメラ高さが最大未満なら、少しずつ上げる
-			float raise = min(step * 0.25f, maxY - g_Camera.pos.y);
+			float raise = min(step * 0.35f, maxY - g_Camera.pos.y);
 			g_Camera.pos.y += raise;
-			// 必要に応じてカメラの注視点（at）も一緒に上げる場合はこちらを使う
-			// g_Camera.at.y += raise;
+			// g_Camera.at.y += raise; // 必要なら注視点も
 		}
-		// 最大値に到達したらそのまま
 	}
 	else {
-		// --- 両方が画面内に戻った場合、カメラを元の高さまで下げる ---
+		// --- 両方とも十分に中央にいる場合はカメラを下げる ---
 		if (g_Camera.pos.y > startY) {
-			float lower = min(step * 0.25f, g_Camera.pos.y - startY);
+			float lower = min(step * 0.35f, g_Camera.pos.y - startY);
 			g_Camera.pos.y -= lower;
-			// 必要に応じてカメラの注視点（at）も一緒に下げる場合はこちらを使う
-			// g_Camera.at.y -= lower;
+			// g_Camera.at.y -= lower; // 必要なら注視点も
 		}
-		// 初期位置以下にはならない
 	}
 
 	// デバッグ出力

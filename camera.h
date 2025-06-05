@@ -57,4 +57,5 @@ int GetViewPortType(void);
 
 void SetCameraAT(XMFLOAT3 pos);
 
-void EnsureCameraFramesTargets(XMFLOAT3 target1, XMFLOAT3 target2);
+void EnsureCameraFramesTargets(XMFLOAT3 target1, XMFLOAT3 target2, float viewEdgeBuffer);
+

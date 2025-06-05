@@ -337,7 +337,7 @@ void DrawGame(void)
 
 	XMFLOAT3 playerPos = GetPlayer()->pos;
 	XMFLOAT3 player2Pos = GetPlayer2()->pos;
-	EnsureCameraFramesTargets(playerPos, player2Pos);
+	EnsureCameraFramesTargets(playerPos, player2Pos, 0.35f); // 20%手前からカメラ上昇
 
 	// プレイヤー視点
 	SetCamera();
