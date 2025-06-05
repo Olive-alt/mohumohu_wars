@@ -124,7 +124,7 @@ HRESULT InitPlayer(void)
 	g_Player.scl = XMFLOAT3(1.0f, 1.0f, 1.0f);
 
 	g_Player.spd = 0.0f;			// 移動スピードクリア
-	g_Player.hp = 3.0;
+	g_Player.hp = 3.0f;
 	g_Player.use = TRUE;			// TRUE:生きてる
 	g_Player.size = PLAYER_SIZE;	// 当たり判定の大きさ
 

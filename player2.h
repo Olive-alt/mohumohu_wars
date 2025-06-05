@@ -32,7 +32,7 @@ struct PLAYER2
 	DX11_MODEL			model;				// モデル情報
 
 	int					shadowIdx;			// 影のインデックス番号
-	int					hp;					// HP
+	float					hp;					// HP
 	//ワープゲートクールタイム用
 	BOOL				gateUse;
 	int					gateCoolTime;

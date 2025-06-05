@@ -432,6 +432,7 @@ void CheckHit(void)
 			if (player->hp <= 0.0f) {
 				player->use = FALSE;                      // 死亡フラグ
 				ReleaseShadow(player->shadowIdx);         // 影を解放
+				SetMode(MODE_RESULT);
 			}
 
 			bullet[i].use = FALSE;                        // 弾を消す
@@ -449,6 +450,7 @@ void CheckHit(void)
 			if (player2->hp <= 0.0f) {
 				player2->use = FALSE;                     // 死亡フラグ
 				ReleaseShadow(player2->shadowIdx);        // 影を解放
+				SetMode(MODE_RESULT);
 			}
 
 			bullet[i].use = FALSE;                        // 弾を消す
