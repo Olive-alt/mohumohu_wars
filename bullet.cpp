@@ -29,7 +29,6 @@
 //*****************************************************************************
 // プロトタイプ宣言
 //*****************************************************************************
-HRESULT MakeVertexBullet(void);
 
 //*****************************************************************************
 // グローバル変数
@@ -255,7 +254,7 @@ HRESULT MakeVertexBullet(void)
 //=============================================================================
 // 弾のパラメータをセット
 //=============================================================================
-int SetBullet(XMFLOAT3 pos, XMFLOAT3 rot)
+int SetBullet(XMFLOAT3 pos, XMFLOAT3 rot, int owner)
 {
 	int nIdxBullet = -1;
 
@@ -267,13 +266,13 @@ int SetBullet(XMFLOAT3 pos, XMFLOAT3 rot)
 			g_Bullet[nCntBullet].rot = rot;
 			g_Bullet[nCntBullet].scl = { 1.0f, 1.0f, 1.0f };
 			g_Bullet[nCntBullet].use = TRUE;
-
+			g_Bullet[nCntBullet].owner = owner;  // 発射元を設定
 			// 影の設定
 			g_Bullet[nCntBullet].shadowIdx = CreateShadow(g_Bullet[nCntBullet].pos, 0.5f, 0.5f);
 
 			nIdxBullet = nCntBullet;
 
-		//	PlaySound(SOUND_LABEL_SE_shot000);
+			//	PlaySound(SOUND_LABEL_SE_shot000);
 
 			break;
 		}

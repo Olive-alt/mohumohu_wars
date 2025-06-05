@@ -388,7 +388,8 @@ void DrawGame(void)
 void CheckHit(void)
 {
 	ENEMY *enemy = GetEnemy();		// エネミーのポインターを初期化
-	PLAYER *player = GetPlayer();	// プレイヤーのポインターを初期化
+	PLAYER* player = GetPlayer();	// プレイヤーのポインターを初期化
+	PLAYER2* player2 = GetPlayer2();	// プレイヤーのポインターを初期化
 	BULLET *bullet = GetBullet();	// 弾のポインターを初期化
 
 	// 敵とプレイヤーキャラ
@@ -418,36 +419,39 @@ void CheckHit(void)
 	}
 
 
-	// プレイヤーの弾と敵
 	for (int i = 0; i < MAX_BULLET; i++)
 	{
-		//弾の有効フラグをチェックする
-		if (bullet[i].use == FALSE)
-			continue;
+		if (bullet[i].use == FALSE) continue;
 
-		// 敵と当たってるか調べる
-		for (int j = 0; j < MAX_ENEMY; j++)
+		// 2-1. プレイヤー２の弾 (owner == 2) がプレイヤー１に当たったら破壊
+		if (bullet[i].owner == 2 &&
+			CollisionBC(bullet[i].pos, player->pos, bullet[i].fWidth, player->size))
 		{
-			//敵の有効フラグをチェックする
-			if (enemy[j].use == FALSE)
-				continue;
+			// プレイヤー１を破壊
+			player->use = FALSE;
+			ReleaseShadow(player->shadowIdx);
 
-			//BCの当たり判定
-			if (CollisionBC(bullet[i].pos, enemy[j].pos, bullet[i].fWidth, enemy[j].size))
-			{
-				// 当たったから未使用に戻す
-				bullet[i].use = FALSE;
-				ReleaseShadow(bullet[i].shadowIdx);
+			// 弾を消す
+			bullet[i].use = FALSE;
+			ReleaseShadow(bullet[i].shadowIdx);
 
-				// 敵キャラクターは倒される
-				enemy[j].use = FALSE;
-				ReleaseShadow(enemy[j].shadowIdx);
-
-				// スコアを足す
-				AddScore(10);
-			}
+			AddScore(10);
 		}
 
+		// 2-2. プレイヤー１の弾 (owner == 1) がプレイヤー２に当たったら破壊
+		if (bullet[i].owner == 1 &&
+			CollisionBC(bullet[i].pos, player2->pos, bullet[i].fWidth, player2->size))
+		{
+			// プレイヤー２を破壊
+			player2->use = FALSE;
+			ReleaseShadow(player2->shadowIdx);
+
+			// 弾を消す
+			bullet[i].use = FALSE;
+			ReleaseShadow(bullet[i].shadowIdx);
+
+			AddScore(10);
+		}
 	}
 
 	// ワープ処理

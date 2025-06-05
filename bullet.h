@@ -28,6 +28,7 @@ typedef struct
 	int			shadowIdx;		// 影ID
 	BOOL		use;			// 使用しているかどうか
 
+	int			owner;			// 発射元オーナー (1: プレイヤー1, 2: プレイヤー2)
 
 } BULLET;
 
@@ -40,7 +41,8 @@ void UninitBullet(void);
 void UpdateBullet(void);
 void DrawBullet(void);
 
-int SetBullet(XMFLOAT3 pos, XMFLOAT3 rot);
+int SetBullet(XMFLOAT3 pos, XMFLOAT3 rot, int owner);
 
 BULLET *GetBullet(void);
+HRESULT MakeVertexBullet(void);
 

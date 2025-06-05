@@ -316,8 +316,9 @@ void UpdatePlayer(void)
 	// 弾発射処理
 	if (GetKeyboardTrigger(DIK_SPACE))
 	{
-		SetBullet(g_Player.pos, g_Player.rot);
+		SetBullet(g_Player.pos, g_Player.rot, 1);
 	}
+
 
 
 	// 影もプレイヤーの位置に合わせる
@@ -431,6 +432,10 @@ void UpdatePlayer(void)
 //=============================================================================
 void DrawPlayer(void)
 {
+	if (g_Player.use == FALSE) {
+		return;
+	}
+
 	XMMATRIX mtxScl, mtxRot, mtxTranslate, mtxWorld, quatMatrix;
 
 	// カリング無効
