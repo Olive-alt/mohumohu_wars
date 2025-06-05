@@ -423,36 +423,41 @@ void CheckHit(void)
 	{
 		if (bullet[i].use == FALSE) continue;
 
-		// 2-1. プレイヤー２の弾 (owner == 2) がプレイヤー１に当たったら破壊
+		// 2-1. プレイヤー２の弾 (owner == 2) がプレイヤー１に当たったら
 		if (bullet[i].owner == 2 &&
 			CollisionBC(bullet[i].pos, player->pos, bullet[i].fWidth, player->size))
 		{
-			// プレイヤー１を破壊
-			player->use = FALSE;
-			ReleaseShadow(player->shadowIdx);
+			// HPを1だけ減らす
+			player->hp -= 1.0f;
+			if (player->hp <= 0.0f) {
+				player->use = FALSE;                      // 死亡フラグ
+				ReleaseShadow(player->shadowIdx);         // 影を解放
+			}
 
-			// 弾を消す
-			bullet[i].use = FALSE;
+			bullet[i].use = FALSE;                        // 弾を消す
 			ReleaseShadow(bullet[i].shadowIdx);
 
 			AddScore(10);
 		}
 
-		// 2-2. プレイヤー１の弾 (owner == 1) がプレイヤー２に当たったら破壊
+		// 2-2. プレイヤー１の弾 (owner == 1) がプレイヤー２に当たったら
 		if (bullet[i].owner == 1 &&
 			CollisionBC(bullet[i].pos, player2->pos, bullet[i].fWidth, player2->size))
 		{
-			// プレイヤー２を破壊
-			player2->use = FALSE;
-			ReleaseShadow(player2->shadowIdx);
+			// HPを1だけ減らす
+			player2->hp -= 1.0f;
+			if (player2->hp <= 0.0f) {
+				player2->use = FALSE;                     // 死亡フラグ
+				ReleaseShadow(player2->shadowIdx);        // 影を解放
+			}
 
-			// 弾を消す
-			bullet[i].use = FALSE;
+			bullet[i].use = FALSE;                        // 弾を消す
 			ReleaseShadow(bullet[i].shadowIdx);
 
 			AddScore(10);
 		}
 	}
+
 
 	// ワープ処理
 	for (int j = 0; j < MAX_WG; j++)

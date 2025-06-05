@@ -49,6 +49,35 @@ static float		roty = 0.0f;
 
 static LIGHT		g_Light;
 
+//HP初期化
+static ID3D11Buffer* g_PlayerHpBarVertexBuffer2 = NULL; // Bar vertex buffer
+
+//HP初期化
+void InitPlayerHpBarVertexBuffer2() {
+	struct VERTEX_3D {
+		XMFLOAT3 Position;
+		XMFLOAT3 Normal;
+		XMFLOAT4 Diffuse;
+		XMFLOAT2 TexCoord;
+	};
+	VERTEX_3D vtx[4];
+	// Positions (x, y, z), centered at origin
+	vtx[0].Position = XMFLOAT3(-0.5f, +0.5f, 0.0f); vtx[0].TexCoord = XMFLOAT2(0, 0);
+	vtx[1].Position = XMFLOAT3(+0.5f, +0.5f, 0.0f); vtx[1].TexCoord = XMFLOAT2(1, 0);
+	vtx[2].Position = XMFLOAT3(-0.5f, -0.5f, 0.0f); vtx[2].TexCoord = XMFLOAT2(0, 1);
+	vtx[3].Position = XMFLOAT3(+0.5f, -0.5f, 0.0f); vtx[3].TexCoord = XMFLOAT2(1, 1);
+	// Normal and diffuse not used for 2D bar, but fill with dummy values
+	for (int i = 0; i < 4; i++) {
+		vtx[i].Normal = XMFLOAT3(0, 0, -1);
+		vtx[i].Diffuse = XMFLOAT4(1, 1, 1, 1);
+	}
+	D3D11_BUFFER_DESC bd = {};
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(vtx);
+	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	D3D11_SUBRESOURCE_DATA init = { vtx, 0, 0 };
+	GetDevice()->CreateBuffer(&bd, &init, &g_PlayerHpBarVertexBuffer2);
+}
 
 
 
@@ -94,7 +123,7 @@ HRESULT InitPlayer2(void)
 	g_Player2.pos = XMFLOAT3(-10.0f, PLAYER2_OFFSET_Y + 50.0f, -50.0f);
 	g_Player2.rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	g_Player2.scl = XMFLOAT3(1.0f, 1.0f, 1.0f);
-
+	g_Player2.hp = 3.0f;				// HP初期値
 	g_Player2.spd = 0.0f;			// 移動スピードクリア
 
 	g_Player2.use = TRUE;			// TRUE:生きてる
@@ -159,7 +188,8 @@ HRESULT InitPlayer2(void)
 	// クォータニオンの初期化
 	XMStoreFloat4(&g_Player2.Quaternion, XMQuaternionIdentity());
 
-
+	// HPバー初期化
+	InitPlayerHpBarVertexBuffer2();
 
 	return S_OK;
 }
@@ -200,6 +230,17 @@ void UpdatePlayer2(void)
 
 	g_Player2.spd *= 0.7f;
 
+	//HP テスト
+	g_Player2.spd *= 0.7f;
+	if (GetKeyboardTrigger(DIK_L)) {
+		g_Player2.hp -= 1.0f;
+		if (g_Player2.hp < 0.0f) g_Player2.hp = 0.0f;
+	}
+
+	if (GetKeyboardTrigger(DIK_O)) {
+		g_Player2.hp += 1.0f;
+		if (g_Player2.hp < 0.0f) g_Player2.hp = 0.0f;
+	}
 	// 移動処理
 	if (GetKeyboardPress(DIK_LEFT))
 	{
@@ -470,6 +511,12 @@ void DrawPlayer2(void)
 	}
 
 	SetEdge(0);
+	//HP BAR 参加
+	SetLightEnable(FALSE);
+
+	DrawPlayer2HpBar(); // This stays the same
+
+	SetLightEnable(TRUE);
 
 	// カリング設定を戻す
 	SetCullingMode(CULL_MODE_BACK);
@@ -484,3 +531,95 @@ PLAYER2* GetPlayer2(void)
 	return &g_Player2;
 }
 
+void DrawPlayer2HpBar() {
+	// 頂点構造体の定義
+	struct VERTEX_3D {
+		XMFLOAT3 Position;
+		XMFLOAT3 Normal;
+		XMFLOAT4 Diffuse;
+		XMFLOAT2 TexCoord;
+	};
+
+	CAMERA* cam = GetCamera();
+	XMMATRIX mtxView = XMLoadFloat4x4(&cam->mtxView);
+
+	// HPバーの幅と高さ、最大HP
+	const float HP_WIDTH = 20.0f;
+	const float HP_HEIGHT = 6.0f;
+	const float maxHp = 3.0f;
+	float percent = g_Player2.hp / maxHp;              // 現在HPの割合を計算
+	percent = fmaxf(0.0f, fminf(1.0f, percent));      // 0～1にクランプ
+
+	XMFLOAT3 hpBarPos = g_Player2.pos;
+	hpBarPos.y += 20.0f;  // プレイヤーの上に表示
+
+	// ビルボード行列（カメラの方向を向くようにする）
+	XMMATRIX mtxBillboard = XMMatrixIdentity();
+	mtxBillboard.r[0] = XMVectorSet(mtxView.r[0].m128_f32[0], mtxView.r[1].m128_f32[0], mtxView.r[2].m128_f32[0], 0.0f);
+	mtxBillboard.r[1] = XMVectorSet(mtxView.r[0].m128_f32[1], mtxView.r[1].m128_f32[1], mtxView.r[2].m128_f32[1], 0.0f);
+	mtxBillboard.r[2] = XMVectorSet(mtxView.r[0].m128_f32[2], mtxView.r[1].m128_f32[2], mtxView.r[2].m128_f32[2], 0.0f);
+
+	// マテリアル設定（テクスチャなしで頂点カラーのみ使用）
+	MATERIAL mat = {};
+	mat.Ambient = mat.Diffuse = XMFLOAT4(1, 1, 1, 1);
+	mat.noTexSampling = 1;
+	SetMaterial(mat);
+	// テクスチャを解除（念のため）
+	ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
+	GetDeviceContext()->PSSetShaderResources(0, 1, nullSRV);
+
+	// ワールド行列作成（位置・回転の適用）
+	XMMATRIX mtxScale = XMMatrixIdentity();
+	XMMATRIX mtxTrans = XMMatrixTranslation(hpBarPos.x, hpBarPos.y, hpBarPos.z);
+	XMMATRIX mtxWorld = mtxScale * mtxBillboard * mtxTrans;
+	SetWorldMatrix(&mtxWorld);
+
+	UINT stride = sizeof(VERTEX_3D);
+	UINT offset = 0;
+
+	// 1. --- 赤色の背景バー（常に全幅） ---
+	VERTEX_3D redVtx[4];
+	float left = -HP_WIDTH / 2.0f;
+	float right = +HP_WIDTH / 2.0f;
+
+	redVtx[0].Position = XMFLOAT3(left, HP_HEIGHT / 2, 0);  redVtx[0].Diffuse = XMFLOAT4(1, 0, 0, 1); // 左上
+	redVtx[1].Position = XMFLOAT3(right, HP_HEIGHT / 2, 0);  redVtx[1].Diffuse = XMFLOAT4(1, 0, 0, 1); // 右上
+	redVtx[2].Position = XMFLOAT3(left, -HP_HEIGHT / 2, 0);  redVtx[2].Diffuse = XMFLOAT4(1, 0, 0, 1); // 左下
+	redVtx[3].Position = XMFLOAT3(right, -HP_HEIGHT / 2, 0); redVtx[3].Diffuse = XMFLOAT4(1, 0, 0, 1); // 右下
+	for (int i = 0; i < 4; i++) {
+		redVtx[i].Normal = XMFLOAT3(0, 0, -1);
+		redVtx[i].TexCoord = XMFLOAT2(0, 0);
+	}
+	D3D11_BUFFER_DESC bd = {};
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(redVtx);
+	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	D3D11_SUBRESOURCE_DATA init = { redVtx, 0, 0 };
+	ID3D11Buffer* barVB = NULL;
+	GetDevice()->CreateBuffer(&bd, &init, &barVB);
+
+	GetDeviceContext()->IASetVertexBuffers(0, 1, &barVB, &stride, &offset);
+	GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	GetDeviceContext()->Draw(4, 0);
+	if (barVB) barVB->Release();
+
+	// 2. --- 緑色のHP本体バー（現在HPの割合で幅を決定） ---
+	if (percent > 0.0f) {
+		VERTEX_3D greenVtx[4];
+		float greenRight = left + HP_WIDTH * percent;  // 緑バーの右端位置
+		greenVtx[0].Position = XMFLOAT3(left, HP_HEIGHT / 2, 0);       greenVtx[0].Diffuse = XMFLOAT4(0, 1, 0, 1);
+		greenVtx[1].Position = XMFLOAT3(greenRight, HP_HEIGHT / 2, 0); greenVtx[1].Diffuse = XMFLOAT4(0, 1, 0, 1);
+		greenVtx[2].Position = XMFLOAT3(left, -HP_HEIGHT / 2, 0);      greenVtx[2].Diffuse = XMFLOAT4(0, 1, 0, 1);
+		greenVtx[3].Position = XMFLOAT3(greenRight, -HP_HEIGHT / 2, 0); greenVtx[3].Diffuse = XMFLOAT4(0, 1, 0, 1);
+		for (int i = 0; i < 4; i++) {
+			greenVtx[i].Normal = XMFLOAT3(0, 0, -1);
+			greenVtx[i].TexCoord = XMFLOAT2(0, 0);
+		}
+		D3D11_SUBRESOURCE_DATA greenInit = { greenVtx, 0, 0 };
+		ID3D11Buffer* fgVB = NULL;
+		GetDevice()->CreateBuffer(&bd, &greenInit, &fgVB);
+		GetDeviceContext()->IASetVertexBuffers(0, 1, &fgVB, &stride, &offset);
+		GetDeviceContext()->Draw(4, 0);
+		if (fgVB) fgVB->Release();
+	}
+}
