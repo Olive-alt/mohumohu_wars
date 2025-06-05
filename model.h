@@ -26,8 +26,8 @@ struct DX11_MODEL_MATERIAL
 // 描画サブセット構造体
 struct DX11_SUBSET
 {
-	unsigned short	StartIndex;
-	unsigned short	IndexNum;
+	unsigned int	StartIndex;
+	unsigned int	IndexNum;
 	DX11_MODEL_MATERIAL	Material;
 };
 
@@ -37,7 +37,7 @@ struct DX11_MODEL
 	ID3D11Buffer*	IndexBuffer;
 
 	DX11_SUBSET		*SubsetArray;
-	unsigned short	SubsetNum;
+	unsigned int	SubsetNum;
 };
 
 
