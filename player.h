@@ -33,7 +33,7 @@ struct PLAYER
 	XMFLOAT4			diffuse[MODEL_MAX_MATERIAL];	// モデルの色
 
 	int					shadowIdx;			// 影のインデックス番号
-
+	int					hp;
 	//ワープゲートクールタイム用
 	BOOL				gateUse;
 	int					gateCoolTime;
@@ -69,4 +69,6 @@ void UpdatePlayer(void);
 void DrawPlayer(void);
 
 PLAYER *GetPlayer(void);
+
+void DrawPlayerHpBar();
 
