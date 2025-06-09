@@ -512,11 +512,13 @@ void DrawPlayer2(void)
 
 	SetEdge(0);
 	//HP BAR Q‰Á
+	SetDepthEnable(FALSE);
 	SetLightEnable(FALSE);
 
 	DrawPlayer2HpBar(); // This stays the same
 
 	SetLightEnable(TRUE);
+	SetDepthEnable(TRUE);
 
 	// ƒJƒŠƒ“ƒOİ’è‚ğ–ß‚·
 	SetCullingMode(CULL_MODE_BACK);
