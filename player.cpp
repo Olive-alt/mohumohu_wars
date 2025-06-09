@@ -511,12 +511,14 @@ void DrawPlayer(void)
 		DrawModel(&g_Parts[i].model);
 
 	}
+	SetDepthEnable(FALSE);
 	//HP BAR 参加
 	SetLightEnable(FALSE);
 
 	DrawPlayerHpBar(); // This stays the same
 
 	SetLightEnable(TRUE);
+	SetDepthEnable(TRUE);
 
 
 	SetEdge(0);
