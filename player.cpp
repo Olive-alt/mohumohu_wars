@@ -323,7 +323,7 @@ void UpdatePlayer(void)
 	if (GetKeyboardTrigger(DIK_SPACE))
 	{
 		BALL* ball = GetBall();
-		if (ball && ball->IsUsedITball() && ball->IsPickedITball())  // すでに使われてるボールは撃たないようにする
+		if (g_Player.haveWeapon && ball && ball->IsUsedITball() && ball->IsPickedITball())  // すでに使われてるボールは撃たないようにする
 		{
 			ball->SetITball(g_Player.pos, g_Player.rot);  // プレイヤーの位置と向きでボールを発射
 		}

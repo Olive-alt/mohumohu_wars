@@ -490,6 +490,7 @@ void CheckHit(void)
 		XMFLOAT3 wg_pos = warpgate[j].GetPosition();
 		XMFLOAT3 wg_hitscl = warpgate[j].GetHitScl();
 
+		//　プレイヤー1
 		//BCの当たり判定
 		if (CollisionBB(player->pos, wg_pos, XMFLOAT3(50.0f, 50.0f, 50.0f), wg_hitscl) && player->gateUse == FALSE)
 		{
@@ -499,6 +500,17 @@ void CheckHit(void)
 			player->gateUse = TRUE;
 			PrintDebugProc("warpgateHIT!!!:No%d\n", j);
 		}
+
+		//　プレイヤー2
+		//BCの当たり判定
+		if (CollisionBB(player2->pos, wg_pos, XMFLOAT3(50.0f, 50.0f, 50.0f), wg_hitscl) && player2->gateUse == FALSE)
+		{
+			int n = j + 1;
+			if (n > MAX_WG)n = 0;
+			player2->pos = warpgate[n].GetPosition();
+			player2->gateUse = TRUE;
+			PrintDebugProc("warpgateHIT!!!:No%d\n", j);
+		}
 	}
 
 	// 巨大化アイテム
@@ -506,8 +518,15 @@ void CheckHit(void)
 	{
 		XMFLOAT3 gi_pos = giant.GetPositionITgiant();
 
+		//　プレイヤー1
 		//BCの当たり判定
 		if (CollisionBC(player->pos, gi_pos, player->size, GIANT_SIZE))
+		{
+			giant.PickITgiant();
+		}
+
+		//　プレイヤー2
+		if (CollisionBC(player2->pos, gi_pos, player2->size, GIANT_SIZE))
 		{
 			giant.PickITgiant();
 		}
@@ -518,12 +537,20 @@ void CheckHit(void)
 	if (bool use = invisible.IsUsedITinvisible())
 	{
 		XMFLOAT3 invi_pos = invisible.GetPositionITinvisible();
-
+		
+		//　プレイヤー1
 		//BCの当たり判定
 		if (CollisionBC(player->pos, invi_pos, player->size, INVISIBLE_SIZE))
 		{
 			invisible.PickITinvisible();
 		}
+
+		//　プレイヤー2
+		if (CollisionBC(player2->pos, invi_pos, player2->size, INVISIBLE_SIZE))
+		{
+			invisible.PickITinvisible();
+		}
+
 	}
 
 	//ボール
@@ -535,11 +562,20 @@ void CheckHit(void)
 
 		if (!pick && !to_throw)
 		{
+			//　プレイヤー1
 			//BCの当たり判定
 			if (CollisionBC(player->pos, ball_pos, player->size, BALL_SIZE))
 			{
 				ball.PickITball();
 			}
+
+			//　プレイヤー2
+			if (CollisionBC(player2->pos, ball_pos, player2->size, BALL_SIZE))
+			{
+				ball.PickITball();
+			}
+
+
 		}
 	}
 
