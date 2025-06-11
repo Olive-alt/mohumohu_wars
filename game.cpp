@@ -62,6 +62,11 @@ WARPGATE warpgate[2];
 //アイテム用
 GIANT giant;
 INVISIBLE invisible;
+BALL ball;
+BALL* GetBall()  // アクセス用の関数を作成
+{
+	return &ball;
+}
 
 //=============================================================================
 // 初期化処理
@@ -134,6 +139,10 @@ HRESULT InitGame(void)
 	invisible.InitITinvisible();
 	invisible.SetITinvisible(XMFLOAT3(200.0f, 0.0f, 100.0f));
 
+	//ボールアイテムの初期化
+	ball.InitITball();
+	ball.SetITballObject(XMFLOAT3(-100.0f, 0.0f, -100.0f));
+
 	// BGM再生
 	//PlaySound(SOUND_LABEL_BGM_sample001);
 
@@ -187,6 +196,9 @@ void UninitGame(void)
 
 	// 透明化アイテムの終了処理
 	invisible.UninitITinvisible();
+
+	//ボールアイテムの終了処理
+	ball.UninitITball();
 
 }
 
@@ -259,6 +271,9 @@ void UpdateGame(void)
 	// 透明化アイテムの更新処理
 	invisible.UpdateITinvisible();
 
+	// ボールアイテムの更新処理
+	ball.UpdateITball();
+
 }
 
 //=============================================================================
@@ -282,6 +297,9 @@ void DrawGame0(void)
 
 	// 弾の描画処理
 	DrawBullet();
+
+	// ボールアイテムの描画処理
+	ball.DrawITball();
 
 	// 巨大化アイテムの描画処理
 	giant.DrawITgiant();
@@ -505,6 +523,23 @@ void CheckHit(void)
 		if (CollisionBC(player->pos, invi_pos, player->size, INVISIBLE_SIZE))
 		{
 			invisible.PickITinvisible();
+		}
+	}
+
+	//ボール
+	if (bool use = ball.IsUsedITball())
+	{
+		XMFLOAT3 ball_pos = ball.GetPositionITball();
+		BOOL pick = ball.IsPickedITball();
+		BOOL to_throw = ball.IsThrewITball();
+
+		if (!pick && !to_throw)
+		{
+			//BCの当たり判定
+			if (CollisionBC(player->pos, ball_pos, player->size, BALL_SIZE))
+			{
+				ball.PickITball();
+			}
 		}
 	}
 

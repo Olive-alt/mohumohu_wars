@@ -37,6 +37,8 @@ struct PLAYER2
 	BOOL				gateUse;
 	int					gateCoolTime;
 
+	//•Šíd•¡–h~—p
+	BOOL				haveWeapon;
 
 	BOOL				use;
 

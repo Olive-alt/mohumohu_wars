@@ -5,6 +5,7 @@
 //
 //=============================================================================
 #include "main.h"
+#include "game.h"
 #include "renderer.h"
 #include "light.h"
 #include "input.h"
@@ -14,6 +15,7 @@
 #include "bullet.h"
 #include "debugproc.h"
 #include "meshfield.h"
+#include "IT_ball.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -131,6 +133,8 @@ HRESULT InitPlayer2(void)
 
 	g_Player2.gateUse = FALSE;
 	g_Player2.gateCoolTime = 0;
+
+	g_Player2.haveWeapon = FALSE;
 
 	// ここでプレイヤー用の影を作成している
 	XMFLOAT3 pos = g_Player2.pos;
@@ -313,9 +317,13 @@ void UpdatePlayer2(void)
 
 
 	// 弾発射処理
-	if (GetKeyboardTrigger(DIK_RETURN))
+	if (GetKeyboardTrigger(DIK_SPACE))
 	{
-		SetBullet(g_Player2.pos, g_Player2.rot, 2);
+		BALL* ball = GetBall();
+		if (ball && ball->IsUsedITball() && ball->IsPickedITball())  // すでに使われてるボールは撃たないようにする
+		{
+			ball->SetITball(g_Player2.pos, g_Player2.rot);  // プレイヤーの位置と向きでボールを発射
+		}
 	}
 
 	// 影もプレイヤーの位置に合わせる
