@@ -19,6 +19,7 @@
 #include "result.h"
 #include "debugproc.h"
 #include "player_select.h"
+#include "stage_select.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -83,7 +84,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	};
 	HWND		hWnd;
 	MSG			msg;
-	
+
 	// ウィンドウクラスの登録
 	RegisterClassEx(&wcex);
 
@@ -132,13 +133,13 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	// ウインドウの表示(初期化処理の後に呼ばないと駄目)
 	ShowWindow(hWnd, nCmdShow);
 	UpdateWindow(hWnd);
-	
+
 	// メッセージループ
-	while(1)
+	while (1)
 	{
-		if(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{
-			if(msg.message == WM_QUIT)
+			if (msg.message == WM_QUIT)
 			{// PostQuitMessage()が呼ばれたらループ終了
 				break;
 			}
@@ -200,14 +201,14 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 //=============================================================================
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	switch(message)
+	switch (message)
 	{
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
 
 	case WM_KEYDOWN:
-		switch(wParam)
+		switch (wParam)
 		{
 		case VK_ESCAPE:
 			DestroyWindow(hWnd);
@@ -308,6 +309,11 @@ void Update(void)
 		UpdatePlayerSelect();
 		break;
 
+	case MODE_STAGE_SELECT:		// プレヤー選択の画面
+		UpdateStageSelect();
+		break;
+
+
 	case MODE_GAME:			// ゲーム画面の更新
 		UpdateGame();
 		break;
@@ -358,6 +364,11 @@ void Draw(void)
 	case MODE_PLAYER_SELECT:		// ゲーム画面の更新
 		DrawPlayerSelect();
 		break;
+
+	case MODE_STAGE_SELECT:		// ゲーム画面の更新
+		DrawStageSelect();
+		break;
+
 
 	case MODE_GAME:			// ゲーム画面の描画
 		DrawGame();
@@ -466,6 +477,11 @@ void SetMode(int mode)
 		InitPlayerSelect();
 		break;
 
+	case MODE_STAGE_SELECT:		// キャラクター選択の更新
+		InitStageSelect();
+		break;
+
+
 	case MODE_GAME:
 		// カメラもここで初期化しておく事にした
 		UninitCamera();
@@ -483,7 +499,7 @@ void SetMode(int mode)
 	case MODE_MAX:
 		// エネミーの終了処理
 		UninitEnemy();
-		
+
 		// プレイヤーの終了処理
 		UninitPlayer();
 		break;
