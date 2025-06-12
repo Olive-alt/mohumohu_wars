@@ -6,7 +6,7 @@
 //=============================================================================
 #include "main.h"
 #include "collision.h"
-
+#include "debugline.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -204,4 +204,110 @@ BOOL RayCast(XMFLOAT3 xp0, XMFLOAT3 xp1, XMFLOAT3 xp2, XMFLOAT3 xpos0, XMFLOAT3 
 }
 
 
+//=============================================================================
+// カプセル同士の当たり判定処理
+// p1a, p1b: カプセル1の端点
+// r1: カプセル1の半径
+// p2a, p2b: カプセル2の端点
+// r2: カプセル2の半径
+// 戻り値：当たってたらTRUE
+//=============================================================================
+BOOL CollisionCapsule(
+	const XMFLOAT3& p1a, const XMFLOAT3& p1b, float r1,
+	const XMFLOAT3& p2a, const XMFLOAT3& p2b, float r2)
+{
+	// 線分間の最近接点を求める
+	XMVECTOR a0 = XMLoadFloat3(&p1a);
+	XMVECTOR a1 = XMLoadFloat3(&p1b);
+	XMVECTOR b0 = XMLoadFloat3(&p2a);
+	XMVECTOR b1 = XMLoadFloat3(&p2b);
+
+	// 公式より: 線分a(s), 線分b(t), s,t∈[0,1]
+	XMVECTOR d1 = a1 - a0; // カプセル1の線分
+	XMVECTOR d2 = b1 - b0; // カプセル2の線分
+	XMVECTOR r = a0 - b0;
+
+	float a = XMVectorGetX(XMVector3Dot(d1, d1)); // |d1|^2
+	float e = XMVectorGetX(XMVector3Dot(d2, d2)); // |d2|^2
+	float f = XMVectorGetX(XMVector3Dot(d2, r));
+
+	float s, t;
+	if (a <= 1e-6f && e <= 1e-6f) {
+		// 両方とも点
+		s = t = 0.0f;
+	}
+	else if (a <= 1e-6f) {
+		// カプセル1が点
+		s = 0.0f;
+		t = f / e;
+		t = max(0.0f, min(1.0f, t));
+	}
+	else {
+		float c = XMVectorGetX(XMVector3Dot(d1, r));
+		if (e <= 1e-6f) {
+			// カプセル2が点
+			t = 0.0f;
+			s = -c / a;
+			s = max(0.0f, min(1.0f, s));
+		}
+		else {
+			float b = XMVectorGetX(XMVector3Dot(d1, d2));
+			float denom = a * e - b * b;
+			if (denom != 0.0f) {
+				s = (b * f - c * e) / denom;
+				s = max(0.0f, min(1.0f, s));
+			}
+			else {
+				s = 0.0f;
+			}
+			t = (b * s + f) / e;
+			t = max(0.0f, min(1.0f, t));
+		}
+	}
+	// 最近接点
+	XMVECTOR c1 = a0 + d1 * s;
+	XMVECTOR c2 = b0 + d2 * t;
+	XMVECTOR diff = c1 - c2;
+	float distSq = XMVectorGetX(XMVector3LengthSq(diff));
+	float rSum = r1 + r2;
+
+	return distSq <= rSum * rSum;
+}
+
+//=============================================================================
+// カプセルと球の当たり判定処理
+// カプセル線分 capA-capB, 半径 capRadius
+// 球中心 spherePos, 半径 sphereRadius
+//=============================================================================
+BOOL CollisionCapsuleSphere(
+	const XMFLOAT3& capA,
+	const XMFLOAT3& capB,
+	float capRadius,
+	const XMFLOAT3& spherePos,
+	float sphereRadius
+)
+{
+	// カプセルの線分ab
+	XMVECTOR a = XMLoadFloat3(&capA);
+	XMVECTOR b = XMLoadFloat3(&capB);
+	XMVECTOR p = XMLoadFloat3(&spherePos);
+	XMVECTOR ab = b - a;
+	XMVECTOR ap = p - a;
+
+	float abLenSq = XMVectorGetX(XMVector3LengthSq(ab));
+	float t = 0.0f;
+
+	if (abLenSq > 0.0f) {
+		// 球の中心pからカプセル線分abへの最近接点を求める
+		t = XMVectorGetX(XMVector3Dot(ap, ab)) / abLenSq;
+		t = max(0.0f, min(1.0f, t)); // [0,1]の範囲にクランプ
+	}
+
+	XMVECTOR closest = a + ab * t; // 線分上の最近接点
+	XMVECTOR diff = p - closest;
+	float distSq = XMVectorGetX(XMVector3LengthSq(diff));
+	float sumR = capRadius + sphereRadius;
+
+	return (distSq <= sumR * sumR);
+}
 

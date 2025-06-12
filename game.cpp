@@ -47,7 +47,6 @@
 // プロトタイプ宣言
 //*****************************************************************************
 void CheckHit(void);
-void DrawDebugSphereOutline(const XMFLOAT3& center, float radius, const XMFLOAT4& color, int slices = 20);
 
 
 
@@ -399,6 +398,19 @@ void DrawGame(void)
 #ifdef _DEBUG
 	// プレイヤー、プレイヤー２、エネミーのデバッグ用当たり判定球を描画
 	DrawDebugSphereOutline(GetPlayer(0)->pos, GetPlayer(0)->size, XMFLOAT4(1, 0, 0, 1));
+
+
+	DrawDebugCapsuleOutline(
+		GetPlayer(0)->capsuleA,
+		GetPlayer(0)->capsuleB,
+		GetPlayer(0)->size,
+		XMFLOAT4(1, 1, 1, 1), // color
+		20,  // slices (roundness)
+		4    // hemiRings (cap smoothness)
+	);
+
+
+
 	DrawDebugSphereOutline(GetPlayer(1)->pos, GetPlayer(1)->size, XMFLOAT4(1, 0, 0, 1));
 	ENEMY* enemy = GetEnemy();
 	for (int i = 0; i < MAX_ENEMY; ++i) {
@@ -539,11 +551,24 @@ void CheckHit(void)
 		XMFLOAT3 gi_pos = giant.GetPositionITgiant();
 
 		//　プレイヤー1
-		//BCの当たり判定
-		if (CollisionBC(player0->pos, gi_pos, player0->size, GIANT_SIZE))
+		
+		////BCの当たり判定
+		//if (CollisionBC(player0->pos, gi_pos, player0->size, GIANT_SIZE))
+		//{
+		//	giant.PickITgiant();
+		//}
+
+		// カプセルと球の当たり判定
+		if (CollisionCapsuleSphere(
+			player0->capsuleA,
+			player0->capsuleB,
+			player0->size,
+			gi_pos,
+			GIANT_SIZE))
 		{
 			giant.PickITgiant();
 		}
+
 
 		//　プレイヤー2
 		if (CollisionBC(player1->pos, gi_pos, player1->size, GIANT_SIZE))
@@ -616,33 +641,3 @@ void CheckHit(void)
 }
 
 
-// 球のワイヤーフレームを描画する関数
-void DrawDebugSphereOutline(const XMFLOAT3& center, float radius, const XMFLOAT4& color, int slices)
-{
-	// XY平面の円を描画
-	for (int i = 0; i < slices; ++i) {
-		float theta1 = XM_2PI * i / slices;
-		float theta2 = XM_2PI * (i + 1) / slices;
-		XMFLOAT3 p1(center.x + cosf(theta1) * radius, center.y + sinf(theta1) * radius, center.z);
-		XMFLOAT3 p2(center.x + cosf(theta2) * radius, center.y + sinf(theta2) * radius, center.z);
-		DebugLine_DrawLine(p1, p2, color);
-	}
-
-	// XZ平面の円を描画
-	for (int i = 0; i < slices; ++i) {
-		float theta1 = XM_2PI * i / slices;
-		float theta2 = XM_2PI * (i + 1) / slices;
-		XMFLOAT3 p1(center.x + cosf(theta1) * radius, center.y, center.z + sinf(theta1) * radius);
-		XMFLOAT3 p2(center.x + cosf(theta2) * radius, center.y, center.z + sinf(theta2) * radius);
-		DebugLine_DrawLine(p1, p2, color);
-	}
-
-	// YZ平面の円を描画
-	for (int i = 0; i < slices; ++i) {
-		float theta1 = XM_2PI * i / slices;
-		float theta2 = XM_2PI * (i + 1) / slices;
-		XMFLOAT3 p1(center.x, center.y + cosf(theta1) * radius, center.z + sinf(theta1) * radius);
-		XMFLOAT3 p2(center.x, center.y + cosf(theta2) * radius, center.z + sinf(theta2) * radius);
-		DebugLine_DrawLine(p1, p2, color);
-	}
-}

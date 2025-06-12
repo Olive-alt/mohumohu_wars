@@ -31,8 +31,7 @@
 #define PLAYER_PARTS_MAX	(2)								// プレイヤーのパーツの数
 
 
-//test
-//test2
+
 // 
 //*****************************************************************************
 // プロトタイプ宣言
@@ -129,6 +128,17 @@ HRESULT InitPlayer(void)
 		g_Player[i].hp = 3.0f;
 		g_Player[i].use = TRUE;			// TRUE:生きてる
 		g_Player[i].size = PLAYER_SIZE;	// 当たり判定の大きさ
+
+
+		// カプセルの端点を初期化
+		g_Player[i].capsuleA.x = g_Player[i].pos.x;
+		g_Player[i].capsuleA.y = g_Player[i].pos.y - PLAYER_HEIGHT / 2.0f;
+		g_Player[i].capsuleA.z = g_Player[i].pos.z;
+
+		g_Player[i].capsuleB.x = g_Player[i].pos.x;
+		g_Player[i].capsuleB.y = g_Player[i].pos.y + PLAYER_HEIGHT / 2.0f;
+		g_Player[i].capsuleB.z = g_Player[i].pos.z;
+
 
 		// モデルのディフューズを保存しておく。色変え対応の為。
 		GetModelDiffuse(&g_Player[i].model, &g_Player[i].diffuse[0]);
@@ -339,6 +349,15 @@ void UpdatePlayer(void)
 			XMVECTOR newQuat = XMQuaternionSlerp(currentQuat, targetQuat, 0.05f);
 			XMStoreFloat4(&g_Player[i].Quaternion, newQuat);
 		}
+
+		g_Player[i].capsuleA.x = g_Player[i].pos.x;
+		g_Player[i].capsuleA.y = g_Player[i].pos.y - PLAYER_HEIGHT / 2.0f;
+		g_Player[i].capsuleA.z = g_Player[i].pos.z;
+
+		g_Player[i].capsuleB.x = g_Player[i].pos.x;
+		g_Player[i].capsuleB.y = g_Player[i].pos.y + PLAYER_HEIGHT / 2.0f;
+		g_Player[i].capsuleB.z = g_Player[i].pos.z;
+
 
 #ifdef _DEBUG
 		PrintDebugProc(

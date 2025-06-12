@@ -167,3 +167,121 @@ void DebugLine_Shutdown()
     if (g_ps) { g_ps->Release();           g_ps = nullptr; }
     g_lines.clear();
 }
+
+// ‹…‚ÌƒƒCƒ„[ƒtƒŒ[ƒ€‚ğ•`‰æ‚·‚éŠÖ”
+void DrawDebugSphereOutline(const XMFLOAT3& center, float radius, const XMFLOAT4& color, int slices)
+{
+    // XY•½–Ê‚Ì‰~‚ğ•`‰æ
+    for (int i = 0; i < slices; ++i) {
+        float theta1 = XM_2PI * i / slices;
+        float theta2 = XM_2PI * (i + 1) / slices;
+        XMFLOAT3 p1(center.x + cosf(theta1) * radius, center.y + sinf(theta1) * radius, center.z);
+        XMFLOAT3 p2(center.x + cosf(theta2) * radius, center.y + sinf(theta2) * radius, center.z);
+        DebugLine_DrawLine(p1, p2, color);
+    }
+
+    // XZ•½–Ê‚Ì‰~‚ğ•`‰æ
+    for (int i = 0; i < slices; ++i) {
+        float theta1 = XM_2PI * i / slices;
+        float theta2 = XM_2PI * (i + 1) / slices;
+        XMFLOAT3 p1(center.x + cosf(theta1) * radius, center.y, center.z + sinf(theta1) * radius);
+        XMFLOAT3 p2(center.x + cosf(theta2) * radius, center.y, center.z + sinf(theta2) * radius);
+        DebugLine_DrawLine(p1, p2, color);
+    }
+
+    // YZ•½–Ê‚Ì‰~‚ğ•`‰æ
+    for (int i = 0; i < slices; ++i) {
+        float theta1 = XM_2PI * i / slices;
+        float theta2 = XM_2PI * (i + 1) / slices;
+        XMFLOAT3 p1(center.x, center.y + cosf(theta1) * radius, center.z + sinf(theta1) * radius);
+        XMFLOAT3 p2(center.x, center.y + cosf(theta2) * radius, center.z + sinf(theta2) * radius);
+        DebugLine_DrawLine(p1, p2, color);
+    }
+}
+
+// Draw a capsule's wireframe outline (clean style)
+void DrawDebugCapsuleOutline(
+    const XMFLOAT3& a, // base
+    const XMFLOAT3& b, // tip
+    float radius,
+    const XMFLOAT4& color,
+    int slices = 20,   // number of rings/segments in each circle
+    int hemiRings = 4  // number of latitude rings on each cap (excluding the pole)
+)
+{
+    using namespace DirectX;
+
+    // Axis (capsule main direction)
+    XMVECTOR va = XMLoadFloat3(&a);
+    XMVECTOR vb = XMLoadFloat3(&b);
+    XMVECTOR axis = XMVector3Normalize(vb - va);
+    float length = XMVectorGetX(XMVector3Length(vb - va));
+
+    // Orthonormal basis
+    XMVECTOR ref = fabs(XMVectorGetX(XMVector3Dot(axis, XMVectorSet(1, 0, 0, 0)))) > 0.99f
+        ? XMVectorSet(0, 1, 0, 0) : XMVectorSet(1, 0, 0, 0);
+    XMVECTOR n1 = XMVector3Normalize(XMVector3Cross(axis, ref));
+    XMVECTOR n2 = XMVector3Normalize(XMVector3Cross(axis, n1));
+
+    // Draw rings at both ends (the equators)
+    for (int i = 0; i < slices; ++i) {
+        float t1 = XM_2PI * i / slices;
+        float t2 = XM_2PI * (i + 1) / slices;
+        XMVECTOR off1 = XMVectorScale(n1, cosf(t1) * radius) + XMVectorScale(n2, sinf(t1) * radius);
+        XMVECTOR off2 = XMVectorScale(n1, cosf(t2) * radius) + XMVectorScale(n2, sinf(t2) * radius);
+
+        // Base ring
+        XMFLOAT3 pA1, pA2;
+        XMStoreFloat3(&pA1, va + off1);
+        XMStoreFloat3(&pA2, va + off2);
+        DebugLine_DrawLine(pA1, pA2, color);
+
+        // Top ring
+        XMFLOAT3 pB1, pB2;
+        XMStoreFloat3(&pB1, vb + off1);
+        XMStoreFloat3(&pB2, vb + off2);
+        DebugLine_DrawLine(pB1, pB2, color);
+
+        // Connect side lines (cylinder)
+        DebugLine_DrawLine(pA1, pB1, color);
+    }
+
+    // Draw latitude rings (hemiRings) for each hemisphere (caps)
+    for (int h = 1; h < hemiRings; ++h) {
+        float phi = (XM_PIDIV2 * h) / hemiRings; // 0 (equator) to pi/2 (pole)
+        float y = sinf(phi) * radius;
+        float r = cosf(phi) * radius;
+
+        // Lower hemisphere (base cap)
+        XMVECTOR capCenterA = va;
+        XMVECTOR capDirA = -axis;
+        for (int i = 0; i < slices; ++i) {
+            float t1 = XM_2PI * i / slices;
+            float t2 = XM_2PI * (i + 1) / slices;
+            XMVECTOR off1 = XMVectorScale(n1, cosf(t1) * r) + XMVectorScale(n2, sinf(t1) * r);
+            XMVECTOR off2 = XMVectorScale(n1, cosf(t2) * r) + XMVectorScale(n2, sinf(t2) * r);
+            XMVECTOR ring1 = capCenterA + off1 + XMVectorScale(capDirA, y);
+            XMVECTOR ring2 = capCenterA + off2 + XMVectorScale(capDirA, y);
+            XMFLOAT3 fp1, fp2;
+            XMStoreFloat3(&fp1, ring1);
+            XMStoreFloat3(&fp2, ring2);
+            DebugLine_DrawLine(fp1, fp2, color);
+        }
+
+        // Upper hemisphere (tip cap)
+        XMVECTOR capCenterB = vb;
+        XMVECTOR capDirB = axis;
+        for (int i = 0; i < slices; ++i) {
+            float t1 = XM_2PI * i / slices;
+            float t2 = XM_2PI * (i + 1) / slices;
+            XMVECTOR off1 = XMVectorScale(n1, cosf(t1) * r) + XMVectorScale(n2, sinf(t1) * r);
+            XMVECTOR off2 = XMVectorScale(n1, cosf(t2) * r) + XMVectorScale(n2, sinf(t2) * r);
+            XMVECTOR ring1 = capCenterB + off1 + XMVectorScale(capDirB, y);
+            XMVECTOR ring2 = capCenterB + off2 + XMVectorScale(capDirB, y);
+            XMFLOAT3 fp1, fp2;
+            XMStoreFloat3(&fp1, ring1);
+            XMStoreFloat3(&fp2, ring2);
+            DebugLine_DrawLine(fp1, fp2, color);
+        }
+    }
+}

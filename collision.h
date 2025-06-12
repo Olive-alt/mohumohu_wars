@@ -27,3 +27,7 @@ float dotProduct(XMVECTOR *v1, XMVECTOR *v2);
 void crossProduct(XMVECTOR *ret, XMVECTOR *v1, XMVECTOR *v2);
 BOOL RayCast(XMFLOAT3 p0, XMFLOAT3 p1, XMFLOAT3 p2, XMFLOAT3 pos0, XMFLOAT3 pos1, XMFLOAT3 *hit, XMFLOAT3 *normal);
 
+BOOL CollisionCapsule(const XMFLOAT3& p1a, const XMFLOAT3& p1b, float r1, const XMFLOAT3& p2a, const XMFLOAT3& p2b, float r2);
+BOOL CollisionCapsuleSphere(const XMFLOAT3& capA, const XMFLOAT3& capB, float capRadius, const XMFLOAT3& spherePos, float sphereRadius);
+
+
