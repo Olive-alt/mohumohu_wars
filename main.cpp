@@ -20,6 +20,7 @@
 #include "debugproc.h"
 #include "player_select.h"
 #include "stage_select.h"
+#include "debugline.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -235,6 +236,8 @@ HRESULT Init(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
 {
 	InitRenderer(hInstance, hWnd, bWindow);
 
+	DebugLine_Initialize(GetDevice(), GetDeviceContext());
+
 	InitLight();
 
 	InitCamera();
@@ -280,6 +283,8 @@ void Uninit(void)
 
 	//入力の終了処理
 	UninitInput();
+
+	DebugLine_Shutdown();
 
 	UninitRenderer();
 }

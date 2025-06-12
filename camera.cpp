@@ -352,3 +352,13 @@ void EnsureCameraFramesTargets(XMFLOAT3 target1, XMFLOAT3 target2, float viewEdg
 	// デバッグ出力
 	PrintDebugProc("CameraHeight: %f\n", g_Camera.pos.y);
 }
+
+
+// 追加: ビュー×プロジェクション行列を取得する
+XMMATRIX GetCameraViewProjMatrix(void)
+{
+	// 必要なら#include <DirectXMath.h>も！
+	XMMATRIX view = XMLoadFloat4x4(&g_Camera.mtxView);
+	XMMATRIX proj = XMLoadFloat4x4(&g_Camera.mtxProjection);
+	return view * proj;
+}

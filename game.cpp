@@ -34,6 +34,9 @@
 #include "IT_giant.h"
 #include "IT_invisible.h"
 
+//デバッグ表示
+#include "debugline.h"
+
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
@@ -45,6 +48,7 @@
 // プロトタイプ宣言
 //*****************************************************************************
 void CheckHit(void);
+void DrawDebugSphereOutline(const XMFLOAT3& center, float radius, const XMFLOAT4& color, int slices = 20);
 
 
 
@@ -352,6 +356,7 @@ void DrawGame(void)
 	PrintDebugProc("ViewPortType:%d\n", g_ViewPortType_Game);
 
 #endif
+	DebugLine_BeginFrame();
 
 	XMFLOAT3 playerPos = GetPlayer()->pos;
 	XMFLOAT3 player2Pos = GetPlayer2()->pos;
@@ -396,7 +401,28 @@ void DrawGame(void)
 		break;
 
 	}
+#ifdef _DEBUG
+	// プレイヤー、プレイヤー２、エネミーのデバッグ用当たり判定球を描画
+	DrawDebugSphereOutline(GetPlayer()->pos, GetPlayer()->size, XMFLOAT4(1, 0, 0, 1));
+	DrawDebugSphereOutline(GetPlayer2()->pos, GetPlayer2()->size, XMFLOAT4(1, 0, 0, 1));
+	ENEMY* enemy = GetEnemy();
+	for (int i = 0; i < MAX_ENEMY; ++i) {
+		if (enemy[i].use)
+			DrawDebugSphereOutline(enemy[i].pos, enemy[i].size, XMFLOAT4(0, 0, 1, 1));
+	}
 
+	// アイテムのデバッグ用当たり判定球を描画
+	if (giant.IsUsedITgiant())
+		DrawDebugSphereOutline(giant.GetPositionITgiant(), GIANT_SIZE, XMFLOAT4(1, 1, 0, 1)); // Yellow
+
+
+	DrawDebugSphereOutline(invisible.GetPositionITinvisible(), INVISIBLE_SIZE, XMFLOAT4(0, 1, 0, 1)); // Green
+
+	if (ball.IsUsedITball())
+		DrawDebugSphereOutline(ball.GetPositionITball(), BALL_SIZE, XMFLOAT4(1, 1, 1, 1)); // White
+
+	DebugLine_Render(GetCameraViewProjMatrix());
+#endif
 }
 
 
@@ -596,3 +622,33 @@ void CheckHit(void)
 }
 
 
+// 球のワイヤーフレームを描画する関数
+void DrawDebugSphereOutline(const XMFLOAT3& center, float radius, const XMFLOAT4& color, int slices)
+{
+	// XY平面の円を描画
+	for (int i = 0; i < slices; ++i) {
+		float theta1 = XM_2PI * i / slices;
+		float theta2 = XM_2PI * (i + 1) / slices;
+		XMFLOAT3 p1(center.x + cosf(theta1) * radius, center.y + sinf(theta1) * radius, center.z);
+		XMFLOAT3 p2(center.x + cosf(theta2) * radius, center.y + sinf(theta2) * radius, center.z);
+		DebugLine_DrawLine(p1, p2, color);
+	}
+
+	// XZ平面の円を描画
+	for (int i = 0; i < slices; ++i) {
+		float theta1 = XM_2PI * i / slices;
+		float theta2 = XM_2PI * (i + 1) / slices;
+		XMFLOAT3 p1(center.x + cosf(theta1) * radius, center.y, center.z + sinf(theta1) * radius);
+		XMFLOAT3 p2(center.x + cosf(theta2) * radius, center.y, center.z + sinf(theta2) * radius);
+		DebugLine_DrawLine(p1, p2, color);
+	}
+
+	// YZ平面の円を描画
+	for (int i = 0; i < slices; ++i) {
+		float theta1 = XM_2PI * i / slices;
+		float theta2 = XM_2PI * (i + 1) / slices;
+		XMFLOAT3 p1(center.x, center.y + cosf(theta1) * radius, center.z + sinf(theta1) * radius);
+		XMFLOAT3 p2(center.x, center.y + cosf(theta2) * radius, center.z + sinf(theta2) * radius);
+		DebugLine_DrawLine(p1, p2, color);
+	}
+}

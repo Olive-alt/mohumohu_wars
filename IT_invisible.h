@@ -7,7 +7,7 @@
 //*****************************************************************************
 #define	MAX_INVISIBLE			(1)			// –ØÅ‘å”
 
-#define	INVISIBLE_SIZE		(5.0f)				// “–‚½‚è”»’è‚Ì‘å‚«‚³
+#define	INVISIBLE_SIZE		(15.0f)				// “–‚½‚è”»’è‚Ì‘å‚«‚³
 
 class INVISIBLE
 {

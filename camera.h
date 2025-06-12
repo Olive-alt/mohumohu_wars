@@ -59,3 +59,5 @@ void SetCameraAT(XMFLOAT3 pos);
 
 void EnsureCameraFramesTargets(XMFLOAT3 target1, XMFLOAT3 target2, float viewEdgeBuffer);
 
+XMMATRIX GetCameraViewProjMatrix(void);//Debug BC/カプセルを表示するために取る
+
