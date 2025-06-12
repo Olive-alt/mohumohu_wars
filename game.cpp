@@ -14,7 +14,6 @@
 #include "fade.h"
 
 #include "player.h"
-#include "player2.h"
 #include "enemy.h"
 #include "meshfield.h"
 #include "meshwall.h"
@@ -87,7 +86,6 @@ HRESULT InitGame(void)
 
 	// プレイヤーの初期化
 	InitPlayer();
-	InitPlayer2();
 
 	// エネミーの初期化
 	InitEnemy();
@@ -181,7 +179,6 @@ void UninitGame(void)
 
 	// プレイヤーの終了処理
 	UninitPlayer();
-	UninitPlayer2();
 
 	// 影の終了処理
 	UninitShadow();
@@ -234,7 +231,6 @@ void UpdateGame(void)
 
 	// プレイヤーの更新処理
 	UpdatePlayer();
-	UpdatePlayer2();
 
 	// エネミーの更新処理
 	UpdateEnemy();
@@ -297,7 +293,6 @@ void DrawGame0(void)
 
 	// プレイヤーの描画処理
 	DrawPlayer();
-	DrawPlayer2();
 
 	// 弾の描画処理
 	DrawBullet();
@@ -358,8 +353,8 @@ void DrawGame(void)
 #endif
 	DebugLine_BeginFrame();
 
-	XMFLOAT3 playerPos = GetPlayer()->pos;
-	XMFLOAT3 player2Pos = GetPlayer2()->pos;
+	XMFLOAT3 playerPos = GetPlayer(0)->pos;
+	XMFLOAT3 player2Pos = GetPlayer(1)->pos;
 	EnsureCameraFramesTargets(playerPos, player2Pos, 0.35f); // 20%手前からカメラ上昇
 
 	// プレイヤー視点
@@ -403,8 +398,8 @@ void DrawGame(void)
 	}
 #ifdef _DEBUG
 	// プレイヤー、プレイヤー２、エネミーのデバッグ用当たり判定球を描画
-	DrawDebugSphereOutline(GetPlayer()->pos, GetPlayer()->size, XMFLOAT4(1, 0, 0, 1));
-	DrawDebugSphereOutline(GetPlayer2()->pos, GetPlayer2()->size, XMFLOAT4(1, 0, 0, 1));
+	DrawDebugSphereOutline(GetPlayer(0)->pos, GetPlayer(0)->size, XMFLOAT4(1, 0, 0, 1));
+	DrawDebugSphereOutline(GetPlayer(1)->pos, GetPlayer(1)->size, XMFLOAT4(1, 0, 0, 1));
 	ENEMY* enemy = GetEnemy();
 	for (int i = 0; i < MAX_ENEMY; ++i) {
 		if (enemy[i].use)
@@ -432,8 +427,8 @@ void DrawGame(void)
 void CheckHit(void)
 {
 	ENEMY *enemy = GetEnemy();		// エネミーのポインターを初期化
-	PLAYER* player = GetPlayer();	// プレイヤーのポインターを初期化
-	PLAYER2* player2 = GetPlayer2();	// プレイヤーのポインターを初期化
+	PLAYER* player0 = GetPlayer(0); // プレイヤー1 (index=0)
+	PLAYER* player1 = GetPlayer(1); // プレイヤー2 (index=1)
 	BULLET *bullet = GetBullet();	// 弾のポインターを初期化
 
 	// 敵とプレイヤーキャラ
@@ -443,64 +438,63 @@ void CheckHit(void)
 		if (enemy[i].use == FALSE)
 			continue;
 
-		//BCの当たり判定
-		if (CollisionBC(player->pos, enemy[i].pos, player->size, enemy[i].size))
+		// プレイヤー1 と敵の衝突
+		if (CollisionBC(player0->pos, enemy[i].pos, player0->size, enemy[i].size))
 		{
-			// 敵キャラクターは倒される
 			enemy[i].use = FALSE;
 			ReleaseShadow(enemy[i].shadowIdx);
-			// 巨大化
-			player->scl.x *= 1.2f;
-			player->scl.y *= 1.2f;
-			player->scl.z *= 1.2f;
-			//最大値を制限する
-			player->scl.x = min(player->scl.x, 4.0f);
-			player->scl.y = min(player->scl.y, 4.0f);
-			player->scl.z = min(player->scl.z, 4.0f);
-			// スコアを足す
+			player0->scl.x = min(player0->scl.x * 1.2f, 4.0f);
+			player0->scl.y = min(player0->scl.y * 1.2f, 4.0f);
+			player0->scl.z = min(player0->scl.z * 1.2f, 4.0f);
 			AddScore(0, 100);
+		}
+
+		// プレイヤー2 と敵の衝突（必要なら有効フラグチェック後に同様の処理を追加）
+		if (player1 && player1->use &&
+			CollisionBC(player1->pos, enemy[i].pos, player1->size, enemy[i].size))
+		{
+			enemy[i].use = FALSE;
+			ReleaseShadow(enemy[i].shadowIdx);
+			player1->scl.x = min(player1->scl.x * 1.2f, 4.0f);
+			player1->scl.y = min(player1->scl.y * 1.2f, 4.0f);
+			player1->scl.z = min(player1->scl.z * 1.2f, 4.0f);
+			AddScore(1, 100);
 		}
 	}
 
 
 	for (int i = 0; i < MAX_BULLET; i++)
 	{
-		if (bullet[i].use == FALSE) continue;
+		if (!bullet[i].use) continue;
 
-		// 2-1. プレイヤー２の弾 (owner == 2) がプレイヤー１に当たったら
+		// プレイヤー2 の弾 (owner==2) がプレイヤー1 に当たったら
 		if (bullet[i].owner == 2 &&
-			CollisionBC(bullet[i].pos, player->pos, bullet[i].fWidth, player->size))
+			CollisionBC(bullet[i].pos, player0->pos, bullet[i].fWidth, player0->size))
 		{
-			// HPを1だけ減らす
-			player->hp -= 1.0f;
-			if (player->hp <= 0.0f) {
-				player->use = FALSE;                      // 死亡フラグ
-				ReleaseShadow(player->shadowIdx);         // 影を解放
+			player0->hp -= 1.0f;
+			if (player0->hp <= 0.0f) {
+				player0->use = FALSE;
+				ReleaseShadow(player0->shadowIdx);
 				SetMode(MODE_RESULT);
 			}
-
-			bullet[i].use = FALSE;                        // 弾を消す
+			bullet[i].use = FALSE;
 			ReleaseShadow(bullet[i].shadowIdx);
-
-			AddScore(1 ,10);
+			AddScore(1, 10);
 		}
 
-		// 2-2. プレイヤー１の弾 (owner == 1) がプレイヤー２に当たったら
-		if (bullet[i].owner == 1 &&
-			CollisionBC(bullet[i].pos, player2->pos, bullet[i].fWidth, player2->size))
+		// プレイヤー1 の弾 (owner==1) がプレイヤー2 に当たったら
+		if (player1 && bullet[i].owner == 1 &&
+			CollisionBC(bullet[i].pos, player1->pos, bullet[i].fWidth, player1->size))
 		{
-			// HPを1だけ減らす
-			player2->hp -= 1.0f;
-			if (player2->hp <= 0.0f) {
-				player2->use = FALSE;                     // 死亡フラグ
-				ReleaseShadow(player2->shadowIdx);        // 影を解放
+			player1->hp -= 1.0f;
+			if (player1->hp <= 0.0f) {
+				player1->use = FALSE;
+				ReleaseShadow(player1->shadowIdx);
 				SetMode(MODE_RESULT);
 			}
-
-			bullet[i].use = FALSE;                        // 弾を消す
+			bullet[i].use = FALSE;
 			ReleaseShadow(bullet[i].shadowIdx);
-
-			AddScore(0,10);
+			AddScore(0, 10);
 		}
 	}
 
@@ -518,23 +512,23 @@ void CheckHit(void)
 
 		//　プレイヤー1
 		//BCの当たり判定
-		if (CollisionBB(player->pos, wg_pos, XMFLOAT3(50.0f, 50.0f, 50.0f), wg_hitscl) && player->gateUse == FALSE)
+		if (CollisionBB(player0->pos, wg_pos, XMFLOAT3(50.0f, 50.0f, 50.0f), wg_hitscl) && player0->gateUse == FALSE)
 		{
 			int n = j + 1;
 			if (n > MAX_WG)n = 0;
-			player->pos = warpgate[n].GetPosition();
-			player->gateUse = TRUE;
+			player0->pos = warpgate[n].GetPosition();
+			player0->gateUse = TRUE;
 			PrintDebugProc("warpgateHIT!!!:No%d\n", j);
 		}
 
 		//　プレイヤー2
 		//BCの当たり判定
-		if (CollisionBB(player2->pos, wg_pos, XMFLOAT3(50.0f, 50.0f, 50.0f), wg_hitscl) && player2->gateUse == FALSE)
+		if (CollisionBB(player1->pos, wg_pos, XMFLOAT3(50.0f, 50.0f, 50.0f), wg_hitscl) && player1->gateUse == FALSE)
 		{
 			int n = j + 1;
 			if (n > MAX_WG)n = 0;
-			player2->pos = warpgate[n].GetPosition();
-			player2->gateUse = TRUE;
+			player1->pos = warpgate[n].GetPosition();
+			player1->gateUse = TRUE;
 			PrintDebugProc("warpgateHIT!!!:No%d\n", j);
 		}
 	}
@@ -546,13 +540,13 @@ void CheckHit(void)
 
 		//　プレイヤー1
 		//BCの当たり判定
-		if (CollisionBC(player->pos, gi_pos, player->size, GIANT_SIZE))
+		if (CollisionBC(player0->pos, gi_pos, player0->size, GIANT_SIZE))
 		{
 			giant.PickITgiant();
 		}
 
 		//　プレイヤー2
-		if (CollisionBC(player2->pos, gi_pos, player2->size, GIANT_SIZE))
+		if (CollisionBC(player1->pos, gi_pos, player1->size, GIANT_SIZE))
 		{
 			giant.PickITgiant();
 		}
@@ -566,13 +560,13 @@ void CheckHit(void)
 		
 		//　プレイヤー1
 		//BCの当たり判定
-		if (CollisionBC(player->pos, invi_pos, player->size, INVISIBLE_SIZE))
+		if (CollisionBC(player0->pos, invi_pos, player0->size, INVISIBLE_SIZE))
 		{
 			invisible.PickITinvisible();
 		}
 
 		//　プレイヤー2
-		if (CollisionBC(player2->pos, invi_pos, player2->size, INVISIBLE_SIZE))
+		if (CollisionBC(player1->pos, invi_pos, player1->size, INVISIBLE_SIZE))
 		{
 			invisible.PickITinvisible();
 		}
@@ -590,13 +584,13 @@ void CheckHit(void)
 		{
 			//　プレイヤー1
 			//BCの当たり判定
-			if (CollisionBC(player->pos, ball_pos, player->size, BALL_SIZE))
+			if (CollisionBC(player1->pos, ball_pos, player1->size, BALL_SIZE))
 			{
 				ball.PickITball();
 			}
 
 			//　プレイヤー2
-			if (CollisionBC(player2->pos, ball_pos, player2->size, BALL_SIZE))
+			if (CollisionBC(player1->pos, ball_pos, player1->size, BALL_SIZE))
 			{
 				ball.PickITball();
 			}

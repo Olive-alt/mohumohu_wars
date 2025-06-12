@@ -11,7 +11,7 @@
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
-#define MAX_PLAYER		(4)					// プレイヤーの数
+#define MAX_PLAYER		(2)					// プレイヤーの数
 
 #define	PLAYER_SIZE		(15.0f)				// 当たり判定の大きさ
 
@@ -70,7 +70,12 @@ void UninitPlayer(void);
 void UpdatePlayer(void);
 void DrawPlayer(void);
 
-PLAYER *GetPlayer(void);
+// プレイヤー取得（互換版＋インデックス版）
+PLAYER* GetPlayer(void);         // 互換：index=0
+PLAYER* GetPlayer(int index);    // index = 0～PLAYER_MAX-1
 
 void DrawPlayerHpBar();
+
+void HandlePlayerInput(void);	//弾発射処理
+void MovePlayers(void);			//移動処理
 

@@ -3,7 +3,6 @@
 #include "input.h"
 #include "player_select.h"
 #include "player.h"
-#include "player2.h"
 #include "fade.h"
 #include "sound.h"
 #include "sprite.h"
