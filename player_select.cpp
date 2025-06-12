@@ -23,7 +23,7 @@ static ID3D11ShaderResourceView* g_Texture[2] = { NULL };
 static ID3D11ShaderResourceView* g_PetTexture = NULL;
 
 static const char* g_TexturName[2] = {
-    "data/TEXTURE/bg000.jpg",
+    "data/TEXTURE/bg001.jpg",
     "data/TEXTURE/copy.png"
 };
 
@@ -138,10 +138,10 @@ void UpdatePlayerSelect(void)
     // 決定キー
     if (GetKeyboardTrigger(DIK_RETURN))
     {
-        SetFade(FADE_OUT, MODE_GAME);
+        SetFade(FADE_OUT, MODE_STAGE_SELECT);
     }
     // キャンセルキー
-    else if (GetKeyboardTrigger(DIK_ESCAPE))
+    else if (GetKeyboardTrigger(DIK_SPACE))
     {
         SetFade(FADE_OUT, MODE_TITLE);
     }

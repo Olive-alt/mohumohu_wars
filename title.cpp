@@ -171,7 +171,7 @@ void UpdateTitle(void)
 
 	if (selectedMenuItem == 0 && GetKeyboardTrigger(DIK_RETURN))
 	{// ゲーム開始アイコンでEnter押したら、ゲームスタート
-		SetFade(FADE_OUT, MODE_GAME);
+		SetFade(FADE_OUT, MODE_PLAYER_SELECT);
 		//SetFade(FADE_OUT, MODE_RESULT);
 	}
 	if (selectedMenuItem == 1 && GetKeyboardTrigger(DIK_RETURN))

@@ -1,4 +1,3 @@
-// stage_select.cpp
 #include "main.h"
 #include "renderer.h"
 #include "input.h"
@@ -6,23 +5,28 @@
 #include "fade.h"
 #include "sound.h"
 #include "sprite.h"
-//stage制作したら変更
+#include "player.h" 
+#include "debugproc.h" 
+#include "sound.h"
+#include "sprite.h"
+
 #define MAX_STAGES 2
 #define TEXTURE_WIDTH_STAGE_ICON (128)
 #define TEXTURE_HEIGHT_STAGE_ICON (128)
 #define TEXTURE_WIDTH_STAGE_TITLE (400)
 #define TEXTURE_HEIGHT_STAGE_TITLE (100)
+#define TEXTURE_WIDTH_LOGO (480)
+#define TEXTURE_HEIGHT_LOGO (80)
 
 static int g_SelectedStage = 1;
 
 static ID3D11Buffer* g_VertexBuffer = NULL;
-static ID3D11ShaderResourceView* g_BackgroundTexture = NULL;
-static ID3D11ShaderResourceView* g_StageTitleTexture = NULL;
-static ID3D11ShaderResourceView* g_StageIconsTexture = NULL;
+static ID3D11ShaderResourceView* g_Texture[2] = { NULL };
 
-static const char* g_BackgroundTextureName = "data/TEXTURE/stage_select_bg.jpg";
-static const char* g_StageTitleTextureName = "data/TEXTURE/stage_title.png";
-static const char* g_StageIconsTextureName = "data/TEXTURE/stage_icons.png";
+static const char* g_TexturName[2] = {
+    "data/TEXTURE/bg002.jpg",
+    "data/TEXTURE/copy.png"
+};
 
 static float alpha;
 static BOOL flag_alpha;
@@ -32,29 +36,18 @@ HRESULT InitStageSelect(void)
 {
     ID3D11Device* pDevice = GetDevice();
 
-    // 背景テクスチャ読み込み
-    D3DX11CreateShaderResourceViewFromFile(pDevice,
-        g_BackgroundTextureName,
-        NULL,
-        NULL,
-        &g_BackgroundTexture,
-        NULL);
+    // テクスチャ生成（背景とロゴ）
+    for (int i = 0; i < 2; i++)
+    {
+        g_Texture[i] = NULL;
+        D3DX11CreateShaderResourceViewFromFile(GetDevice(),
+            g_TexturName[i],
+            NULL,
+            NULL,
+            &g_Texture[i],
+            NULL);
+    }
 
-    // ステージタイトルテクスチャ読み込み
-    D3DX11CreateShaderResourceViewFromFile(pDevice,
-        g_StageTitleTextureName,
-        NULL,
-        NULL,
-        &g_StageTitleTexture,
-        NULL);
-
-    // ステージアイコンテクスチャ読み込み
-    D3DX11CreateShaderResourceViewFromFile(pDevice,
-        g_StageIconsTextureName,
-        NULL,
-        NULL,
-        &g_StageIconsTexture,
-        NULL);
 
     // 頂点バッファ生成
     D3D11_BUFFER_DESC bd;
@@ -63,7 +56,7 @@ HRESULT InitStageSelect(void)
     bd.ByteWidth = sizeof(VERTEX_3D) * 4;
     bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
     bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-    pDevice->CreateBuffer(&bd, NULL, &g_VertexBuffer);
+    GetDevice()->CreateBuffer(&bd, NULL, &g_VertexBuffer);
 
     g_SelectedStage = 1;
     alpha = 1.0f;
@@ -83,23 +76,15 @@ void UninitStageSelect(void)
         g_VertexBuffer = NULL;
     }
 
-    if (g_BackgroundTexture)
+    for (int i = 0; i < 2; i++)
     {
-        g_BackgroundTexture->Release();
-        g_BackgroundTexture = NULL;
+        if (g_Texture[i])
+        {
+            g_Texture[i]->Release();
+            g_Texture[i] = NULL;
+        }
     }
 
-    if (g_StageTitleTexture)
-    {
-        g_StageTitleTexture->Release();
-        g_StageTitleTexture = NULL;
-    }
-
-    if (g_StageIconsTexture)
-    {
-        g_StageIconsTexture->Release();
-        g_StageIconsTexture = NULL;
-    }
 
     g_Load = FALSE;
 }
@@ -111,23 +96,31 @@ void UpdateStageSelect(void)
     {
         g_SelectedStage--;
         if (g_SelectedStage < 1) g_SelectedStage = MAX_STAGES;
-        // ここで選択音を再生
+        PrintDebugProc("Selected Stage: %d\n", g_SelectedStage);
     }
     else if (GetKeyboardTrigger(DIK_RIGHT))
     {
         g_SelectedStage++;
         if (g_SelectedStage > MAX_STAGES) g_SelectedStage = 1;
-        // ここで選択音を再生
+        PrintDebugProc("Selected Stage: %d\n", g_SelectedStage);
     }
 
-    // 決定キー
+    // 決定キー（Enter）
     if (GetKeyboardTrigger(DIK_RETURN))
     {
-        // 選択されたステージを設定してゲーム開始
+        if (g_SelectedStage == 1)
+        {
+            PrintDebugProc("Loading Model 1\n");
+        }
+        else if (g_SelectedStage == 2)
+        {
+            PrintDebugProc("Loading Model 2\n");
+        }
+
         SetFade(FADE_OUT, MODE_GAME);
     }
-    // キャンセルキー
-    else if (GetKeyboardTrigger(DIK_ESCAPE))
+    // キャンセルキー（ESC）
+    else if (GetKeyboardTrigger(DIK_SPACE))
     {
         SetFade(FADE_OUT, MODE_PLAYER_SELECT);
     }
@@ -178,40 +171,19 @@ void DrawStageSelect(void)
 
     // 背景描画
     {
-        GetDeviceContext()->PSSetShaderResources(0, 1, &g_BackgroundTexture);
+        GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[0]);
         SetSprite(g_VertexBuffer, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, SCREEN_WIDTH, SCREEN_HEIGHT, 0.0f, 0.0f, 1.0f, 1.0f);
         GetDeviceContext()->Draw(4, 0);
     }
 
-    // ステージタイトル描画
+    // ロゴ描画
     {
-        GetDeviceContext()->PSSetShaderResources(0, 1, &g_StageTitleTexture);
-        SetSpriteColor(g_VertexBuffer, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 4,
-            TEXTURE_WIDTH_STAGE_TITLE, TEXTURE_HEIGHT_STAGE_TITLE,
-            0.0f, 0.0f, 1.0f, 1.0f,
-            XMFLOAT4(1.0f, 1.0f, 1.0f, alpha));
+        GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[1]);
+        SetSpriteColor(g_VertexBuffer, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 3, TEXTURE_WIDTH_LOGO, TEXTURE_HEIGHT_LOGO,
+            0.0f, 0.0f, 1.0f, 1.0f, XMFLOAT4(1.0f, 1.0f, 1.0f, alpha));
         GetDeviceContext()->Draw(4, 0);
     }
 
-    // ステージアイコン描画
-    if (g_StageIconsTexture)
-    {
-        float iconSpacing = SCREEN_WIDTH / (MAX_STAGES + 1);
-        float iconY = SCREEN_HEIGHT / 2;
-
-        for (int i = 1; i <= MAX_STAGES; i++)
-        {
-            float iconX = iconSpacing * i;
-            float iconAlpha = (i == g_SelectedStage) ? alpha : 0.5f;
-
-            GetDeviceContext()->PSSetShaderResources(0, 1, &g_StageIconsTexture);
-            SetSpriteColor(g_VertexBuffer, iconX, iconY,
-                TEXTURE_WIDTH_STAGE_ICON, TEXTURE_HEIGHT_STAGE_ICON,
-                (i - 1) * (1.0f / MAX_STAGES), 0.0f, 1.0f / MAX_STAGES, 1.0f,
-                XMFLOAT4(1.0f, 1.0f, 1.0f, iconAlpha));
-            GetDeviceContext()->Draw(4, 0);
-        }
-    }
 
     // 深度テストとライティングを有効化
     SetLightEnable(TRUE);
