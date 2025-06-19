@@ -21,7 +21,8 @@
 #define TEXTURE_MAX					(3)				// ÉeÉNÉXÉ`ÉÉÇÃêî
 
 #define TEXTURE_WIDTH_LOGO			(480)			// ÉçÉSÉTÉCÉY
-#define TEXTURE_HEIGHT_LOGO			(80)			// 
+#define TEXTURE_HEIGHT_LOGO			(80)
+// 
 
 //*****************************************************************************
 // ÉvÉçÉgÉ^ÉCÉvêÈåæ
@@ -36,6 +37,7 @@ static ID3D11ShaderResourceView	*g_Texture[TEXTURE_MAX] = { NULL };	// ÉeÉNÉXÉ`É
 
 static char *g_TexturName[TEXTURE_MAX] = {
 	"data/TEXTURE/Result/sample_ui_score_win_1280x720.jpg",
+	//"data/TEXTURE/ui_score_scXX.png",
 };
 
 

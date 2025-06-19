@@ -6,28 +6,31 @@
 #include "fade.h"
 #include "sound.h"
 #include "sprite.h"
-//#include "pet.h"   
 
 #define MAX_PLAYERS 4
-#define MAX_PET 4
 #define TEXTURE_WIDTH_LOGO (480)
 #define TEXTURE_HEIGHT_LOGO (80)
-#define TEXTURE_WIDTH_PET_LOGO (320)
-#define TEXTURE_HEIGHT_PET_LOGO (64)
+#define TEXTURE_WIDTH_PLAYER_ICON (128)
+#define TEXTURE_HEIGHT_PLAYER_ICON (128)
+#define SELECTION_BORDER_SIZE (15)
 
-static int g_SelectedPlayers = 1;
-static int g_SelectedPet = 1;
+static int g_SelectedPlayer = 0; // 0-3 for 4 players
 
 static ID3D11Buffer* g_VertexBuffer = NULL;
 static ID3D11ShaderResourceView* g_Texture[2] = { NULL };
-static ID3D11ShaderResourceView* g_PetTexture = NULL;
+static ID3D11ShaderResourceView* g_PlayerIcons[MAX_PLAYERS] = { NULL };
 
 static const char* g_TexturName[2] = {
     "data/TEXTURE/bg001.jpg",
     "data/TEXTURE/copy.png"
 };
 
-static const char* g_PetTextureName = "data/TEXTURE/pet_logo.png";
+static const char* g_PlayerIconNames[MAX_PLAYERS] = {
+    "data/TEXTURE/Select_player/player1.png",
+    "data/TEXTURE/Select_player/player2.png",
+    "data/TEXTURE/Select_player/player3.png",
+    "data/TEXTURE/Select_player/player4.png"
+};
 
 static float alpha;
 static BOOL flag_alpha;
@@ -49,13 +52,17 @@ HRESULT InitPlayerSelect(void)
             NULL);
     }
 
-    // ペットロゴのテクスチャ読み込み
-    D3DX11CreateShaderResourceViewFromFile(GetDevice(),
-        g_PetTextureName,
-        NULL,
-        NULL,
-        &g_PetTexture,
-        NULL);
+    // プレイヤーアイコン読み込み
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        g_PlayerIcons[i] = NULL;
+        D3DX11CreateShaderResourceViewFromFile(GetDevice(),
+            g_PlayerIconNames[i],
+            NULL,
+            NULL,
+            &g_PlayerIcons[i],
+            NULL);
+    }
 
     // 頂点バッファ生成
     D3D11_BUFFER_DESC bd;
@@ -66,8 +73,7 @@ HRESULT InitPlayerSelect(void)
     bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     GetDevice()->CreateBuffer(&bd, NULL, &g_VertexBuffer);
 
-    g_SelectedPlayers = 1;
-    g_SelectedPet = 1;
+    g_SelectedPlayer = 0;
     alpha = 1.0f;
     flag_alpha = TRUE;
     g_Load = TRUE;
@@ -94,10 +100,13 @@ void UninitPlayerSelect(void)
         }
     }
 
-    if (g_PetTexture)
+    for (int i = 0; i < MAX_PLAYERS; i++)
     {
-        g_PetTexture->Release();
-        g_PetTexture = NULL;
+        if (g_PlayerIcons[i])
+        {
+            g_PlayerIcons[i]->Release();
+            g_PlayerIcons[i] = NULL;
+        }
     }
 
     g_Load = FALSE;
@@ -105,34 +114,16 @@ void UninitPlayerSelect(void)
 
 void UpdatePlayerSelect(void)
 {
-    // プレイヤー数選択（1～4）
-    if (GetKeyboardTrigger(DIK_1))
-    {
-        g_SelectedPlayers = 1;
-    }
-    else if (GetKeyboardTrigger(DIK_2))
-    {
-        g_SelectedPlayers = 2;
-    }
-    else if (GetKeyboardTrigger(DIK_3))
-    {
-        g_SelectedPlayers = 3;
-    }
-    else if (GetKeyboardTrigger(DIK_4))
-    {
-        g_SelectedPlayers = 4;
-    }
-
-    // ペット選択（← → キー）
+    // プレイヤー選択（← → キー）
     if (GetKeyboardTrigger(DIK_LEFT))
     {
-        g_SelectedPet--;
-        if (g_SelectedPet < 1) g_SelectedPet = MAX_PET;
+        g_SelectedPlayer--;
+        if (g_SelectedPlayer < 0) g_SelectedPlayer = MAX_PLAYERS - 1;
     }
     else if (GetKeyboardTrigger(DIK_RIGHT))
     {
-        g_SelectedPet++;
-        if (g_SelectedPet > MAX_PET) g_SelectedPet = 1;
+        g_SelectedPlayer++;
+        if (g_SelectedPlayer >= MAX_PLAYERS) g_SelectedPlayer = 0;
     }
 
     // 決定キー
@@ -200,21 +191,42 @@ void DrawPlayerSelect(void)
     // ロゴ描画
     {
         GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[1]);
-        SetSpriteColor(g_VertexBuffer, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 3, TEXTURE_WIDTH_LOGO, TEXTURE_HEIGHT_LOGO,
+        SetSpriteColor(g_VertexBuffer, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 6, TEXTURE_WIDTH_LOGO, TEXTURE_HEIGHT_LOGO,
             0.0f, 0.0f, 1.0f, 1.0f, XMFLOAT4(1.0f, 1.0f, 1.0f, alpha));
         GetDeviceContext()->Draw(4, 0);
     }
 
-    // ペットロゴ描画
+    // プレイヤーアイコン描画 (横並び)
     {
-        if (g_PetTexture)
+        float startX = SCREEN_WIDTH / 2 - (MAX_PLAYERS * (TEXTURE_WIDTH_PLAYER_ICON + 20)) / 2 + TEXTURE_WIDTH_PLAYER_ICON / 2;
+        float yPos = SCREEN_HEIGHT - 150;
+
+        for (int i = 0; i < MAX_PLAYERS; i++)
         {
-            GetDeviceContext()->PSSetShaderResources(0, 1, &g_PetTexture);
-            SetSpriteColor(g_VertexBuffer, SCREEN_WIDTH / 2, SCREEN_HEIGHT * 2 / 3,
-                TEXTURE_WIDTH_PET_LOGO, TEXTURE_HEIGHT_PET_LOGO,
-                0.0f, 0.0f, 1.0f, 1.0f,
-                XMFLOAT4(1.0f, 1.0f, 1.0f, alpha));
-            GetDeviceContext()->Draw(4, 0);
+            if (g_PlayerIcons[i])
+            {
+                // 選択中のプレイヤーには青い枠を描画
+                if (i == g_SelectedPlayer)
+                {
+                    // 青い枠を描画 
+                    SetSpriteColor(g_VertexBuffer, 
+                        startX + i * (TEXTURE_WIDTH_PLAYER_ICON + 20), yPos,
+                        TEXTURE_WIDTH_PLAYER_ICON + SELECTION_BORDER_SIZE * 2, 
+                        TEXTURE_HEIGHT_PLAYER_ICON + SELECTION_BORDER_SIZE * 2,
+                        0.0f, 0.0f, 1.0f, 1.0f,
+                        XMFLOAT4(0.0f, 0.5f, 1.0f, 1.0f));
+                    GetDeviceContext()->Draw(4, 0);
+                }
+
+                // プレイヤーアイコンを描画
+                GetDeviceContext()->PSSetShaderResources(0, 1, &g_PlayerIcons[i]);
+                SetSpriteColor(g_VertexBuffer,
+                    startX + i * (TEXTURE_WIDTH_PLAYER_ICON + 20), yPos,
+                    TEXTURE_WIDTH_PLAYER_ICON, TEXTURE_HEIGHT_PLAYER_ICON,
+                    0.0f, 0.0f, 1.0f, 1.0f,
+                    XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
+                GetDeviceContext()->Draw(4, 0);
+            }
         }
     }
 
