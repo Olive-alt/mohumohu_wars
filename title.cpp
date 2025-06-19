@@ -35,14 +35,14 @@ static ID3D11Buffer* g_VertexBuffer = NULL;		// 頂点情報
 static ID3D11ShaderResourceView* g_Texture[TEXTURE_MAX] = { NULL };	// テクスチャ情報
 
 static char* g_TexturName[TEXTURE_MAX] = {
-	"data/TEXTURE/ui_title_bg1280x720.png",
-	"data/TEXTURE/ui_title_bt_start_off.png",
-	"data/TEXTURE/ui_title_bt_start_on.png",
-	"data/TEXTURE/ui_title_bt_set_off.png",
-	"data/TEXTURE/ui_title_bt_set_on.png",
-	"data/TEXTURE/ui_title_bt_end_off.png",
-	"data/TEXTURE/ui_title_bt_end_on.png",
-	"data/TEXTURE/002.png",
+	"data/TEXTURE/Title/ui_title_bg1280x720.png",
+	"data/TEXTURE/Title/ui_title_bt_start_off.png",
+	"data/TEXTURE/Title/ui_title_bt_start_on.png",
+	"data/TEXTURE/Title/ui_title_bt_set_off.png",
+	"data/TEXTURE/Title/ui_title_bt_set_on.png",
+	"data/TEXTURE/Title/ui_title_bt_end_off.png",
+	"data/TEXTURE/Title/ui_title_bt_end_on.png",
+	"data/TEXTURE/Title/002.png",
 
 	"data/TEXTURE/effect000.jpg",
 };

@@ -90,9 +90,6 @@
     <ClInclude Include="SG_warpgate.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="player2.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="IT_giant.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -143,9 +140,6 @@
     <ClCompile Include="renderer.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="tree.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="bullet.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -188,9 +182,6 @@
     <ClCompile Include="SG_warpgate.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="player2.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="IT_giant.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -207,6 +198,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="debugline.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="tree.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
