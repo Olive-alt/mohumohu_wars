@@ -15,17 +15,19 @@
 #define TEXTURE_HEIGHT_STAGE_ICON (128)
 #define TEXTURE_WIDTH_STAGE_TITLE (400)
 #define TEXTURE_HEIGHT_STAGE_TITLE (100)
-#define TEXTURE_WIDTH_LOGO (480)
-#define TEXTURE_HEIGHT_LOGO (80)
+#define TEXTURE_WIDTH_LOGO (200)
+#define TEXTURE_HEIGHT_LOGO (200)
 
 static int g_SelectedStage = 1;
 
 static ID3D11Buffer* g_VertexBuffer = NULL;
-static ID3D11ShaderResourceView* g_Texture[2] = { NULL };
+static ID3D11ShaderResourceView* g_Texture[3] = { NULL };
 
-static const char* g_TexturName[2] = {
+static const char* g_TexturName[3] = {
     "data/TEXTURE/bg002.jpg",
-    "data/TEXTURE/copy.png"
+    "data/TEXTURE/stage1.png",
+    "data/TEXTURE/stage2.png"
+
 };
 
 static float alpha;
@@ -37,7 +39,7 @@ HRESULT InitStageSelect(void)
     ID3D11Device* pDevice = GetDevice();
 
     // ÉeÉNÉXÉ`ÉÉê∂ê¨ÅiîwåiÇ∆ÉçÉSÅj
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 3; i++)
     {
         g_Texture[i] = NULL;
         D3DX11CreateShaderResourceViewFromFile(GetDevice(),
@@ -76,7 +78,7 @@ void UninitStageSelect(void)
         g_VertexBuffer = NULL;
     }
 
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 3; i++)
     {
         if (g_Texture[i])
         {
@@ -178,9 +180,12 @@ void DrawStageSelect(void)
 
     // ÉçÉSï`âÊ
     {
-        GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[1]);
-        SetSpriteColor(g_VertexBuffer, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 3, TEXTURE_WIDTH_LOGO, TEXTURE_HEIGHT_LOGO,
-            0.0f, 0.0f, 1.0f, 1.0f, XMFLOAT4(1.0f, 1.0f, 1.0f, alpha));
+        GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[g_SelectedStage]);
+        SetSpriteColor(g_VertexBuffer,
+            SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2,
+            TEXTURE_WIDTH_LOGO, TEXTURE_HEIGHT_LOGO,
+            0.0f, 0.0f, 1.0f, 1.0f,
+            XMFLOAT4(1.0f, 1.0f, 1.0f, alpha));
         GetDeviceContext()->Draw(4, 0);
     }
 
