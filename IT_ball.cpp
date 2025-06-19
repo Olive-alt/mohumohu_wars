@@ -59,7 +59,7 @@ HRESULT BALL::InitITball(void)
 	move = XMFLOAT3(VALUE_MOVE, 1.0f, VALUE_MOVE);
 	size = BALL_SIZE;
 	count = 0.0f;
-
+	PlayerIndex = -1;
 
 	MakeVertexITballIcon();
 
@@ -148,14 +148,28 @@ void BALL::UpdateITball(void)
 		}
 		else if (pick)
 		{
-			PLAYER* player = GetPlayer();
+			PLAYER* player = GetPlayer(PlayerIndex);
 			icon_pos.x = player->pos.x - sin(XM_PI) * 1.0f;
 			icon_pos.y = player->pos.y * 2;
 			icon_pos.z = player->pos.z - cos(XM_PI) * 1.0f;
+
+			pos.x = player->pos.x - sin(XM_PI) * 1.0f;
+			pos.y = player->pos.y;
+			pos.z = player->pos.z - cos(XM_PI) * 1.0f;
+
 		}
 
 
 	}
+#ifdef _DEBUG
+	PrintDebugProc(
+		"ballPos:(%f,%f,%f)\n",
+		pos.x,
+		pos.y,
+		pos.z
+	);
+#endif
+
 }
 
 void BALL::DrawITball(void)
@@ -283,32 +297,33 @@ void BALL::SetITball(XMFLOAT3 set_pos, XMFLOAT3 p_rot)
 {
 	pick = FALSE;
 	to_throw = TRUE;
-	pos = set_pos;
-	rot = p_rot;
-	PLAYER* player = GetPlayer();
+	PLAYER* player = GetPlayer(PlayerIndex);
+	pos = player->pos;
+	rot = player->rot;
 	player->haveWeapon = FALSE;
 
 }
 
-void BALL::HitITball(void)
+void BALL::HitITball(int p_Index)
 {
+	if (p_Index == PlayerIndex)return;
+
 	use = FALSE;
 	to_throw = FALSE;
-	PLAYER* player = GetPlayer();
+	PLAYER* player = GetPlayer(p_Index);
 	player->use = FALSE;
-	PrintDebugProc("ballHIT!!!\n");
-
-	//player->
+	PlayerIndex = -1;
 }
 
-void BALL::PickITball(void)
+void BALL::PickITball(int p_Index)
 {
 	pick = TRUE;
-	PLAYER* player = GetPlayer();
+	PLAYER* player = GetPlayer(p_Index);
 
 	if (player->haveWeapon)return;
 
 	player->haveWeapon = TRUE;
+	PlayerIndex = p_Index;
 	pos.x = player->pos.x - sin(XM_PI) * 1.0f;
 	pos.y = player->pos.y;
 	pos.z = player->pos.z - cos(XM_PI) * 1.0f;

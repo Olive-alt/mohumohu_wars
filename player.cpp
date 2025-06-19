@@ -14,6 +14,7 @@
 #include "bullet.h"
 #include "debugproc.h"
 #include "meshfield.h"
+#include "item.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -270,6 +271,17 @@ void UpdatePlayer(void)
 		{
 			g_Player[i].hp = min(g_Player[i].hp + 1.0f, 3.0f);
 		}
+
+		// 弾発射
+		if (GetKeyboardTrigger(DIK_SPACE))
+		{
+			BALL* ball = GetBall();
+			if (ball && ball->IsUsedITball())  // すでに使われてるボールは撃たないようにする
+			{
+				ball->SetITball(g_Player[i].pos, g_Player[i].rot);  // プレイヤーの位置と向きでボールを発射
+			}
+		}
+
 
 		// ▼ ワープゲート用クールタイム
 		if (g_Player[i].gateUse)

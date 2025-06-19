@@ -24,11 +24,14 @@
 //*****************************************************************************
 // グローバル変数
 //*****************************************************************************
+BOOL		load = FALSE;
+DX11_MODEL	model;				// モデル情報
+
 
 //=============================================================================
 // 初期化処理
 //=============================================================================
-HRESULT GIANT::InitITgiant(void)
+GIANT::GIANT()
 {
 	load = TRUE;
 	LoadModel(MODEL_GIANT, &model);
@@ -38,9 +41,26 @@ HRESULT GIANT::InitITgiant(void)
 	rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	scl = XMFLOAT3(1.0f, 1.0f, 1.0f);
 	old_scl = XMFLOAT3(1.0f, 1.0f, 1.0f);
-
+	old_size = 0.0f;
 	giantUse = FALSE;
 	giantTimer = 0;
+	PlayerIndex = -1;
+}
+
+HRESULT GIANT::InitITgiant(void)
+{
+	load = TRUE;
+	LoadModel(MODEL_GIANT, &model);
+
+	//use = FALSE;
+	//pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	//rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	//scl = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	//old_scl = XMFLOAT3(1.0f, 1.0f, 1.0f);
+
+	//giantUse = FALSE;
+	//giantTimer = 0;
+	//PlayerIndex = -1;
 
 	return S_OK;
 }
@@ -55,6 +75,7 @@ void GIANT::UninitITgiant(void)
 		UnloadModel(&model);
 		load = FALSE;
 	}
+	delete this;
 }
 
 void GIANT::UpdateITgiant(void)
@@ -122,18 +143,28 @@ void GIANT::FinishITgiant(void)
 	giantUse = FALSE;
 	use = FALSE;
 	giantTimer = 0;
-	PLAYER* player = GetPlayer();
+	PLAYER* player = GetPlayer(PlayerIndex);
 	player->scl = old_scl;
+	player->size = old_size;
+	PlayerIndex = -1;
 }
 
-void GIANT::PickITgiant(void)
+void GIANT::PickITgiant(int p_Index)
 {
+	PLAYER* player = GetPlayer(p_Index);
+
+	if (!giantUse)
+	{
+		old_scl = player->scl;
+		old_size = player->size;
+	}
+
 	giantUse = TRUE;
 	use = FALSE;
-	PLAYER* player = GetPlayer();
-	old_scl = player->scl;
 
+	PlayerIndex = p_Index;
 	player->scl.x *= GIANT_SCL_RATE;
 	player->scl.y *= GIANT_SCL_RATE;
 	player->scl.z *= GIANT_SCL_RATE;
+	player->size *= GIANT_SCL_RATE;
 }

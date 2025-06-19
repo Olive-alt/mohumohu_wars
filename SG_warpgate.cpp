@@ -71,12 +71,13 @@ void WARPGATE::UpdateSGwarpgate(void)
 {
 	if (use)
 	{
-		//rot.z += 0.1f;
+		rot.z -= 0.01f;
 	}
 }
 
 void WARPGATE::DrawSGwarpgate(void) const
 {
+	g_bAlpaTest == FALSE;
 	// αテスト設定
 	if (g_bAlpaTest == TRUE)
 	{
@@ -114,17 +115,17 @@ void WARPGATE::DrawSGwarpgate(void) const
 
 
 		// 正方行列（直交行列）を転置行列させて逆行列を作ってる版(速い)
-		mtxWorld.r[0].m128_f32[0] = mtxView.r[0].m128_f32[0];
-		mtxWorld.r[0].m128_f32[1] = mtxView.r[1].m128_f32[0];
-		mtxWorld.r[0].m128_f32[2] = mtxView.r[2].m128_f32[0];
+		//mtxWorld.r[0].m128_f32[0] = mtxView.r[0].m128_f32[0];
+		//mtxWorld.r[0].m128_f32[1] = mtxView.r[1].m128_f32[0];
+		//mtxWorld.r[0].m128_f32[2] = mtxView.r[2].m128_f32[0];
 
-		mtxWorld.r[1].m128_f32[0] = mtxView.r[0].m128_f32[1];
-		mtxWorld.r[1].m128_f32[1] = mtxView.r[1].m128_f32[1];
-		mtxWorld.r[1].m128_f32[2] = mtxView.r[2].m128_f32[1];
+		//mtxWorld.r[1].m128_f32[0] = mtxView.r[0].m128_f32[1];
+		//mtxWorld.r[1].m128_f32[1] = mtxView.r[1].m128_f32[1];
+		//mtxWorld.r[1].m128_f32[2] = mtxView.r[2].m128_f32[1];
 
-		mtxWorld.r[2].m128_f32[0] = mtxView.r[0].m128_f32[2];
-		mtxWorld.r[2].m128_f32[1] = mtxView.r[1].m128_f32[2];
-		mtxWorld.r[2].m128_f32[2] = mtxView.r[2].m128_f32[2];
+		//mtxWorld.r[2].m128_f32[0] = mtxView.r[0].m128_f32[2];
+		//mtxWorld.r[2].m128_f32[1] = mtxView.r[1].m128_f32[2];
+		//mtxWorld.r[2].m128_f32[2] = mtxView.r[2].m128_f32[2];
 
 
 		// スケールを反映
@@ -200,14 +201,15 @@ HRESULT MakeVertexSGwarpgate(void)
 
 	VERTEX_3D* vertex = (VERTEX_3D*)msr.pData;
 
-	float fWidth = 60.0f;
-	float fHeight = 90.0f;
+	float fWidth = WG_WIDTH;
+	float fHeight = WG_HEIGHT;
+
 
 	// 頂点座標の設定
-	vertex[0].Position = XMFLOAT3(-fWidth / 2.0f, fHeight, 0.0f);
-	vertex[1].Position = XMFLOAT3(fWidth / 2.0f, fHeight, 0.0f);
-	vertex[2].Position = XMFLOAT3(-fWidth / 2.0f, 0.0f, 0.0f);
-	vertex[3].Position = XMFLOAT3(fWidth / 2.0f, 0.0f, 0.0f);
+	vertex[0].Position = XMFLOAT3(-fWidth / 2.0f, fHeight / 2.0f, 0.0f);
+	vertex[1].Position = XMFLOAT3(fWidth / 2.0f, fHeight / 2.0f, 0.0f);
+	vertex[2].Position = XMFLOAT3(-fWidth / 2.0f, -fHeight / 2.0f, 0.0f);
+	vertex[3].Position = XMFLOAT3(fWidth / 2.0f, -fHeight / 2.0f, 0.0f);
 
 	// 法線の設定
 	vertex[0].Normal = XMFLOAT3(0.0f, 0.0f, -1.0f);

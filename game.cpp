@@ -30,8 +30,7 @@
 #include "SG_wind.h"
 #include "SG_warpgate.h"
 //アイテム用
-#include "IT_giant.h"
-#include "IT_invisible.h"
+#include "item.h"
 
 //デバッグ表示
 #include "debugline.h"
@@ -61,14 +60,6 @@ static BOOL	g_bPause = TRUE;	// ポーズON/OFF
 //ステージギミック用
 WIND wind;
 WARPGATE warpgate[2];
-//アイテム用
-GIANT giant;
-INVISIBLE invisible;
-BALL ball;
-BALL* GetBall()  // アクセス用の関数を作成
-{
-	return &ball;
-}
 
 //=============================================================================
 // 初期化処理
@@ -132,17 +123,8 @@ HRESULT InitGame(void)
 		warpgate[i].SetSGwarpgate(XMFLOAT3(0.0f + (300.0f * i), 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(1.0f, 1.0f, 1.0f));
 	}
 
-	//巨大化アイテムの初期化
-	giant.InitITgiant();
-	giant.SetITgiant(XMFLOAT3(100.0f, 0.0f, 100.0f));
-
-	//透明化アイテムの初期化
-	invisible.InitITinvisible();
-	invisible.SetITinvisible(XMFLOAT3(200.0f, 0.0f, 100.0f));
-
-	//ボールアイテムの初期化
-	ball.InitITball();
-	ball.SetITballObject(XMFLOAT3(-100.0f, 0.0f, -100.0f));
+	//アイテムの初期化
+	InitItem();
 
 	// BGM再生
 	//PlaySound(SOUND_LABEL_BGM_sample001);
@@ -191,14 +173,8 @@ void UninitGame(void)
 		warpgate[i].UninitSGwarpgate();
 	}
 
-	// 巨大化アイテムの終了処理
-	giant.UninitITgiant();
-
-	// 透明化アイテムの終了処理
-	invisible.UninitITinvisible();
-
-	//ボールアイテムの終了処理
-	ball.UninitITball();
+	//アイテムの終了処理
+	UninitItem();
 
 }
 
@@ -243,6 +219,9 @@ void UpdateGame(void)
 	// 弾の更新処理
 	UpdateBullet();
 
+	//アイテムの更新処理
+	UpdateItem();
+
 	//// パーティクルの更新処理
 	//UpdateParticle();
 
@@ -251,6 +230,9 @@ void UpdateGame(void)
 
 	// 当たり判定処理
 	CheckHit();
+
+	//アイテムの当たり判定処理
+	CheckHitItem();
 
 	// スコアの更新処理
 	UpdateScore();
@@ -264,14 +246,6 @@ void UpdateGame(void)
 		warpgate[i].UpdateSGwarpgate();
 	}
 
-	// 巨大化アイテムの更新処理
-	giant.UpdateITgiant();
-
-	// 透明化アイテムの更新処理
-	invisible.UpdateITinvisible();
-
-	// ボールアイテムの更新処理
-	ball.UpdateITball();
 
 }
 
@@ -296,14 +270,8 @@ void DrawGame0(void)
 	// 弾の描画処理
 	DrawBullet();
 
-	// ボールアイテムの描画処理
-	ball.DrawITball();
-
-	// 巨大化アイテムの描画処理
-	giant.DrawITgiant();
-
-	// 透明化アイテムの描画処理
-	invisible.DrawITinvisible();
+	//アイテムの描画処理
+	DrawItem();
 
 	// 壁の描画処理
 	DrawMeshWall();
@@ -419,16 +387,16 @@ void DrawGame(void)
 	}
 
 	// アイテムのデバッグ用当たり判定球を描画
-	if (giant.IsUsedITgiant())
-		DrawDebugSphereOutline(giant.GetPositionITgiant(), GIANT_SIZE, XMFLOAT4(1, 1, 0, 1)); // Yellow
+	//if (giant.IsUsedITgiant())
+	//	DrawDebugSphereOutline(giant.GetPositionITgiant(), GIANT_SIZE, XMFLOAT4(1, 1, 0, 1)); // Yellow
 
 
-	DrawDebugSphereOutline(invisible.GetPositionITinvisible(), INVISIBLE_SIZE, XMFLOAT4(0, 1, 0, 1)); // Green
+	//DrawDebugSphereOutline(invisible.GetPositionITinvisible(), INVISIBLE_SIZE, XMFLOAT4(0, 1, 0, 1)); // Green
 
-	if (ball.IsUsedITball())
-		DrawDebugSphereOutline(ball.GetPositionITball(), BALL_SIZE, XMFLOAT4(1, 1, 1, 1)); // White
+	//if (ball.IsUsedITball())
+	//	DrawDebugSphereOutline(ball.GetPositionITball(), BALL_SIZE, XMFLOAT4(1, 1, 1, 1)); // White
 
-	DebugLine_Render(GetCameraViewProjMatrix());
+	//DebugLine_Render(GetCameraViewProjMatrix());
 #endif
 }
 
@@ -438,10 +406,9 @@ void DrawGame(void)
 //=============================================================================
 void CheckHit(void)
 {
-	ENEMY *enemy = GetEnemy();		// エネミーのポインターを初期化
-	PLAYER* player0 = GetPlayer(0); // プレイヤー1 (index=0)
-	PLAYER* player1 = GetPlayer(1); // プレイヤー2 (index=1)
-	BULLET *bullet = GetBullet();	// 弾のポインターを初期化
+	ENEMY* enemy = GetEnemy();		// エネミーのポインターを初期化
+	BULLET* bullet = GetBullet();	// 弾のポインターを初期化
+	PLAYER* player = GetPlayer(); // プレイヤー1 (index=0)
 
 	// 敵とプレイヤーキャラ
 	for (int i = 0; i < MAX_ENEMY; i++)
@@ -450,27 +417,15 @@ void CheckHit(void)
 		if (enemy[i].use == FALSE)
 			continue;
 
-		// プレイヤー1 と敵の衝突
-		if (CollisionBC(player0->pos, enemy[i].pos, player0->size, enemy[i].size))
+		for (int j = 0; j < MAX_PLAYER; j++)
 		{
-			enemy[i].use = FALSE;
-			ReleaseShadow(enemy[i].shadowIdx);
-			player0->scl.x = min(player0->scl.x * 1.2f, 4.0f);
-			player0->scl.y = min(player0->scl.y * 1.2f, 4.0f);
-			player0->scl.z = min(player0->scl.z * 1.2f, 4.0f);
-			AddScore(0, 100);
-		}
-
-		// プレイヤー2 と敵の衝突（必要なら有効フラグチェック後に同様の処理を追加）
-		if (player1 && player1->use &&
-			CollisionBC(player1->pos, enemy[i].pos, player1->size, enemy[i].size))
-		{
-			enemy[i].use = FALSE;
-			ReleaseShadow(enemy[i].shadowIdx);
-			player1->scl.x = min(player1->scl.x * 1.2f, 4.0f);
-			player1->scl.y = min(player1->scl.y * 1.2f, 4.0f);
-			player1->scl.z = min(player1->scl.z * 1.2f, 4.0f);
-			AddScore(1, 100);
+			// プレイヤー1 と敵の衝突
+			if (CollisionBC(player[j].pos, enemy[i].pos, player[j].size, enemy[i].size))
+			{
+				enemy[i].use = FALSE;
+				ReleaseShadow(enemy[i].shadowIdx);
+				AddScore(0, 100);
+			}
 		}
 	}
 
@@ -479,148 +434,46 @@ void CheckHit(void)
 	{
 		if (!bullet[i].use) continue;
 
-		// プレイヤー2 の弾 (owner==2) がプレイヤー1 に当たったら
-		if (bullet[i].owner == 2 &&
-			CollisionBC(bullet[i].pos, player0->pos, bullet[i].fWidth, player0->size))
+		for (int j = 0; j < MAX_PLAYER; j++)
 		{
-			player0->hp -= 1.0f;
-			if (player0->hp <= 0.0f) {
-				player0->use = FALSE;
-				ReleaseShadow(player0->shadowIdx);
-				SetMode(MODE_RESULT);
+			// プレイヤー1 と敵の衝突
+			if (bullet[i].owner == 2 && CollisionBC(bullet[i].pos, player[j].pos, bullet[i].fWidth, player[j].size))
+			{
+				player[j].hp -= 1.0f;
+				if (player[j].hp <= 0.0f) {
+					player[j].use = FALSE;
+					ReleaseShadow(player[j].shadowIdx);
+					SetMode(MODE_RESULT);
+				}
+				bullet[i].use = FALSE;
+				ReleaseShadow(bullet[i].shadowIdx);
+				AddScore(1, 10);
 			}
-			bullet[i].use = FALSE;
-			ReleaseShadow(bullet[i].shadowIdx);
-			AddScore(1, 10);
-		}
-
-		// プレイヤー1 の弾 (owner==1) がプレイヤー2 に当たったら
-		if (player1 && bullet[i].owner == 1 &&
-			CollisionBC(bullet[i].pos, player1->pos, bullet[i].fWidth, player1->size))
-		{
-			player1->hp -= 1.0f;
-			if (player1->hp <= 0.0f) {
-				player1->use = FALSE;
-				ReleaseShadow(player1->shadowIdx);
-				SetMode(MODE_RESULT);
-			}
-			bullet[i].use = FALSE;
-			ReleaseShadow(bullet[i].shadowIdx);
-			AddScore(0, 10);
 		}
 	}
 
 
 	// ワープ処理
-	for (int j = 0; j < MAX_WG; j++)
+	for (int i = 0; i < MAX_WG; i++)
 	{
-		bool use = warpgate[j].IsUsed();
+		bool use = warpgate[i].IsUsed();
 		//敵の有効フラグをチェックする
 		if (use == FALSE)
 			continue;
 
-		XMFLOAT3 wg_pos = warpgate[j].GetPosition();
-		XMFLOAT3 wg_hitscl = warpgate[j].GetHitScl();
+		XMFLOAT3 wg_pos = warpgate[i].GetPosition();
+		XMFLOAT3 wg_hitscl = warpgate[i].GetHitScl();
 
-		//　プレイヤー1
-		//BCの当たり判定
-		if (CollisionBB(player0->pos, wg_pos, XMFLOAT3(50.0f, 50.0f, 50.0f), wg_hitscl) && player0->gateUse == FALSE)
+		for (int j = 0; j < MAX_PLAYER; j++)
 		{
-			int n = j + 1;
-			if (n > MAX_WG)n = 0;
-			player0->pos = warpgate[n].GetPosition();
-			player0->gateUse = TRUE;
-			PrintDebugProc("warpgateHIT!!!:No%d\n", j);
-		}
-
-		//　プレイヤー2
-		//BCの当たり判定
-		if (CollisionBB(player1->pos, wg_pos, XMFLOAT3(50.0f, 50.0f, 50.0f), wg_hitscl) && player1->gateUse == FALSE)
-		{
-			int n = j + 1;
-			if (n > MAX_WG)n = 0;
-			player1->pos = warpgate[n].GetPosition();
-			player1->gateUse = TRUE;
-			PrintDebugProc("warpgateHIT!!!:No%d\n", j);
-		}
-	}
-
-	// 巨大化アイテム
-	if (bool use = giant.IsUsedITgiant())
-	{
-		XMFLOAT3 gi_pos = giant.GetPositionITgiant();
-
-		//　プレイヤー1
-		
-		////BCの当たり判定
-		//if (CollisionBC(player0->pos, gi_pos, player0->size, GIANT_SIZE))
-		//{
-		//	giant.PickITgiant();
-		//}
-
-		// カプセルと球の当たり判定
-		if (CollisionCapsuleSphere(
-			player0->capsuleA,
-			player0->capsuleB,
-			player0->size,
-			gi_pos,
-			GIANT_SIZE))
-		{
-			giant.PickITgiant();
-		}
-
-
-		//　プレイヤー2
-		if (CollisionBC(player1->pos, gi_pos, player1->size, GIANT_SIZE))
-		{
-			giant.PickITgiant();
-		}
-
-	}
-
-	//透明化
-	if (bool use = invisible.IsUsedITinvisible())
-	{
-		XMFLOAT3 invi_pos = invisible.GetPositionITinvisible();
-		
-		//　プレイヤー1
-		//BCの当たり判定
-		if (CollisionBC(player0->pos, invi_pos, player0->size, INVISIBLE_SIZE))
-		{
-			invisible.PickITinvisible();
-		}
-
-		//　プレイヤー2
-		if (CollisionBC(player1->pos, invi_pos, player1->size, INVISIBLE_SIZE))
-		{
-			invisible.PickITinvisible();
-		}
-
-	}
-
-	//ボール
-	if (bool use = ball.IsUsedITball())
-	{
-		XMFLOAT3 ball_pos = ball.GetPositionITball();
-		BOOL pick = ball.IsPickedITball();
-		BOOL to_throw = ball.IsThrewITball();
-
-		if (!pick && !to_throw)
-		{
-			//　プレイヤー1
-			//BCの当たり判定
-			if (CollisionBC(player1->pos, ball_pos, player1->size, BALL_SIZE))
+			if (CollisionBB(player[j].pos, wg_pos, XMFLOAT3(50.0f, 50.0f, 50.0f), wg_hitscl) && player[j].gateUse == FALSE)
 			{
-				ball.PickITball();
+				int n = i + 1;
+				if (n > MAX_WG)n = 0;
+				player[j].pos = warpgate[n].GetPosition();
+				player[j].gateUse = TRUE;
+				PrintDebugProc("warpgateHIT!!!:No%d\n", j);
 			}
-
-			//　プレイヤー2
-			if (CollisionBC(player1->pos, ball_pos, player1->size, BALL_SIZE))
-			{
-				ball.PickITball();
-			}
-
-
 		}
 	}
 

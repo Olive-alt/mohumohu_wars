@@ -10,7 +10,7 @@
 #include <random>
 #include "model.h"
 
-#define BALL_SIZE	(15.0f)
+#define BALL_SIZE	(10.0f)
 #define BALL_MAX		(1)
 
 //*****************************************************************************
@@ -23,7 +23,7 @@ private:
 	XMFLOAT3		rot;		// ポリゴンの向き(回転)
 	XMFLOAT3		scl;		// ポリゴンの大きさ(スケール)
 	XMFLOAT3		move;		// ポリゴンの位置
-	//XMFLOAT3		Bmove;		// ポリゴンの位置
+	int				PlayerIndex;		// ポリゴンの位置
 
 	BOOL			use;
 	BOOL			to_throw;
@@ -55,8 +55,8 @@ public:
 
 	void SetITballObject(XMFLOAT3 set_pos);
 	void SetITball(XMFLOAT3 set_pos, XMFLOAT3 p_rot);
-	void HitITball(void);
-	void PickITball(void);
+	void HitITball(int p_Index);
+	void PickITball(int p_Index);
 
 	bool IsUsedITball() const { return use; }
 	bool IsPickedITball() const { return pick; }

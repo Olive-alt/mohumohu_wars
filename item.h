@@ -5,13 +5,18 @@
 //
 //=============================================================================
 #pragma once
+#include "IT_ball.h"
 
 
 //*****************************************************************************
 // プロトタイプ宣言
 //*****************************************************************************
-HRESULT InitGame(void);
-void UninitGame(void);
-void UpdateGame(void);
-void DrawGame(void);
+HRESULT InitItem(void);
+void UninitItem(void);
+void UpdateItem(void);
+void DrawItem(void);
 
+void CheckHitItem(void);
+BALL* GetBall();  // アクセス用の関数を作成
+
+//void DrawDebugSphereOutline(const XMFLOAT3& center, float radius, const XMFLOAT4& color, int slices); //debug用の関数

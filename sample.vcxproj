@@ -147,6 +147,7 @@
     <ClInclude Include="fade.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="input.h" />
+    <ClInclude Include="item.h" />
     <ClInclude Include="IT_ball.h" />
     <ClInclude Include="IT_giant.h" />
     <ClInclude Include="IT_invisible.h" />
@@ -180,6 +181,7 @@
     <ClCompile Include="fade.cpp" />
     <ClCompile Include="game.cpp" />
     <ClCompile Include="input.cpp" />
+    <ClCompile Include="item.cpp" />
     <ClCompile Include="IT_ball.cpp" />
     <ClCompile Include="IT_giant.cpp" />
     <ClCompile Include="IT_invisible.cpp" />

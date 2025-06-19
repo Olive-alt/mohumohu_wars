@@ -13,22 +13,22 @@ class GIANT
 {
 private:
 	XMFLOAT4X4	m_mtxWorld;			// ワールドマトリックス
-	BOOL		use;
+	BOOL		use = FALSE;
 	XMFLOAT3	pos;
 	XMFLOAT3	rot;
 	XMFLOAT3	scl;
 	XMFLOAT3	old_scl;
+	float      old_size;
 	MATERIAL	material;		// マテリアル
-	BOOL		load;
-	DX11_MODEL	model;				// モデル情報
 	int			shadowIdx;			// 影のインデックス番号
 
-	BOOL		giantUse;
+	BOOL		giantUse = FALSE;
 	int			giantTimer;
+	int         PlayerIndex;
 
 public:
 	//WARPGATE(XMFLOAT3& init_pos) :  pos(init_pos) {}
-
+	GIANT();
 	HRESULT InitITgiant(void);
 	void UninitITgiant(void);
 	void UpdateITgiant(void);
@@ -36,7 +36,7 @@ public:
 
 	void SetITgiant(XMFLOAT3 set_pos);
 	void FinishITgiant(void);
-	void PickITgiant(void);
+	void PickITgiant(int p_Index);
 
 	bool IsUsedITgiant() const { return use; }
 	XMFLOAT3 GetPositionITgiant() const { return pos; }

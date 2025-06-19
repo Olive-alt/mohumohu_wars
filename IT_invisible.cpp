@@ -38,6 +38,7 @@ HRESULT INVISIBLE::InitITinvisible(void)
 	scl = XMFLOAT3(1.0f, 1.0f, 1.0f);
 	invisibleUse = FALSE;
 	invisibleTimer = 0;
+	PlayerIndex = -1;
 
 	return S_OK;
 }
@@ -64,7 +65,7 @@ void INVISIBLE::UpdateITinvisible(void)
 	if (invisibleUse)
 	{
 		invisibleTimer += 1;
-		PrintDebugProc("invisibleTimer %d\n", invisibleTimer);
+		//PrintDebugProc("invisibleTimer %d\n", invisibleTimer);
 		if (invisibleTimer > INVISIBLE_TIME)
 		{
 			FinishITinvisible();
@@ -119,21 +120,22 @@ void INVISIBLE::FinishITinvisible(void)
 	invisibleUse = FALSE;
 	use = FALSE;
 	invisibleTimer = 0;
-	PLAYER* player = GetPlayer();
+	PLAYER* player = GetPlayer(PlayerIndex);
 
 	for (int j = 0; j < player->model.SubsetNum; j++)
 	{
 		SetModelDiffuse(&player->model, j, old_diffuse[j]);
 	}
+	PlayerIndex = -1;
 }
 
-void INVISIBLE::PickITinvisible(void)
+void INVISIBLE::PickITinvisible(int p_Index)
 {
 	invisibleUse = TRUE;
 	use = FALSE;
-	PLAYER* player = GetPlayer();
+	PLAYER* player = GetPlayer(p_Index);
 	GetModelDiffuse(&player->model, &old_diffuse[0]);
-
+	PlayerIndex = p_Index;
 	for (int j = 0; j < player->model.SubsetNum; j++)
 	{
 		SetModelDiffuse(&player->model, j, XMFLOAT4(1.0f, 1.0f, 1.0f, 0.0f));
