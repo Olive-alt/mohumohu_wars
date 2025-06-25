@@ -8,6 +8,8 @@
 #include "renderer.h"
 #include "score.h"
 #include "sprite.h"
+#include "player.h"
+#include "camera.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -84,9 +86,9 @@ HRESULT InitScore(void)
     g_h = TEXTURE_HEIGHT;
     g_TexNo = 0;
 
-    // 各プレイヤーのスコア初期化
-    for (int i = 0; i < SCORE_PLAYER_MAX; i++)
-        g_Score[i] = 0;
+    //// 各プレイヤーのスコア初期化
+    //for (int i = 0; i < SCORE_PLAYER_MAX; i++)
+    //    g_Score[i] = 0;
 
     g_Load = TRUE;
     return S_OK;
@@ -132,6 +134,12 @@ void UpdateScore(void)
 //=============================================================================
 void DrawScore(void)
 {
+    if (GetMode() == MODE_RESULT)
+    {
+        DrawScoreAbovePlayers();
+        return;
+    }
+
     // 頂点バッファ設定
     UINT stride = sizeof(VERTEX_3D);
     UINT offset = 0;
@@ -207,4 +215,128 @@ int GetScore(int playerIndex)
 {
     if (playerIndex < 0 || playerIndex >= SCORE_PLAYER_MAX) return 0;
     return g_Score[playerIndex];
+}
+
+//スコアをリセットする
+void ResetScore(void)
+{
+    for (int i = 0; i < SCORE_PLAYER_MAX; i++)
+        g_Score[i] = 0;
+}
+
+//プレイヤーの上にスコアを表示する
+void DrawScoreAbovePlayers(void)
+{
+    CAMERA* cam = GetCamera();
+    XMMATRIX mtxView = XMLoadFloat4x4(&cam->mtxView);
+    PLAYER* players = GetPlayer();
+
+    // 数字一桁のサイズ（ワールド座標系）
+    const float DIGIT_WIDTH = 4.0f;
+    const float DIGIT_HEIGHT = 8.0f;
+
+    // スコア表示用テクスチャのマテリアル設定
+    MATERIAL mat = {};
+    mat.Ambient = mat.Diffuse = XMFLOAT4(1, 1, 1, 1);
+    mat.noTexSampling = 0;
+    SetMaterial(mat);
+
+    GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[g_TexNo]);
+
+    for (int p = 0; p < SCORE_PLAYER_MAX; p++)
+    {
+        if (!players[p].use) continue;
+
+        XMFLOAT3 scorePos = players[p].pos;
+        scorePos.y += 28.0f; // HPバーの上に表示
+
+        int score = g_Score[p];
+
+        // スコアを左から右に描画するための数字配列へ変換
+        char digits[16];
+        int numDigits = 0;
+        if (score == 0) {
+            digits[0] = 0;
+            numDigits = 1;
+        }
+        else {
+            int temp = score;
+            char tempDigits[16];
+            int count = 0;
+            while (temp > 0) {
+                tempDigits[count++] = temp % 10;
+                temp /= 10;
+            }
+            // 配列を反転して左から右に並べる
+            for (int i = 0; i < count; i++) {
+                digits[i] = tempDigits[count - i - 1];
+            }
+            numDigits = count;
+        }
+
+        float totalWidth = DIGIT_WIDTH * numDigits;
+        for (int d = 0; d < numDigits; d++)
+        {
+            int digit = digits[d];
+
+            // ビルボード行列を計算（カメラの方向を向く）
+            XMMATRIX mtxBillboard = XMMatrixIdentity();
+            mtxBillboard.r[0] = XMVectorSet(mtxView.r[0].m128_f32[0], mtxView.r[1].m128_f32[0], mtxView.r[2].m128_f32[0], 0.0f);
+            mtxBillboard.r[1] = XMVectorSet(mtxView.r[0].m128_f32[1], mtxView.r[1].m128_f32[1], mtxView.r[2].m128_f32[1], 0.0f);
+            mtxBillboard.r[2] = XMVectorSet(mtxView.r[0].m128_f32[2], mtxView.r[1].m128_f32[2], mtxView.r[2].m128_f32[2], 0.0f);
+
+            // スコア全体を中央揃えするためのXオフセット
+            float digitOffsetX = -totalWidth / 2 + DIGIT_WIDTH / 2 + DIGIT_WIDTH * d;
+
+            // ワールド行列作成（スケール・ビルボード・位置）
+            XMMATRIX mtxScale = XMMatrixIdentity();
+            XMMATRIX mtxTrans = XMMatrixTranslation(scorePos.x + digitOffsetX, scorePos.y, scorePos.z);
+            XMMATRIX mtxWorld = mtxScale * mtxBillboard * mtxTrans;
+            SetWorldMatrix(&mtxWorld);
+
+            // 数字一桁分の四角形（ポリゴン）を作成
+            struct VERTEX_3D {
+                XMFLOAT3 Position;
+                XMFLOAT3 Normal;
+                XMFLOAT4 Diffuse;
+                XMFLOAT2 TexCoord;
+            };
+            VERTEX_3D vtx[4];
+
+            float left = -DIGIT_WIDTH / 2.0f;
+            float right = +DIGIT_WIDTH / 2.0f;
+            float top = DIGIT_HEIGHT / 2.0f;
+            float bottom = -DIGIT_HEIGHT / 2.0f;
+
+            float tw = 1.0f / 10.0f;
+            float tx = digit * tw;
+            float th = 1.0f;
+
+            vtx[0].Position = XMFLOAT3(left, top, 0);     vtx[0].TexCoord = XMFLOAT2(tx, 0);
+            vtx[1].Position = XMFLOAT3(right, top, 0);    vtx[1].TexCoord = XMFLOAT2(tx + tw, 0);
+            vtx[2].Position = XMFLOAT3(left, bottom, 0);  vtx[2].TexCoord = XMFLOAT2(tx, th);
+            vtx[3].Position = XMFLOAT3(right, bottom, 0); vtx[3].TexCoord = XMFLOAT2(tx + tw, th);
+
+            for (int i = 0; i < 4; i++) {
+                vtx[i].Normal = XMFLOAT3(0, 0, -1);
+                vtx[i].Diffuse = XMFLOAT4(1, 1, 1, 1);
+            }
+
+            D3D11_BUFFER_DESC bd = {};
+            bd.Usage = D3D11_USAGE_DEFAULT;
+            bd.ByteWidth = sizeof(vtx);
+            bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+            D3D11_SUBRESOURCE_DATA init = { vtx, 0, 0 };
+            ID3D11Buffer* vb = NULL;
+            GetDevice()->CreateBuffer(&bd, &init, &vb);
+
+            UINT stride = sizeof(VERTEX_3D);
+            UINT offset = 0;
+            GetDeviceContext()->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
+            GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+            GetDeviceContext()->Draw(4, 0);
+
+            if (vb) vb->Release();
+        }
+    }
 }

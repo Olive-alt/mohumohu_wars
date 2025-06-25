@@ -28,6 +28,10 @@ void AddScore(int playerIndex, int add);
 
 int GetScore(int playerIndex);
 
+void ResetScore(void);
+
+void DrawScoreAbovePlayers(void);
+
 
 
 

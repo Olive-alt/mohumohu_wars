@@ -522,100 +522,106 @@ PLAYER* GetPlayer(void)
 }
 
 void DrawPlayerHpBar() {
-	// 頂点構造体の定義
-	struct VERTEX_3D {
-		XMFLOAT3 Position;
-		XMFLOAT3 Normal;
-		XMFLOAT4 Diffuse;
-		XMFLOAT2 TexCoord;
-	};
-
-	CAMERA* cam = GetCamera();
-	XMMATRIX mtxView = XMLoadFloat4x4(&cam->mtxView);
-
-
-	// HPバーの幅と高さ、最大HP
-	const float HP_WIDTH = 20.0f;
-	const float HP_HEIGHT = 6.0f;
-	const float maxHp = 3.0f;
-	for (int i = 0; i < MAX_PLAYER; i++)
+	if (GetMode() != MODE_RESULT)
 	{
-		float percent = g_Player[i].hp / maxHp;              // 現在HPの割合を計算
 
-		percent = fmaxf(0.0f, fminf(1.0f, percent));      // 0～1にクランプ
 
-		XMFLOAT3 hpBarPos = g_Player[i].pos;
-		hpBarPos.y += 20.0f;  // プレイヤーの上に表示
+		// 頂点構造体の定義
+		struct VERTEX_3D {
+			XMFLOAT3 Position;
+			XMFLOAT3 Normal;
+			XMFLOAT4 Diffuse;
+			XMFLOAT2 TexCoord;
+		};
 
-		// ビルボード行列（カメラの方向を向くようにする）
-		XMMATRIX mtxBillboard = XMMatrixIdentity();
-		mtxBillboard.r[0] = XMVectorSet(mtxView.r[0].m128_f32[0], mtxView.r[1].m128_f32[0], mtxView.r[2].m128_f32[0], 0.0f);
-		mtxBillboard.r[1] = XMVectorSet(mtxView.r[0].m128_f32[1], mtxView.r[1].m128_f32[1], mtxView.r[2].m128_f32[1], 0.0f);
-		mtxBillboard.r[2] = XMVectorSet(mtxView.r[0].m128_f32[2], mtxView.r[1].m128_f32[2], mtxView.r[2].m128_f32[2], 0.0f);
+		CAMERA* cam = GetCamera();
+		XMMATRIX mtxView = XMLoadFloat4x4(&cam->mtxView);
 
-		// マテリアル設定（テクスチャなしで頂点カラーのみ使用）
-		MATERIAL mat = {};
-		mat.Ambient = mat.Diffuse = XMFLOAT4(1, 1, 1, 1);
-		mat.noTexSampling = 1;
-		SetMaterial(mat);
-		// テクスチャを解除（念のため）
-		ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
-		GetDeviceContext()->PSSetShaderResources(0, 1, nullSRV);
 
-		// ワールド行列作成（位置・回転の適用）
-		XMMATRIX mtxScale = XMMatrixIdentity();
-		XMMATRIX mtxTrans = XMMatrixTranslation(hpBarPos.x, hpBarPos.y, hpBarPos.z);
-		XMMATRIX mtxWorld = mtxScale * mtxBillboard * mtxTrans;
-		SetWorldMatrix(&mtxWorld);
+		// HPバーの幅と高さ、最大HP
+		const float HP_WIDTH = 20.0f;
+		const float HP_HEIGHT = 6.0f;
+		const float maxHp = 3.0f;
+		for (int i = 0; i < MAX_PLAYER; i++)
+		{
+			float percent = g_Player[i].hp / maxHp;              // 現在HPの割合を計算
 
-		UINT stride = sizeof(VERTEX_3D);
-		UINT offset = 0;
+			percent = fmaxf(0.0f, fminf(1.0f, percent));      // 0～1にクランプ
 
-		// 1. --- 赤色の背景バー（常に全幅） ---
-		VERTEX_3D redVtx[4];
-		float left = -HP_WIDTH / 2.0f;
-		float right = +HP_WIDTH / 2.0f;
+			XMFLOAT3 hpBarPos = g_Player[i].pos;
+			hpBarPos.y += 20.0f;  // プレイヤーの上に表示
 
-		redVtx[0].Position = XMFLOAT3(left, HP_HEIGHT / 2, 0);  redVtx[0].Diffuse = XMFLOAT4(1, 0, 0, 1); // 左上
-		redVtx[1].Position = XMFLOAT3(right, HP_HEIGHT / 2, 0);  redVtx[1].Diffuse = XMFLOAT4(1, 0, 0, 1); // 右上
-		redVtx[2].Position = XMFLOAT3(left, -HP_HEIGHT / 2, 0);  redVtx[2].Diffuse = XMFLOAT4(1, 0, 0, 1); // 左下
-		redVtx[3].Position = XMFLOAT3(right, -HP_HEIGHT / 2, 0); redVtx[3].Diffuse = XMFLOAT4(1, 0, 0, 1); // 右下
-		for (int i = 0; i < 4; i++) {
-			redVtx[i].Normal = XMFLOAT3(0, 0, -1);
-			redVtx[i].TexCoord = XMFLOAT2(0, 0);
-		}
-		D3D11_BUFFER_DESC bd = {};
-		bd.Usage = D3D11_USAGE_DEFAULT;
-		bd.ByteWidth = sizeof(redVtx);
-		bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-		D3D11_SUBRESOURCE_DATA init = { redVtx, 0, 0 };
-		ID3D11Buffer* barVB = NULL;
-		GetDevice()->CreateBuffer(&bd, &init, &barVB);
+			// ビルボード行列（カメラの方向を向くようにする）
+			XMMATRIX mtxBillboard = XMMatrixIdentity();
+			mtxBillboard.r[0] = XMVectorSet(mtxView.r[0].m128_f32[0], mtxView.r[1].m128_f32[0], mtxView.r[2].m128_f32[0], 0.0f);
+			mtxBillboard.r[1] = XMVectorSet(mtxView.r[0].m128_f32[1], mtxView.r[1].m128_f32[1], mtxView.r[2].m128_f32[1], 0.0f);
+			mtxBillboard.r[2] = XMVectorSet(mtxView.r[0].m128_f32[2], mtxView.r[1].m128_f32[2], mtxView.r[2].m128_f32[2], 0.0f);
 
-		GetDeviceContext()->IASetVertexBuffers(0, 1, &barVB, &stride, &offset);
-		GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-		GetDeviceContext()->Draw(4, 0);
-		if (barVB) barVB->Release();
+			// マテリアル設定（テクスチャなしで頂点カラーのみ使用）
+			MATERIAL mat = {};
+			mat.Ambient = mat.Diffuse = XMFLOAT4(1, 1, 1, 1);
+			mat.noTexSampling = 1;
+			SetMaterial(mat);
+			// テクスチャを解除（念のため）
+			ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
+			GetDeviceContext()->PSSetShaderResources(0, 1, nullSRV);
 
-		// 2. --- 緑色のHP本体バー（現在HPの割合で幅を決定） ---
-		if (percent > 0.0f) {
-			VERTEX_3D greenVtx[4];
-			float greenRight = left + HP_WIDTH * percent;  // 緑バーの右端位置
-			greenVtx[0].Position = XMFLOAT3(left, HP_HEIGHT / 2, 0);       greenVtx[0].Diffuse = XMFLOAT4(0, 1, 0, 1);
-			greenVtx[1].Position = XMFLOAT3(greenRight, HP_HEIGHT / 2, 0); greenVtx[1].Diffuse = XMFLOAT4(0, 1, 0, 1);
-			greenVtx[2].Position = XMFLOAT3(left, -HP_HEIGHT / 2, 0);      greenVtx[2].Diffuse = XMFLOAT4(0, 1, 0, 1);
-			greenVtx[3].Position = XMFLOAT3(greenRight, -HP_HEIGHT / 2, 0); greenVtx[3].Diffuse = XMFLOAT4(0, 1, 0, 1);
+			// ワールド行列作成（位置・回転の適用）
+			XMMATRIX mtxScale = XMMatrixIdentity();
+			XMMATRIX mtxTrans = XMMatrixTranslation(hpBarPos.x, hpBarPos.y, hpBarPos.z);
+			XMMATRIX mtxWorld = mtxScale * mtxBillboard * mtxTrans;
+			SetWorldMatrix(&mtxWorld);
+
+			UINT stride = sizeof(VERTEX_3D);
+			UINT offset = 0;
+
+			// 1. --- 赤色の背景バー（常に全幅） ---
+			VERTEX_3D redVtx[4];
+			float left = -HP_WIDTH / 2.0f;
+			float right = +HP_WIDTH / 2.0f;
+
+			redVtx[0].Position = XMFLOAT3(left, HP_HEIGHT / 2, 0);  redVtx[0].Diffuse = XMFLOAT4(1, 0, 0, 1); // 左上
+			redVtx[1].Position = XMFLOAT3(right, HP_HEIGHT / 2, 0);  redVtx[1].Diffuse = XMFLOAT4(1, 0, 0, 1); // 右上
+			redVtx[2].Position = XMFLOAT3(left, -HP_HEIGHT / 2, 0);  redVtx[2].Diffuse = XMFLOAT4(1, 0, 0, 1); // 左下
+			redVtx[3].Position = XMFLOAT3(right, -HP_HEIGHT / 2, 0); redVtx[3].Diffuse = XMFLOAT4(1, 0, 0, 1); // 右下
 			for (int i = 0; i < 4; i++) {
-				greenVtx[i].Normal = XMFLOAT3(0, 0, -1);
-				greenVtx[i].TexCoord = XMFLOAT2(0, 0);
+				redVtx[i].Normal = XMFLOAT3(0, 0, -1);
+				redVtx[i].TexCoord = XMFLOAT2(0, 0);
 			}
-			D3D11_SUBRESOURCE_DATA greenInit = { greenVtx, 0, 0 };
-			ID3D11Buffer* fgVB = NULL;
-			GetDevice()->CreateBuffer(&bd, &greenInit, &fgVB);
-			GetDeviceContext()->IASetVertexBuffers(0, 1, &fgVB, &stride, &offset);
+			D3D11_BUFFER_DESC bd = {};
+			bd.Usage = D3D11_USAGE_DEFAULT;
+			bd.ByteWidth = sizeof(redVtx);
+			bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+			D3D11_SUBRESOURCE_DATA init = { redVtx, 0, 0 };
+			ID3D11Buffer* barVB = NULL;
+			GetDevice()->CreateBuffer(&bd, &init, &barVB);
+
+			GetDeviceContext()->IASetVertexBuffers(0, 1, &barVB, &stride, &offset);
+			GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 			GetDeviceContext()->Draw(4, 0);
-			if (fgVB) fgVB->Release();
+			if (barVB) barVB->Release();
+
+			// 2. --- 緑色のHP本体バー（現在HPの割合で幅を決定） ---
+			if (percent > 0.0f) {
+				VERTEX_3D greenVtx[4];
+				float greenRight = left + HP_WIDTH * percent;  // 緑バーの右端位置
+				greenVtx[0].Position = XMFLOAT3(left, HP_HEIGHT / 2, 0);       greenVtx[0].Diffuse = XMFLOAT4(0, 1, 0, 1);
+				greenVtx[1].Position = XMFLOAT3(greenRight, HP_HEIGHT / 2, 0); greenVtx[1].Diffuse = XMFLOAT4(0, 1, 0, 1);
+				greenVtx[2].Position = XMFLOAT3(left, -HP_HEIGHT / 2, 0);      greenVtx[2].Diffuse = XMFLOAT4(0, 1, 0, 1);
+				greenVtx[3].Position = XMFLOAT3(greenRight, -HP_HEIGHT / 2, 0); greenVtx[3].Diffuse = XMFLOAT4(0, 1, 0, 1);
+				for (int i = 0; i < 4; i++) {
+					greenVtx[i].Normal = XMFLOAT3(0, 0, -1);
+					greenVtx[i].TexCoord = XMFLOAT2(0, 0);
+				}
+				D3D11_SUBRESOURCE_DATA greenInit = { greenVtx, 0, 0 };
+				ID3D11Buffer* fgVB = NULL;
+				GetDevice()->CreateBuffer(&bd, &greenInit, &fgVB);
+				GetDeviceContext()->IASetVertexBuffers(0, 1, &fgVB, &stride, &offset);
+				GetDeviceContext()->Draw(4, 0);
+				if (fgVB) fgVB->Release();
+			}
 		}
+
 	}
 }
 

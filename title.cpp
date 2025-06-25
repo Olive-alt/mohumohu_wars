@@ -12,7 +12,7 @@
 #include "sprite.h"
 #include "title.h"
 #include "meshfield.h"
-
+#include "score.h"
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
@@ -113,6 +113,9 @@ HRESULT InitTitle(void)
 	flag_alpha = TRUE;
 
 	flag_settings = FALSE;
+
+	//スコアをリセットする
+	ResetScore();
 
 	// BGM再生
 	//PlaySound(SOUND_LABEL_BGM_sample000);
