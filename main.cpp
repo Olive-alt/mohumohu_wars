@@ -16,7 +16,7 @@
 #include "game.h"
 #include "fade.h"
 #include "title.h"
-#include "result.h"
+#include "newresult.h"
 #include "debugproc.h"
 #include "player_select.h"
 #include "stage_select.h"
@@ -324,7 +324,7 @@ void Update(void)
 		break;
 
 	case MODE_RESULT:		// リザルト画面の更新
-		UpdateResult();
+		UpdateNewResult();
 		break;
 	}
 
@@ -389,7 +389,7 @@ void Draw(void)
 		// ライティングを無効
 		SetLightEnable(FALSE);
 
-		DrawResult();
+		DrawNewResult();
 
 		// ライティングを有効に
 		SetLightEnable(TRUE);
@@ -466,7 +466,7 @@ void SetMode(int mode)
 	UninitGame();
 
 	// リザルト画面の終了処理
-	UninitResult();
+	UninitNewResult();
 
 
 	g_Mode = mode;	// 次のモードをセットしている
@@ -497,7 +497,7 @@ void SetMode(int mode)
 
 	case MODE_RESULT:
 		// リザルト画面の初期化
-		InitResult();
+		InitNewResult();
 		break;
 
 		// ゲーム終了時の処理
