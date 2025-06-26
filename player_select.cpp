@@ -201,10 +201,19 @@ void DrawPlayerSelect(void)
         float startX = SCREEN_WIDTH / 2 - (MAX_PLAYERS * (TEXTURE_WIDTH_PLAYER_ICON + 20)) / 2 + TEXTURE_WIDTH_PLAYER_ICON / 2;
         float yPos = SCREEN_HEIGHT - 150;
 
-        for (int i = 0; i < MAX_PLAYERS; i++)
+        for (int i = 0; i <MAX_PLAYERS; i++)
         {
             if (g_PlayerIcons[i])
             {
+             // プレイヤーアイコンを描画
+                GetDeviceContext()->PSSetShaderResources(0, 1, &g_PlayerIcons[i]);
+                SetSpriteColor(g_VertexBuffer,
+                    startX + i * (TEXTURE_WIDTH_PLAYER_ICON + 20), yPos,
+                    TEXTURE_WIDTH_PLAYER_ICON, TEXTURE_HEIGHT_PLAYER_ICON,
+                    0.0f, 0.0f, 1.0f, 1.0f,
+                    XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
+                GetDeviceContext()->Draw(4, 0);
+
                 // 選択中のプレイヤーには青い枠を描画
                 if (i == g_SelectedPlayer)
                 {
@@ -218,14 +227,6 @@ void DrawPlayerSelect(void)
                     GetDeviceContext()->Draw(4, 0);
                 }
 
-                // プレイヤーアイコンを描画
-                GetDeviceContext()->PSSetShaderResources(0, 1, &g_PlayerIcons[i]);
-                SetSpriteColor(g_VertexBuffer,
-                    startX + i * (TEXTURE_WIDTH_PLAYER_ICON + 20), yPos,
-                    TEXTURE_WIDTH_PLAYER_ICON, TEXTURE_HEIGHT_PLAYER_ICON,
-                    0.0f, 0.0f, 1.0f, 1.0f,
-                    XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
-                GetDeviceContext()->Draw(4, 0);
             }
         }
     }
