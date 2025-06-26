@@ -223,7 +223,7 @@ void DrawPlayerSelect(void)
                         TEXTURE_WIDTH_PLAYER_ICON + SELECTION_BORDER_SIZE * 2, 
                         TEXTURE_HEIGHT_PLAYER_ICON + SELECTION_BORDER_SIZE * 2,
                         0.0f, 0.0f, 1.0f, 1.0f,
-                        XMFLOAT4(0.0f, 0.5f, 1.0f, 1.0f));
+                        XMFLOAT4(1.0f, 1.0f, 0.9f, 1.0f));
                     GetDeviceContext()->Draw(4, 0);
                 }
 
