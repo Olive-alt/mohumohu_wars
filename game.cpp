@@ -127,7 +127,7 @@ HRESULT InitGame(void)
 	InitItem();
 
 	// BGMçƒê∂
-	//PlaySound(SOUND_LABEL_BGM_sample001);
+	PlaySound(SOUND_LABEL_BGM_mofu_1);
 
 	return S_OK;
 }

@@ -8,7 +8,7 @@
 #include "renderer.h"
 #include "input.h"
 #include "fade.h"
-//#include "sound.h"
+#include "sound.h"
 #include "sprite.h"
 #include "title.h"
 #include "meshfield.h"
@@ -118,7 +118,7 @@ HRESULT InitTitle(void)
 	ResetScore();
 
 	// BGMçƒê∂
-	//PlaySound(SOUND_LABEL_BGM_sample000);
+	PlaySound(SOUND_LABEL_BGM_title);
 
 	g_Load = TRUE;
 	return S_OK;
