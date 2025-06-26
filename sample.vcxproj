@@ -149,6 +149,7 @@
     <ClInclude Include="input.h" />
     <ClInclude Include="item.h" />
     <ClInclude Include="IT_ball.h" />
+    <ClInclude Include="IT_boomerang.h" />
     <ClInclude Include="IT_giant.h" />
     <ClInclude Include="IT_invisible.h" />
     <ClInclude Include="light.h" />
@@ -184,6 +185,7 @@
     <ClCompile Include="input.cpp" />
     <ClCompile Include="item.cpp" />
     <ClCompile Include="IT_ball.cpp" />
+    <ClCompile Include="IT_boomerang.cpp" />
     <ClCompile Include="IT_giant.cpp" />
     <ClCompile Include="IT_invisible.cpp" />
     <ClCompile Include="light.cpp" />

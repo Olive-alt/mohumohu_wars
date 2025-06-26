@@ -59,6 +59,11 @@ BALL* GetBall()  // アクセス用の関数を作成
 {
 	return &ball;
 }
+BOOM boom;  // ブーメランのインスタンスを作成
+BOOM* GetBoomerang()  // アクセス用の関数を作成
+{
+	return &boom;  // ボールの中にあるブーメランを返す
+}
 
 //=============================================================================
 // 初期化処理
@@ -75,6 +80,8 @@ HRESULT InitItem(void)
 		giant[i]->InitITgiant();
 	}
 
+
+
 	//透明化アイテムの初期化
 	invisible.InitITinvisible();
 	invisible.SetITinvisible(XMFLOAT3(200.0f, 0.0f, 100.0f));
@@ -82,6 +89,9 @@ HRESULT InitItem(void)
 	//ボールアイテムの初期化
 	ball.InitITball();
 	ball.SetITballObject(XMFLOAT3(-100.0f, 0.0f, -100.0f));
+
+	boom.InitITboom();
+	boom.SetITboomObject(XMFLOAT3(-150.0f, 0.0f, -150.0f), 0);
 
 	// BGM再生
 	//PlaySound(SOUND_LABEL_BGM_sample001);
@@ -107,6 +117,9 @@ void UninitItem(void)
 
 	//ボールアイテムの終了処理
 	ball.UninitITball();
+
+	// ブーメランの終了処理
+	boom.UninitITboom();
 
 }
 
@@ -165,6 +178,10 @@ void UpdateItem(void)
 	// ボールアイテムの更新処理
 	ball.UpdateITball();
 
+	// ブーメランの更新処理
+	boom.UpdateITboom();
+
+
 }
 
 //=============================================================================
@@ -174,6 +191,9 @@ void DrawItem(void)
 {
 	// ボールアイテムの描画処理
 	ball.DrawITball();
+
+	// ブーメランの描画処理
+	boom.DrawITboom();
 
 	for (int i = 0; i < 10; i++)
 	{
@@ -266,6 +286,34 @@ void CheckHitItem(void)
 				if (CollisionBC(player[i].pos, ball_pos, player[i].size, BALL_SIZE))
 				{
 					ball.HitITball(i);
+				}
+			}
+		}
+	}
+
+	// ブーメラン
+	if (bool use = boom.IsUsedITboom())
+	{
+		XMFLOAT3 boom_pos = boom.GetPositionITboom();
+		BOOL pick = boom.IsPickedITboom();
+		BOOL to_throw = boom.IsThrewITboom();
+		if (!pick && !to_throw)
+		{
+			for (int i = 0; i < MAX_PLAYER; i++)
+			{
+				if (CollisionBC(player[i].pos, boom_pos, player[i].size, BOOM_SIZE))
+				{
+					boom.PickITboom(i);
+				}
+			}
+		}
+		else if (to_throw)
+		{
+			for (int i = 0; i < MAX_PLAYER; i++)
+			{
+				if (CollisionBC(player[i].pos, boom_pos, player[i].size, BOOM_SIZE))
+				{
+					boom.HitITboom(i);
 				}
 			}
 		}
