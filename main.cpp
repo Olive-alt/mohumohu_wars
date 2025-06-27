@@ -21,6 +21,7 @@
 #include "player_select.h"
 #include "stage_select.h"
 #include "debugline.h"
+#include "podium.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -325,6 +326,8 @@ void Update(void)
 
 	case MODE_RESULT:		// リザルト画面の更新
 		UpdateNewResult();
+		// 表彰台の更新
+		UpdatePodium();
 		break;
 	}
 
@@ -389,7 +392,10 @@ void Draw(void)
 		// ライティングを無効
 		SetLightEnable(FALSE);
 
+		// 3Dのリザルトシーンを描画
 		DrawNewResult();
+		//表彰台を描画
+		DrawPodium();
 
 		// ライティングを有効に
 		SetLightEnable(TRUE);
@@ -465,9 +471,10 @@ void SetMode(int mode)
 	// ゲーム画面の終了処理
 	UninitGame();
 
-	// リザルト画面の終了処理
+	// 3Dのリザルト画面の終了処理
 	UninitNewResult();
-
+	// 表彰台の終了処理
+	UninitPodium();
 
 	g_Mode = mode;	// 次のモードをセットしている
 
@@ -496,8 +503,10 @@ void SetMode(int mode)
 		break;
 
 	case MODE_RESULT:
-		// リザルト画面の初期化
+		// 3Dのリザルト画面の初期化
 		InitNewResult();
+		// 表彰台の初期化
+		InitPodium();
 		break;
 
 		// ゲーム終了時の処理

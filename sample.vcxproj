@@ -161,6 +161,7 @@
     <ClInclude Include="particle.h" />
     <ClInclude Include="player.h" />
     <ClInclude Include="player_select.h" />
+    <ClInclude Include="podium.h" />
     <ClInclude Include="renderer.h" />
     <ClInclude Include="result.h" />
     <ClInclude Include="score.h" />
@@ -197,6 +198,7 @@
     <ClCompile Include="particle.cpp" />
     <ClCompile Include="player.cpp" />
     <ClCompile Include="player_select.cpp" />
+    <ClCompile Include="podium.cpp" />
     <ClCompile Include="renderer.cpp" />
     <ClCompile Include="result.cpp" />
     <ClCompile Include="score.cpp" />

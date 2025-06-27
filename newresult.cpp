@@ -64,6 +64,17 @@ HRESULT InitNewResult(void)
 
 	// プレイヤーの初期化
 	InitPlayer();
+	// 1P（プレイヤー0番）の位置変更
+	PLAYER* p1 = GetPlayer(0);
+	if (p1) {
+		p1->pos = XMFLOAT3(20.0f, 60.0f, 0.0f);  // 好きな位置に設定
+	}
+
+	// 2P（プレイヤー1番）の位置変更
+	PLAYER* p2 = GetPlayer(1);
+	if (p2) {
+		p2->pos = XMFLOAT3(-15.0f, 45.0f, 0.0f);  // 好きな位置に設定
+	}
 
 
 
@@ -158,6 +169,11 @@ void UpdateNewResult(void)
 	if (GetKeyboardTrigger(DIK_P))
 	{
 		g_bPause = g_bPause ? FALSE : TRUE;
+	}
+
+	if (GetKeyboardTrigger(DIK_RETURN))
+	{// Enter押したら、ステージを切り替える
+		SetFade(FADE_OUT, MODE_TITLE);
 	}
 
 #endif
