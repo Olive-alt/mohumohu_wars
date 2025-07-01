@@ -22,6 +22,7 @@
 #include "stage_select.h"
 #include "debugline.h"
 #include "podium.h"
+#include "mode_select.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -319,6 +320,10 @@ void Update(void)
 		UpdateStageSelect();
 		break;
 
+	case MODE_MODE_SELECT:		// プレヤー選択の画面
+		UpdateModeSelect();
+		break;
+
 
 	case MODE_GAME:			// ゲーム画面の更新
 		UpdateGame();
@@ -375,6 +380,10 @@ void Draw(void)
 
 	case MODE_STAGE_SELECT:		// ゲーム画面の更新
 		DrawStageSelect();
+		break;
+
+	case MODE_MODE_SELECT:		// ゲーム画面の更新
+		DrawModeSelect();
 		break;
 
 
@@ -491,6 +500,10 @@ void SetMode(int mode)
 
 	case MODE_STAGE_SELECT:		// キャラクター選択の更新
 		InitStageSelect();
+		break;
+
+	case MODE_MODE_SELECT:		// キャラクター選択の更新
+		InitModeSelect();
 		break;
 
 

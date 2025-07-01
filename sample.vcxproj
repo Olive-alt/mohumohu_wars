@@ -138,6 +138,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\0701_text\mode_select.h" />
     <ClInclude Include="bullet.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="collision.h" />
@@ -194,6 +195,7 @@
     <ClCompile Include="meshfield.cpp" />
     <ClCompile Include="meshwall.cpp" />
     <ClCompile Include="model.cpp" />
+    <ClCompile Include="mode_select.cpp" />
     <ClCompile Include="newresult.cpp" />
     <ClCompile Include="particle.cpp" />
     <ClCompile Include="player.cpp" />

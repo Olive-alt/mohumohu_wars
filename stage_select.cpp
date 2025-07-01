@@ -119,7 +119,7 @@ void UpdateStageSelect(void)
             PrintDebugProc("Loading Model 2\n");
         }
 
-        SetFade(FADE_OUT, MODE_GAME);
+        SetFade(FADE_OUT, MODE_MODE_SELECT);
     }
     // キャンセルキー（ESC）
     else if (GetKeyboardTrigger(DIK_SPACE))

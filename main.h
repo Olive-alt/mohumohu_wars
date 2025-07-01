@@ -74,6 +74,7 @@ enum
 	MODE_TUTORIAL,			// ゲーム説明画面
 	MODE_PLAYER_SELECT,     //プレヤー選択画面
 	MODE_STAGE_SELECT,     //stage選択画面
+	MODE_MODE_SELECT,     //stage選択画面
 	MODE_GAME,				// ゲーム画面
 	MODE_RESULT,			// リザルト画面
 	MODE_MAX
