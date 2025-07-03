@@ -15,7 +15,6 @@
 
 #include "item.h"
 #include "player.h"
-#include "enemy.h"
 #include "collision.h"
 #include "debugproc.h"
 
@@ -226,7 +225,6 @@ void DrawItem(void)
 //=============================================================================
 void CheckHitItem(void)
 {
-	ENEMY* enemy = GetEnemy();		// エネミーのポインターを初期化
 	PLAYER* player = GetPlayer(); // プレイヤー1 (index=0)
 
 	for (int i = 0; i < 10; i++)
@@ -318,20 +316,6 @@ void CheckHitItem(void)
 			}
 		}
 	}
-
-	//// エネミーが全部死亡したら状態遷移
-	//int enemy_count = 0;
-	//for (int i = 0; i < MAX_ENEMY; i++)
-	//{
-	//	if (enemy[i].use == FALSE) continue;
-	//	enemy_count++;
-	//}
-
-	//// エネミーが０匹？
-	//if (enemy_count == 0)
-	//{
-	//	SetFade(FADE_OUT, MODE_RESULT);
-	//}
 
 }
 

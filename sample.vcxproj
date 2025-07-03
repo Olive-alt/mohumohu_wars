@@ -139,12 +139,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\0701_text\mode_select.h" />
-    <ClInclude Include="bullet.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="collision.h" />
     <ClInclude Include="debugline.h" />
     <ClInclude Include="debugproc.h" />
-    <ClInclude Include="enemy.h" />
     <ClInclude Include="fade.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="input.h" />
@@ -164,7 +162,6 @@
     <ClInclude Include="player_select.h" />
     <ClInclude Include="podium.h" />
     <ClInclude Include="renderer.h" />
-    <ClInclude Include="result.h" />
     <ClInclude Include="score.h" />
     <ClInclude Include="SG_warpgate.h" />
     <ClInclude Include="shadow.h" />
@@ -173,15 +170,12 @@
     <ClInclude Include="SG_wind.h" />
     <ClInclude Include="stage_select.h" />
     <ClInclude Include="title.h" />
-    <ClInclude Include="tree.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="bullet.cpp" />
     <ClCompile Include="camera.cpp" />
     <ClCompile Include="collision.cpp" />
     <ClCompile Include="debugline.cpp" />
     <ClCompile Include="debugproc.cpp" />
-    <ClCompile Include="enemy.cpp" />
     <ClCompile Include="fade.cpp" />
     <ClCompile Include="game.cpp" />
     <ClCompile Include="input.cpp" />
@@ -202,7 +196,6 @@
     <ClCompile Include="player_select.cpp" />
     <ClCompile Include="podium.cpp" />
     <ClCompile Include="renderer.cpp" />
-    <ClCompile Include="result.cpp" />
     <ClCompile Include="score.cpp" />
     <ClCompile Include="SG_warpgate.cpp" />
     <ClCompile Include="shadow.cpp" />
@@ -211,7 +204,6 @@
     <ClCompile Include="SG_wind.cpp" />
     <ClCompile Include="stage_select.cpp" />
     <ClCompile Include="title.cpp" />
-    <ClCompile Include="tree.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

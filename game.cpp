@@ -14,12 +14,9 @@
 #include "fade.h"
 
 #include "player.h"
-#include "enemy.h"
 #include "meshfield.h"
 #include "meshwall.h"
 #include "shadow.h"
-#include "tree.h"
-#include "bullet.h"
 #include "score.h"
 #include "particle.h"
 #include "collision.h"
@@ -77,9 +74,6 @@ HRESULT InitGame(void)
 	// プレイヤーの初期化
 	InitPlayer();
 
-	// エネミーの初期化
-	InitEnemy();
-
 	// 壁の初期化
 	InitMeshWall(XMFLOAT3(0.0f, 0.0f, MAP_TOP), XMFLOAT3(0.0f, 0.0f, 0.0f),
 		XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 16, 2, 80.0f, 80.0f);
@@ -100,11 +94,6 @@ HRESULT InitGame(void)
 	InitMeshWall(XMFLOAT3(0.0f, 0.0f, MAP_DOWN), XMFLOAT3(0.0f, 0.0f, 0.0f),
 		XMFLOAT4(1.0f, 1.0f, 1.0f, 0.25f), 16, 2, 80.0f, 80.0f);
 
-	// 木を生やす
-	InitTree();
-
-	// 弾の初期化
-	InitBullet();
 
 	// スコアの初期化
 	InitScore();
@@ -143,20 +132,11 @@ void UninitGame(void)
 	// スコアの終了処理
 	UninitScore();
 
-	// 弾の終了処理
-	UninitBullet();
-
-	// 木の終了処理
-	UninitTree();
-
 	// 壁の終了処理
 	UninitMeshWall();
 
 	// 地面の終了処理
 	UninitMeshField();
-
-	// エネミーの終了処理
-	UninitEnemy();
 
 	// プレイヤーの終了処理
 	UninitPlayer();
@@ -207,17 +187,8 @@ void UpdateGame(void)
 	// プレイヤーの更新処理
 	UpdatePlayer();
 
-	// エネミーの更新処理
-	UpdateEnemy();
-
 	// 壁処理の更新
 	UpdateMeshWall();
-
-	// 木の更新処理
-	UpdateTree();
-
-	// 弾の更新処理
-	UpdateBullet();
 
 	//アイテムの更新処理
 	UpdateItem();
@@ -261,23 +232,14 @@ void DrawGame0(void)
 	// 影の描画処理
 	DrawShadow();
 
-	// エネミーの描画処理
-	DrawEnemy();
-
 	// プレイヤーの描画処理
 	DrawPlayer();
-
-	// 弾の描画処理
-	DrawBullet();
 
 	//アイテムの描画処理
 	DrawItem();
 
 	// 壁の描画処理
 	DrawMeshWall();
-
-	// 木の描画処理
-	DrawTree();
 
 	// ワープゲートの描画処理
 	for (int i = 0; i < MAX_WG; i++)
@@ -340,7 +302,6 @@ void DrawGame(void)
 		DrawGame0();
 
 		// エネミー視点
-		pos = GetEnemy()->pos;
 		pos.y = 0.0f;
 		SetCameraAT(pos);
 		SetCamera();
@@ -354,7 +315,6 @@ void DrawGame(void)
 		DrawGame0();
 
 		// エネミー視点
-		pos = GetEnemy()->pos;
 		pos.y = 0.0f;
 		SetCameraAT(pos);
 		SetCamera();
@@ -380,11 +340,6 @@ void DrawGame(void)
 
 
 	DrawDebugSphereOutline(GetPlayer(1)->pos, GetPlayer(1)->size, XMFLOAT4(1, 0, 0, 1));
-	ENEMY* enemy = GetEnemy();
-	for (int i = 0; i < MAX_ENEMY; ++i) {
-		if (enemy[i].use)
-			DrawDebugSphereOutline(enemy[i].pos, enemy[i].size, XMFLOAT4(0, 0, 1, 1));
-	}
 
 	// アイテムのデバッグ用当たり判定球を描画
 	//if (giant.IsUsedITgiant())
@@ -406,52 +361,7 @@ void DrawGame(void)
 //=============================================================================
 void CheckHit(void)
 {
-	ENEMY* enemy = GetEnemy();		// エネミーのポインターを初期化
-	BULLET* bullet = GetBullet();	// 弾のポインターを初期化
 	PLAYER* player = GetPlayer(); // プレイヤー1 (index=0)
-
-	// 敵とプレイヤーキャラ
-	for (int i = 0; i < MAX_ENEMY; i++)
-	{
-		//敵の有効フラグをチェックする
-		if (enemy[i].use == FALSE)
-			continue;
-
-		for (int j = 0; j < MAX_PLAYER; j++)
-		{
-			// プレイヤー1 と敵の衝突
-			if (CollisionBC(player[j].pos, enemy[i].pos, player[j].size, enemy[i].size))
-			{
-				enemy[i].use = FALSE;
-				ReleaseShadow(enemy[i].shadowIdx);
-				AddScore(0, 100);
-			}
-		}
-	}
-
-
-	for (int i = 0; i < MAX_BULLET; i++)
-	{
-		if (!bullet[i].use) continue;
-
-		for (int j = 0; j < MAX_PLAYER; j++)
-		{
-			// プレイヤー1 と敵の衝突
-			if (bullet[i].owner == 2 && CollisionBC(bullet[i].pos, player[j].pos, bullet[i].fWidth, player[j].size))
-			{
-				player[j].hp -= 1.0f;
-				if (player[j].hp <= 0.0f) {
-					player[j].use = FALSE;
-					ReleaseShadow(player[j].shadowIdx);
-					SetMode(MODE_RESULT);
-				}
-				bullet[i].use = FALSE;
-				ReleaseShadow(bullet[i].shadowIdx);
-				AddScore(1, 10);
-			}
-		}
-	}
-
 
 	// ワープ処理
 	for (int i = 0; i < MAX_WG; i++)
@@ -479,18 +389,14 @@ void CheckHit(void)
 
 	// エネミーが全部死亡したら状態遷移
 	int enemy_count = 0;
-	for (int i = 0; i < MAX_ENEMY; i++)
+	for(int i=0;i<MAX_PLAYER;i++)
 	{
-		if (enemy[i].use == FALSE) continue;
-		enemy_count++;
+		// エネミーが０匹？
+		if (player[i].use ==false)
+		{
+			SetFade(FADE_OUT, MODE_RESULT);
+		}
 	}
-
-	// エネミーが０匹？
-	if (enemy_count == 0)
-	{
-		SetFade(FADE_OUT, MODE_RESULT);
-	}
-
 }
 
 

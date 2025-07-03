@@ -11,7 +11,6 @@
 #include "camera.h"
 #include "player.h"
 #include "shadow.h"
-#include "bullet.h"
 #include "debugproc.h"
 #include "meshfield.h"
 #include "item.h"
@@ -625,25 +624,6 @@ void DrawPlayerHpBar() {
 	}
 }
 
-
-void HandlePlayerInput(void)
-{
-	// プレイヤー本体を取得
-	PLAYER* p0 = GetPlayer(0);  // プレイヤー1
-	PLAYER* p1 = GetPlayer(1);  // プレイヤー2
-
-	// プレイヤー1: SPACE で発射 (owner = 1)
-	if (p0 && p0->use && GetKeyboardTrigger(DIK_SPACE))
-	{
-		SetBullet(p0->pos, p0->rot, 1);
-	}
-
-	// プレイヤー2: ENTER で発射 (owner = 2)
-	if (p1 && p1->use && GetKeyboardTrigger(DIK_RETURN))
-	{
-		SetBullet(p1->pos, p1->rot, 2);
-	}
-}
 
 //=============================================================================
 // プレイヤー移動処理

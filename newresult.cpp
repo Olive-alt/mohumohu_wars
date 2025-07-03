@@ -14,12 +14,9 @@
 #include "game.h"
 
 #include "player.h"
-#include "enemy.h"
 #include "meshfield.h"
 #include "meshwall.h"
 #include "shadow.h"
-#include "tree.h"
-#include "bullet.h"
 #include "score.h"
 #include "time.h"
 
@@ -79,9 +76,6 @@ HRESULT InitNewResult(void)
 
 
 
-	// エネミーの初期化
-	InitEnemy();
-
 	// 壁の初期化
 	InitMeshWall(XMFLOAT3(0.0f, 0.0f, MAP_TOP), XMFLOAT3(0.0f, 0.0f, 0.0f),
 		XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 16, 2, 80.0f, 80.0f);
@@ -104,9 +98,6 @@ HRESULT InitNewResult(void)
 
 	// 木を生やす
 	//InitTree();
-
-	// 弾の初期化
-	InitBullet();
 
 	// スコアの初期化
 	InitScore();
@@ -131,20 +122,11 @@ void UninitNewResult(void)
 	// スコアの終了処理
 	UninitScore();
 
-	// 弾の終了処理
-	UninitBullet();
-
-	// 木の終了処理
-	UninitTree();
-
 	// 壁の終了処理
 	UninitMeshWall();
 
 	// 地面の終了処理
 	UninitMeshField();
-
-	// エネミーの終了処理
-	UninitEnemy();
 
 	// プレイヤーの終了処理
 	UninitPlayer();
@@ -197,7 +179,7 @@ void UpdateNewResult(void)
 	//UpdateParticle();
 
 	// 影の更新処理
-	UpdateShadow();
+	//UpdateShadow();
 
 	// 当たり判定処理
 	//CheckHit();
@@ -218,9 +200,6 @@ void DrawNewResult0(void)
 
 	// 影の描画処理
 	DrawShadow();
-
-	// エネミーの描画処理
-	DrawEnemy();
 
 	// プレイヤーの描画処理
 	DrawPlayer();
@@ -284,7 +263,6 @@ void DrawNewResult(void)
 		DrawNewResult0();
 
 		// エネミー視点
-		pos = GetEnemy()->pos;
 		pos.y = 0.0f;
 		SetCameraAT(pos);
 		SetCamera();
@@ -298,7 +276,6 @@ void DrawNewResult(void)
 		DrawNewResult();
 
 		// エネミー視点
-		pos = GetEnemy()->pos;
 		pos.y = 0.0f;
 		SetCameraAT(pos);
 		SetCamera();

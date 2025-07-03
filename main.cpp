@@ -12,7 +12,6 @@
 #include "sound.h"
 #include "model.h"
 #include "player.h"
-#include "enemy.h"
 #include "game.h"
 #include "fade.h"
 #include "title.h"
@@ -524,8 +523,6 @@ void SetMode(int mode)
 
 		// ゲーム終了時の処理
 	case MODE_MAX:
-		// エネミーの終了処理
-		UninitEnemy();
 
 		// プレイヤーの終了処理
 		UninitPlayer();
