@@ -64,6 +64,12 @@ BOOM* GetBoomerang()  // アクセス用の関数を作成
 	return &boom;  // ボールの中にあるブーメランを返す
 }
 
+HAMR hamr;
+HAMR* GetHammer()  // アクセス用の関数を作成
+{
+	return &hamr;  // ハンマーのインスタンスを返す
+}
+
 //=============================================================================
 // 初期化処理
 //=============================================================================
@@ -89,9 +95,13 @@ HRESULT InitItem(void)
 	ball.InitITball();
 	ball.SetITballObject(XMFLOAT3(-100.0f, 0.0f, -100.0f));
 
+	// ブーメランの初期化
 	boom.InitITboom();
 	boom.SetITboomObject(XMFLOAT3(-150.0f, 0.0f, -150.0f), 0);
 
+	// ハンマーの初期化
+	hamr.InitITHamr();
+	hamr.SetITHamrObject(XMFLOAT3(100.0f, 0.0f, -100.0f));
 	// BGM再生
 	//PlaySound(SOUND_LABEL_BGM_sample001);
 
@@ -119,6 +129,9 @@ void UninitItem(void)
 
 	// ブーメランの終了処理
 	boom.UninitITboom();
+
+	// ハンマーの終了処理
+	hamr.UninitITHamr();
 
 }
 
@@ -180,6 +193,11 @@ void UpdateItem(void)
 	// ブーメランの更新処理
 	boom.UpdateITboom();
 
+	// ハンマーの更新処理
+	hamr.UpdateITHamr();
+
+
+
 
 }
 
@@ -193,6 +211,9 @@ void DrawItem(void)
 
 	// ブーメランの描画処理
 	boom.DrawITboom();
+
+	// ハンマーの描画処理
+	hamr.DrawITHamr();
 
 	for (int i = 0; i < 10; i++)
 	{
@@ -315,6 +336,48 @@ void CheckHitItem(void)
 				}
 			}
 		}
+	}
+
+	// ハンマー
+	if (bool use = hamr.IsUsedITHamr())
+	{
+		BOOL pick = hamr.IsPickedITHamr();
+		XMFLOAT3 test_pos;
+
+		if (pick)
+		{
+			test_pos = hamr.GetHeadWorldPosition();  // <-- This MUST be here
+		}
+		else
+		{
+			test_pos = hamr.GetPositionITHamr();
+		}
+
+
+		for (int i = 0; i < MAX_PLAYER; i++)
+		{
+
+			if (CollisionBC(player[i].pos, test_pos, player[i].size, HAMR_SIZE))
+			{
+				if (!hamr.IsPickedITHamr())
+				{
+					hamr.PickITHamr(i);
+				}
+				else
+				{
+					// Hammer is being held: hit, but do NOT give it to the player hit
+					hamr.HitITHamr(i);
+				}
+			}
+		}
+
+
+
+		// This will draw the sphere at the swinging head position
+		DrawDebugSphereOutline(test_pos, HAMR_SIZE, XMFLOAT4(1, 0.5f, 0, 1));
+
+		DebugLine_Render(GetCameraViewProjMatrix());
+
 	}
 
 }

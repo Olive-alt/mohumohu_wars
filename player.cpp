@@ -369,6 +369,15 @@ void UpdatePlayer(void)
 		g_Player[i].capsuleB.y = g_Player[i].pos.y + PLAYER_HEIGHT / 2.0f;
 		g_Player[i].capsuleB.z = g_Player[i].pos.z;
 
+		// --- Squish reset logic ---
+		if (g_Player[i].squished) {
+			g_Player[i].squishTimer -= 1.0f / 60.0f; // assuming 60fps; use deltaTime if available
+			if (g_Player[i].squishTimer <= 0.0f) {
+				g_Player[i].scl = g_Player[i].originalScl;
+				g_Player[i].squished = false;
+			}
+		}
+
 
 #ifdef _DEBUG
 		PrintDebugProc(

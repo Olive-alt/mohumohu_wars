@@ -62,6 +62,10 @@ struct PLAYER
 	XMFLOAT3 capsuleA;  // カプセル下端
 	XMFLOAT3 capsuleB;  // カプセル上端
 
+	bool squished;
+	float squishTimer;
+	XMFLOAT3 originalScl;
+
 };
 
 

@@ -324,34 +324,42 @@ void DrawGame(void)
 
 	}
 #ifdef _DEBUG
-	// プレイヤー、プレイヤー２、エネミーのデバッグ用当たり判定球を描画
-	DrawDebugSphereOutline(GetPlayer(0)->pos, GetPlayer(0)->size, XMFLOAT4(1, 0, 0, 1));
+	//// プレイヤー、プレイヤー２、エネミーのデバッグ用当たり判定球を描画
+	//DrawDebugSphereOutline(GetPlayer(0)->pos, GetPlayer(0)->size, XMFLOAT4(1, 0, 0, 1));
 
 
-	DrawDebugCapsuleOutline(
-		GetPlayer(0)->capsuleA,
-		GetPlayer(0)->capsuleB,
-		GetPlayer(0)->size,
-		XMFLOAT4(1, 1, 1, 1), // color
-		20,  // slices (roundness)
-		4    // hemiRings (cap smoothness)
-	);
+	//DrawDebugCapsuleOutline(
+	//	GetPlayer(0)->capsuleA,
+	//	GetPlayer(0)->capsuleB,
+	//	GetPlayer(0)->size,
+	//	XMFLOAT4(1, 1, 1, 1), // color
+	//	20,  // slices (roundness)
+	//	4    // hemiRings (cap smoothness)
+	//);
 
 
 
-	DrawDebugSphereOutline(GetPlayer(1)->pos, GetPlayer(1)->size, XMFLOAT4(1, 0, 0, 1));
+	//DrawDebugSphereOutline(GetPlayer(1)->pos, GetPlayer(1)->size, XMFLOAT4(1, 0, 0, 1));
+	//ENEMY* enemy = GetEnemy();
+	//for (int i = 0; i < MAX_ENEMY; ++i) {
+	//	if (enemy[i].use)
+	//		DrawDebugSphereOutline(enemy[i].pos, enemy[i].size, XMFLOAT4(0, 0, 1, 1));
+	//}
 
-	// アイテムのデバッグ用当たり判定球を描画
 	//if (giant.IsUsedITgiant())
 	//	DrawDebugSphereOutline(giant.GetPositionITgiant(), GIANT_SIZE, XMFLOAT4(1, 1, 0, 1)); // Yellow
 
 
 	//DrawDebugSphereOutline(invisible.GetPositionITinvisible(), INVISIBLE_SIZE, XMFLOAT4(0, 1, 0, 1)); // Green
 
-	//if (ball.IsUsedITball())
-	//	DrawDebugSphereOutline(ball.GetPositionITball(), BALL_SIZE, XMFLOAT4(1, 1, 1, 1)); // White
+	if (GetHammer()->IsUsedITHamr())
+	{
+		XMFLOAT3 test_pos = GetHammer()->GetHeadWorldPosition();  // Always use this
+		DrawDebugSphereOutline(test_pos, HAMR_SIZE, XMFLOAT4(1, 0.5f, 0, 1)); // Orange
+	}
 
-	//DebugLine_Render(GetCameraViewProjMatrix());
+
+	DebugLine_Render(GetCameraViewProjMatrix());
 #endif
 }
 
