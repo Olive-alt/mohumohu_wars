@@ -387,8 +387,6 @@ void CheckHit(void)
 		}
 	}
 
-	// エネミーが全部死亡したら状態遷移
-	int enemy_count = 0;
 	for(int i=0;i<MAX_PLAYER;i++)
 	{
 		// エネミーが０匹？
