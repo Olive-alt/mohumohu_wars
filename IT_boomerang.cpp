@@ -10,7 +10,7 @@
 //*****************************************************************************
 // ƒ}ƒNƒ’è‹`
 //*****************************************************************************
-#define	MODEL_BOOM  	"data/MODEL/sphere.obj"			// “Ç‚Ýž‚Þƒ‚ƒfƒ‹–¼
+#define	MODEL_BOOM  	"data/MODEL/boomerang.obj"			// “Ç‚Ýž‚Þƒ‚ƒfƒ‹–¼
 
 #define	VALUE_MOVE		(10.0f)					// ˆÚ“®—Ê
 #define	VALUE_ROTATE	(XM_PI * 0.02f)			// ‰ñ“]—Ê
@@ -64,6 +64,10 @@ HRESULT BOOM::InitITboom(void)
 	boomerangArcRadius = 50.0f;   
 	boomerangSpeed = 1.5f;        
 	boomerangTime = 0.0f;
+
+	spinAngle = 0.0f;
+	spinSpeed = -XM_PI * 0.1f; 
+
 
 	MakeVertexITboomIcon();
 
@@ -134,6 +138,8 @@ void BOOM::UpdateITboom(void)
 		if (to_throw)
 		{
 			boomerangTime += boomerangSpeed * 0.032f;
+			spinAngle += spinSpeed; // This makes it spin as it flies
+			if (spinAngle > XM_2PI) spinAngle -= XM_2PI; // Keep it in range
 
 			PLAYER* player = GetPlayer(PlayerIndex);
 
@@ -312,9 +318,19 @@ void BOOM::DrawITboom(void)
 		mtxScl = XMMatrixScaling(scl.x, scl.y, scl.z);
 		mtxWorld = XMMatrixMultiply(mtxWorld, mtxScl);
 
-		// ‰ñ“]‚ð”½‰f
-		mtxRot = XMMatrixRotationRollPitchYaw(rot.x, rot.y, rot.z);
+		// Off-center spin around local axis
+		float offset = 3.0f; // Try 0.1 to 1.0, positive or negative. Tweak until it "feels" right
+
+		// Move to offset, spin, move back, then regular orientation
+		XMMATRIX mtxOffsetBack = XMMatrixTranslation(0.0f, 0.0f, -offset);
+		XMMATRIX mtxOffsetFwd = XMMatrixTranslation(0.0f, 0.0f, offset);
+
+		mtxRot = XMMatrixRotationRollPitchYaw(rot.x, rot.y, rot.z)
+			* mtxOffsetBack
+			* XMMatrixRotationY(spinAngle)
+			* mtxOffsetFwd;
 		mtxWorld = XMMatrixMultiply(mtxWorld, mtxRot);
+
 
 		// ˆÚ“®‚ð”½‰f
 		mtxTranslate = XMMatrixTranslation(pos.x, pos.y, pos.z);

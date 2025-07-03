@@ -55,6 +55,8 @@ private:
 	float boomerangTime;      // 現在の時間（0=開始, 1=終了）
 	float boomerangSpeed;     // ブーメランの速さ（調整用）
 
+	float spinAngle; // Radians
+	float spinSpeed; // Radians per frame (or per time)
 
 public:
 	HRESULT InitITboom(void);
