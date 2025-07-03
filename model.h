@@ -15,7 +15,7 @@
 
 // マテリアル構造体
 
-#define MODEL_MAX_MATERIAL		(16)		// １モデルのMaxマテリアル数
+#define MODEL_MAX_MATERIAL		(64)		// １モデルのMaxマテリアル数
 
 struct DX11_MODEL_MATERIAL
 {
