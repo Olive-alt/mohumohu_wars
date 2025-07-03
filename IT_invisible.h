@@ -26,6 +26,8 @@ private:
 	BOOL		invisibleUse;
 	int			invisibleTimer;
 	int			PlayerIndex;
+	BOOL		pick;
+
 public:
 	//WARPGATE(XMFLOAT3& init_pos) :  pos(init_pos) {}
 
@@ -39,5 +41,6 @@ public:
 	void PickITinvisible(int p_Index);
 
 	bool IsUsedITinvisible() const { return use; }
+	bool IsPickedITinvisible() const { return pick; }
 	XMFLOAT3 GetPositionITinvisible() const { return pos; }
 };

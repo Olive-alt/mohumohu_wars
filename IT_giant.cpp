@@ -31,12 +31,17 @@ DX11_MODEL	model;				// ƒ‚ƒfƒ‹î•ñ
 //=============================================================================
 // ‰Šú‰»ˆ—
 //=============================================================================
-GIANT::GIANT()
+
+HRESULT GIANT::InitITgiant(void)
 {
-	load = TRUE;
-	LoadModel(MODEL_GIANT, &model);
+	if (!load)
+	{
+		load = TRUE;
+		LoadModel(MODEL_GIANT, &model);
+	}
 
 	use = FALSE;
+	pick = FALSE;
 	pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	scl = XMFLOAT3(1.0f, 1.0f, 1.0f);
@@ -45,22 +50,6 @@ GIANT::GIANT()
 	giantUse = FALSE;
 	giantTimer = 0;
 	PlayerIndex = -1;
-}
-
-HRESULT GIANT::InitITgiant(void)
-{
-	load = TRUE;
-	LoadModel(MODEL_GIANT, &model);
-
-	//use = FALSE;
-	//pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	//rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	//scl = XMFLOAT3(1.0f, 1.0f, 1.0f);
-	//old_scl = XMFLOAT3(1.0f, 1.0f, 1.0f);
-
-	//giantUse = FALSE;
-	//giantTimer = 0;
-	//PlayerIndex = -1;
 
 	return S_OK;
 }
@@ -75,30 +64,27 @@ void GIANT::UninitITgiant(void)
 		UnloadModel(&model);
 		load = FALSE;
 	}
-	delete this;
 }
 
 void GIANT::UpdateITgiant(void)
 {
 	if (use)
 	{
-
-	}
-
-	if (giantUse)
-	{
-		giantTimer += 1;
-		PrintDebugProc("giantTimer %d\n", giantTimer);
-		if (giantTimer > GIANT_TIME)
+		if (giantUse)
 		{
-			FinishITgiant();
+			giantTimer += 1;
+			PrintDebugProc("giantTimer %d\n", giantTimer);
+			if (giantTimer > GIANT_TIME)
+			{
+				FinishITgiant();
+			}
 		}
 	}
 }
 
 void GIANT::DrawITgiant(void)
 {
-	if (!use)return;
+	if (!use || giantUse)return;
 
 	XMMATRIX mtxScl, mtxRot, mtxTranslate, mtxWorld, quatMatrix;
 
@@ -142,29 +128,31 @@ void GIANT::FinishITgiant(void)
 {
 	giantUse = FALSE;
 	use = FALSE;
+	pick = FALSE;
 	giantTimer = 0;
 	PLAYER* player = GetPlayer(PlayerIndex);
 	player->scl = old_scl;
 	player->size = old_size;
 	PlayerIndex = -1;
+	player->big = FALSE;
 }
 
 void GIANT::PickITgiant(int p_Index)
 {
 	PLAYER* player = GetPlayer(p_Index);
 
-	if (!giantUse)
+	if (!player->big)
 	{
 		old_scl = player->scl;
 		old_size = player->size;
 	}
 
 	giantUse = TRUE;
-	use = FALSE;
-
+	pick = TRUE;
+	player->big = TRUE;
 	PlayerIndex = p_Index;
 	player->scl.x *= GIANT_SCL_RATE;
 	player->scl.y *= GIANT_SCL_RATE;
 	player->scl.z *= GIANT_SCL_RATE;
-	player->size *= GIANT_SCL_RATE;
+	//player->size *= GIANT_SCL_RATE;
 }

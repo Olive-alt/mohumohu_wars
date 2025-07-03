@@ -25,10 +25,10 @@ private:
 	BOOL		giantUse = FALSE;
 	int			giantTimer;
 	int         PlayerIndex;
+	BOOL		pick;
 
 public:
 	//WARPGATE(XMFLOAT3& init_pos) :  pos(init_pos) {}
-	GIANT();
 	HRESULT InitITgiant(void);
 	void UninitITgiant(void);
 	void UpdateITgiant(void);
@@ -39,5 +39,6 @@ public:
 	void PickITgiant(int p_Index);
 
 	bool IsUsedITgiant() const { return use; }
+	bool IsPickedITgiant() const { return pick; }
 	XMFLOAT3 GetPositionITgiant() const { return pos; }
 };

@@ -33,6 +33,7 @@ HRESULT INVISIBLE::InitITinvisible(void)
 	LoadModel(MODEL_INVISIBLE, &model);
 
 	use = FALSE;
+	pick = FALSE;
 	pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	scl = XMFLOAT3(1.0f, 1.0f, 1.0f);
@@ -57,25 +58,41 @@ void INVISIBLE::UninitITinvisible(void)
 
 void INVISIBLE::UpdateITinvisible(void)
 {
-	if (use)
+	if (GetKeyboardPress(DIK_0))
 	{
+		PLAYER* player = GetPlayer(0);
 
-	}
-
-	if (invisibleUse)
-	{
-		invisibleTimer += 1;
-		//PrintDebugProc("invisibleTimer %d\n", invisibleTimer);
-		if (invisibleTimer > INVISIBLE_TIME)
+		for (int j = 0; j < player->model.SubsetNum; j++)
 		{
-			FinishITinvisible();
+			SetModelDiffuse(&player->model, j, old_diffuse[j]);
 		}
 	}
+
+
+
+	if (use)
+	{
+		if (invisibleUse)
+		{
+			invisibleTimer += 1;
+			PrintDebugProc("invisibleTimer %d\n", invisibleTimer);
+
+			if (invisibleTimer > INVISIBLE_TIME)
+			{
+				FinishITinvisible();
+			}
+		}
+	}
+	for (int j = 0; j < MODEL_MAX_MATERIAL; j++)
+	{
+		PrintDebugProc("old_col %d\n", old_diffuse[j]);
+	}
+
 }
 
 void INVISIBLE::DrawITinvisible(void)
 {
-	if (!use)return;
+	if (!use || invisibleUse)return;
 
 	XMMATRIX mtxScl, mtxRot, mtxTranslate, mtxWorld, quatMatrix;
 
@@ -119,8 +136,10 @@ void INVISIBLE::FinishITinvisible(void)
 {
 	invisibleUse = FALSE;
 	use = FALSE;
+	pick = FALSE;
 	invisibleTimer = 0;
 	PLAYER* player = GetPlayer(PlayerIndex);
+	player->invisible = FALSE;
 
 	for (int j = 0; j < player->model.SubsetNum; j++)
 	{
@@ -132,12 +151,17 @@ void INVISIBLE::FinishITinvisible(void)
 void INVISIBLE::PickITinvisible(int p_Index)
 {
 	invisibleUse = TRUE;
-	use = FALSE;
+	pick = TRUE;
 	PLAYER* player = GetPlayer(p_Index);
-	GetModelDiffuse(&player->model, &old_diffuse[0]);
 	PlayerIndex = p_Index;
-	for (int j = 0; j < player->model.SubsetNum; j++)
+
+	if (!player->invisible)
 	{
-		SetModelDiffuse(&player->model, j, XMFLOAT4(1.0f, 1.0f, 1.0f, 0.0f));
+		player->invisible = TRUE;
+		GetModelDiffuse(&player->model, &old_diffuse[0]);
+		for (int j = 0; j < player->model.SubsetNum; j++)
+		{
+			SetModelDiffuse(&player->model, j, XMFLOAT4(1.0f, 1.0f, 1.0f, 0.0f));
+		}
 	}
 }

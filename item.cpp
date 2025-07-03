@@ -28,8 +28,7 @@
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
-//ステージギミック用
-//アイテム用
+#define ITEM_MAX	(10)
 
 
 //*****************************************************************************
@@ -48,16 +47,17 @@ static BOOL	g_bPause = TRUE;	// ポーズON/OFF
 
 
 //アイテム用
-GIANT* giant[10] = { nullptr };
-int giantMax = 10;
-int giantCnt = 0;
+//アイテム用
+GIANT giant[ITEM_MAX];
 
-INVISIBLE invisible;
-BALL ball;
+INVISIBLE invisible[1];
+
+BALL ball[ITEM_MAX];
 BALL* GetBall()  // アクセス用の関数を作成
 {
-	return &ball;
+	return &ball[0];
 }
+
 BOOM boom;  // ブーメランのインスタンスを作成
 BOOM* GetBoomerang()  // アクセス用の関数を作成
 {
@@ -77,23 +77,23 @@ HRESULT InitItem(void)
 {
 	g_ViewPortType_Game = TYPE_FULL_SCREEN;
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < ITEM_MAX; i++)
 	{
-		if (!giant[i]) continue;
-
 		//巨大化アイテムの初期化
-		giant[i]->InitITgiant();
+		giant[i].InitITgiant();
 	}
 
+	for (int i = 0; i < 1; i++)
+	{
+		//透明化アイテムの初期化
+		invisible[i].InitITinvisible();
+	}
 
-
-	//透明化アイテムの初期化
-	invisible.InitITinvisible();
-	invisible.SetITinvisible(XMFLOAT3(200.0f, 0.0f, 100.0f));
-
-	//ボールアイテムの初期化
-	ball.InitITball();
-	ball.SetITballObject(XMFLOAT3(-100.0f, 0.0f, -100.0f));
+	for (int i = 0; i < ITEM_MAX; i++)
+	{
+		//ボールアイテムの初期化
+		ball[i].InitITball();
+	}
 
 	// ブーメランの初期化
 	boom.InitITboom();
@@ -113,19 +113,23 @@ HRESULT InitItem(void)
 //=============================================================================
 void UninitItem(void)
 {
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < ITEM_MAX; i++)
 	{
-		if (!giant[i]) continue;
 		// 巨大化アイテムの終了処理
-		giant[i]->UninitITgiant();
-		giant[i] = nullptr;
+		giant[i].UninitITgiant();
 	}
 
-	// 透明化アイテムの終了処理
-	invisible.UninitITinvisible();
+	for (int i = 0; i < 1; i++)
+	{
+		// 透明化アイテムの終了処理
+		invisible[i].UninitITinvisible();
+	}
 
-	//ボールアイテムの終了処理
-	ball.UninitITball();
+	for (int i = 0; i < ITEM_MAX; i++)
+	{
+		//ボールアイテムの終了処理
+		ball[i].UninitITball();
+	}
 
 	// ブーメランの終了処理
 	boom.UninitITboom();
@@ -152,19 +156,40 @@ void UpdateItem(void)
 		g_bPause = g_bPause ? FALSE : TRUE;
 	}
 
-	if (GetKeyboardTrigger(DIK_K))
+	if (GetKeyboardTrigger(DIK_6))
 	{
 		for (int i = 0; i < 10; i++)
 		{
-			if (giant[i]) continue;
-
-			giant[i] = new GIANT;
-			giant[i]->InitITgiant();
-			giant[i]->SetITgiant(XMFLOAT3(100.0f, 0.0f, 100.0f));
-
-			if (giant[i])break;
+			if (!giant[i].IsUsedITgiant())
+			{
+				giant[i].SetITgiant(XMFLOAT3(100.0f, 0.0f, 100.0f));
+				break;
+			}
 		}
+	}
 
+	if (GetKeyboardTrigger(DIK_7))
+	{
+		for (int i = 0; i < 1; i++)
+		{
+			if (!invisible[i].IsUsedITinvisible())
+			{
+				invisible[i].SetITinvisible(XMFLOAT3(200.0f, 0.0f, 100.0f));
+				break;
+			}
+		}
+	}
+
+	if (GetKeyboardTrigger(DIK_8))
+	{
+		for (int i = 0; i < 10; i++)
+		{
+			if (!ball[i].IsUsedITball())
+			{
+				ball[i].SetITballObject(XMFLOAT3(-100.0f, 0.0f, -100.0f));
+				break;
+			}
+		}
 	}
 
 #endif
@@ -175,20 +200,23 @@ void UpdateItem(void)
 	// 当たり判定処理
 	CheckHitItem();
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < ITEM_MAX; i++)
 	{
-		if (!giant[i]) continue;
-
 		// 巨大化アイテムの更新処理
-		giant[i]->UpdateITgiant();
+		giant[i].UpdateITgiant();
 	}
 
+	for (int i = 0; i < 1; i++)
+	{
+		// 透明化アイテムの更新処理
+		invisible[i].UpdateITinvisible();
+	}
 
-	// 透明化アイテムの更新処理
-	invisible.UpdateITinvisible();
-
-	// ボールアイテムの更新処理
-	ball.UpdateITball();
+	for (int i = 0; i < ITEM_MAX; i++)
+	{
+		// ボールアイテムの更新処理
+		ball[i].UpdateITball();
+	}
 
 	// ブーメランの更新処理
 	boom.UpdateITboom();
@@ -206,8 +234,11 @@ void UpdateItem(void)
 //=============================================================================
 void DrawItem(void)
 {
-	// ボールアイテムの描画処理
-	ball.DrawITball();
+	for (int i = 0; i < ITEM_MAX; i++)
+	{
+		// ボールアイテムの描画処理
+		ball[i].DrawITball();
+	}
 
 	// ブーメランの描画処理
 	boom.DrawITboom();
@@ -215,15 +246,17 @@ void DrawItem(void)
 	// ハンマーの描画処理
 	hamr.DrawITHamr();
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < ITEM_MAX; i++)
 	{
-		if (!giant[i]) continue;
-
 		// 巨大化アイテムの描画処理
-		giant[i]->DrawITgiant();
+		giant[i].DrawITgiant();
 	}
-	// 透明化アイテムの描画処理
-	invisible.DrawITinvisible();
+
+	for (int i = 0; i < 1; i++)
+	{
+		// 透明化アイテムの描画処理
+		invisible[i].DrawITinvisible();
+	}
 
 	// 2Dの物を描画する処理
 	// Z比較なし
@@ -248,63 +281,67 @@ void CheckHitItem(void)
 {
 	PLAYER* player = GetPlayer(); // プレイヤー1 (index=0)
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < ITEM_MAX; i++)
 	{
-		if (!giant[i]) continue;
-
 		// 巨大化アイテム
-		if (bool use = giant[i]->IsUsedITgiant())
+		if (giant[i].IsUsedITgiant() && !giant[i].IsPickedITgiant())
 		{
-			XMFLOAT3 gi_pos = giant[i]->GetPositionITgiant();
+			XMFLOAT3 gi_pos = giant[i].GetPositionITgiant();
 			for (int j = 0; j < MAX_PLAYER; j++)
 			{
 				if (CollisionBC(player[j].pos, gi_pos, player[j].size, GIANT_SIZE))
 				{
-					giant[i]->PickITgiant(j);
+					giant[i].PickITgiant(j);
 				}
 			}
 		}
 	}
 
-
-	//透明化
-	if (bool use = invisible.IsUsedITinvisible())
+	for (int i = 0; i < 1
+		; i++)
 	{
-		XMFLOAT3 invi_pos = invisible.GetPositionITinvisible();
-
-		for (int i = 0; i < MAX_PLAYER; i++)
+		//透明化
+		if (invisible[i].IsUsedITinvisible() && !invisible[i].IsPickedITinvisible())
 		{
-			if (CollisionBC(player[i].pos, invi_pos, player[i].size, INVISIBLE_SIZE))
+			XMFLOAT3 invi_pos = invisible[i].GetPositionITinvisible();
+
+			for (int j = 0; j < MAX_PLAYER; j++)
 			{
-				invisible.PickITinvisible(i);
+				if (CollisionBC(player[j].pos, invi_pos, player[j].size, INVISIBLE_SIZE))
+				{
+					invisible[i].PickITinvisible(j);
+				}
 			}
 		}
 	}
 
-	//ボール
-	if (bool use = ball.IsUsedITball())
+	for (int i = 0; i < ITEM_MAX; i++)
 	{
-		XMFLOAT3 ball_pos = ball.GetPositionITball();
-		BOOL pick = ball.IsPickedITball();
-		BOOL to_throw = ball.IsThrewITball();
-
-		if (!pick && !to_throw)
+		//ボール
+		if (bool use = ball[i].IsUsedITball())
 		{
-			for (int i = 0; i < MAX_PLAYER; i++)
+			XMFLOAT3 ball_pos = ball[i].GetPositionITball();
+			BOOL pick = ball[i].IsPickedITball();
+			BOOL to_throw = ball[i].IsThrewITball();
+
+			if (!pick && !to_throw)
 			{
-				if (CollisionBC(player[i].pos, ball_pos, player[i].size, BALL_SIZE))
+				for (int j = 0; j < MAX_PLAYER; j++)
 				{
-					ball.PickITball(i);
+					if (CollisionBC(player[j].pos, ball_pos, player[j].size, BALL_SIZE) && !player[j].haveWeapon)
+					{
+						ball[i].PickITball(j);
+					}
 				}
 			}
-		}
-		else if (to_throw)
-		{
-			for (int i = 0; i < MAX_PLAYER; i++)
+			else if (to_throw && !pick)
 			{
-				if (CollisionBC(player[i].pos, ball_pos, player[i].size, BALL_SIZE))
+				for (int j = 0; j < MAX_PLAYER; j++)
 				{
-					ball.HitITball(i);
+					if (CollisionBC(player[j].pos, ball_pos, player[j].size, BALL_SIZE))
+					{
+						ball[i].HitITball(j);
+					}
 				}
 			}
 		}

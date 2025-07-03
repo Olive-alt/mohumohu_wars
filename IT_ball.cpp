@@ -127,9 +127,8 @@ void BALL::UpdateITball(void)
 	{
 		if (!load) return;
 
-		if (to_throw)
+		if (to_throw && !pick)
 		{
-
 			count += 1;    // ŽžŠÔ‚ði‚ß‚Ä‚¢‚é
 
 			pos.x -= sinf(rot.y) * move.x;
@@ -143,6 +142,8 @@ void BALL::UpdateITball(void)
 				|| pos.z > MAP_TOP)
 			{
 				use = FALSE;
+				pick = FALSE;
+				to_throw = FALSE;
 				//ReleaseShadow(shadowIdx);
 			}
 		}
@@ -290,6 +291,9 @@ void BALL::DrawITball(void)
 void BALL::SetITballObject(XMFLOAT3 set_pos)
 {
 	use = TRUE;
+	pick = FALSE;
+	to_throw = FALSE;
+
 	pos = set_pos;
 }
 
@@ -317,10 +321,10 @@ void BALL::HitITball(int p_Index)
 
 void BALL::PickITball(int p_Index)
 {
-	pick = TRUE;
 	PLAYER* player = GetPlayer(p_Index);
-
 	if (player->haveWeapon)return;
+
+	pick = TRUE;
 
 	player->haveWeapon = TRUE;
 	PlayerIndex = p_Index;

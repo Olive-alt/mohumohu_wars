@@ -38,6 +38,11 @@ struct PLAYER
 	BOOL				gateUse;
 	int					gateCoolTime;
 
+	//巨大化用
+	BOOL				big;
+	//透明化用
+	BOOL				invisible;
+
 	//武器重複防止用
 	BOOL haveWeapon;
 
