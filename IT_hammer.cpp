@@ -316,10 +316,10 @@ void HAMR::HitITHamr(int p_Index)
 
 void HAMR::PickITHamr(int p_Index)
 {
-	pick = TRUE;
 	PLAYER* player = GetPlayer(p_Index);
-
 	if (player->haveWeapon)return;
+
+	pick = TRUE;
 
 	player->haveWeapon = TRUE;
 	PlayerIndex = p_Index;

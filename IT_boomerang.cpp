@@ -436,11 +436,10 @@ void BOOM::HitITboom(int p_Index)
 
 void BOOM::PickITboom(int p_Index)
 {
-	pick = TRUE;
 	PLAYER* player = GetPlayer(p_Index);
-
 	if (player->haveWeapon) return; 
 
+	pick = TRUE;
 	player->haveWeapon = TRUE;
 	PlayerIndex = p_Index;
 	pos.x = player->pos.x - sin(XM_PI) * 1.0f;
