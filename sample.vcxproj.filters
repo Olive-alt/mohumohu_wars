@@ -13,6 +13,18 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
+    <Filter Include="ソース ファイル\ITEM">
+      <UniqueIdentifier>{af948ca6-2e5b-41e6-8566-c8154d28c3c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\STAGE_GIMMICK">
+      <UniqueIdentifier>{57152aca-e74d-40e6-815a-68c9fdba3be5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\ITEM">
+      <UniqueIdentifier>{0cd59aac-ce7d-4dbb-a219-187f637c1996}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\STAGE_GIMMICK">
+      <UniqueIdentifier>{ba31c511-53b9-4f63-a899-a88ccb894f02}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="input.h">
@@ -72,22 +84,7 @@
     <ClInclude Include="light.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="SG_wind.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="SG_warpgate.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="IT_giant.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="IT_invisible.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="player_select.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="IT_ball.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="stage_select.h">
@@ -96,13 +93,7 @@
     <ClInclude Include="debugline.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="item.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="newresult.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="IT_boomerang.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="podium.h">
@@ -111,8 +102,29 @@
     <ClInclude Include="..\0701_text\mode_select.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="IT_ball.h">
+      <Filter>ヘッダー ファイル\ITEM</Filter>
+    </ClInclude>
+    <ClInclude Include="IT_boomerang.h">
+      <Filter>ヘッダー ファイル\ITEM</Filter>
+    </ClInclude>
+    <ClInclude Include="IT_giant.h">
+      <Filter>ヘッダー ファイル\ITEM</Filter>
+    </ClInclude>
     <ClInclude Include="IT_hammer.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>ヘッダー ファイル\ITEM</Filter>
+    </ClInclude>
+    <ClInclude Include="IT_invisible.h">
+      <Filter>ヘッダー ファイル\ITEM</Filter>
+    </ClInclude>
+    <ClInclude Include="item.h">
+      <Filter>ヘッダー ファイル\ITEM</Filter>
+    </ClInclude>
+    <ClInclude Include="SG_warpgate.h">
+      <Filter>ヘッダー ファイル\STAGE_GIMMICK</Filter>
+    </ClInclude>
+    <ClInclude Include="SG_wind.h">
+      <Filter>ヘッダー ファイル\STAGE_GIMMICK</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -173,22 +185,7 @@
     <ClCompile Include="light.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="SG_wind.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="SG_warpgate.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="IT_giant.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="IT_invisible.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="player_select.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="IT_ball.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="stage_select.cpp">
@@ -197,13 +194,7 @@
     <ClCompile Include="debugline.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="item.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="newresult.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="IT_boomerang.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="podium.cpp">
@@ -212,8 +203,29 @@
     <ClCompile Include="mode_select.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="IT_ball.cpp">
+      <Filter>ソース ファイル\ITEM</Filter>
+    </ClCompile>
+    <ClCompile Include="IT_boomerang.cpp">
+      <Filter>ソース ファイル\ITEM</Filter>
+    </ClCompile>
+    <ClCompile Include="IT_giant.cpp">
+      <Filter>ソース ファイル\ITEM</Filter>
+    </ClCompile>
     <ClCompile Include="IT_hammer.cpp">
-      <Filter>ソース ファイル</Filter>
+      <Filter>ソース ファイル\ITEM</Filter>
+    </ClCompile>
+    <ClCompile Include="IT_invisible.cpp">
+      <Filter>ソース ファイル\ITEM</Filter>
+    </ClCompile>
+    <ClCompile Include="item.cpp">
+      <Filter>ソース ファイル\ITEM</Filter>
+    </ClCompile>
+    <ClCompile Include="SG_warpgate.cpp">
+      <Filter>ソース ファイル\STAGE_GIMMICK</Filter>
+    </ClCompile>
+    <ClCompile Include="SG_wind.cpp">
+      <Filter>ソース ファイル\STAGE_GIMMICK</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

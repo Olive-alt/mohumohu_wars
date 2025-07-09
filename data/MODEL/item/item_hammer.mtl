@@ -1,0 +1,48 @@
+newmtl HAMMER:CircleSG1
+illum 4
+Kd 0.90 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.23 0.00 0.00
+Ns 23.00
+newmtl HAMMER:CylinderSG
+illum 4
+Kd 0.80 0.78 0.65
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.20 0.19 0.16
+Ns 23.00
+newmtl HAMMER:CylinderSG1
+illum 4
+Kd 0.02 0.02 0.02
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.00 0.00 0.00
+Ns 23.00
+newmtl item_bomb:CircleSG
+illum 4
+Kd 0.80 0.80 0.80
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.20 0.20 0.20
+Ns 34.00
+newmtl item_bomb:CircleSG2
+illum 4
+Kd 0.90 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.23 0.00 0.00
+Ns 23.00
+newmtl item_bomb:CircleSG4
+illum 4
+Kd 0.09 0.09 0.09
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.02 0.02 0.02
+Ns 23.00

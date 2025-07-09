@@ -9,7 +9,7 @@
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
-#define	MODEL_INVISIBLE	"data/MODEL/sphere.obj"			// 読み込むモデル名
+#define	MODEL_INVISIBLE	"data/MODEL/item/item_hide.obj"			// 読み込むモデル名
 
 #define INVISIBLE_TIME			(600.0f)							// 巨大化の時間
 
