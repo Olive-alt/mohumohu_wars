@@ -28,7 +28,8 @@
 #include "SG_warpgate.h"
 //アイテム用
 #include "item.h"
-
+//タイム用
+#include "time.h"
 //デバッグ表示
 #include "debugline.h"
 
@@ -98,6 +99,9 @@ HRESULT InitGame(void)
 	// スコアの初期化
 	InitScore();
 
+	// タイムの初期化
+	InitTime();
+
 	//// パーティクルの初期化
 	//InitParticle();
 
@@ -132,6 +136,9 @@ void UninitGame(void)
 	// スコアの終了処理
 	UninitScore();
 
+	// タイムの終了処理
+	UninitTime();
+
 	// 壁の終了処理
 	UninitMeshWall();
 
@@ -163,6 +170,8 @@ void UninitGame(void)
 //=============================================================================
 void UpdateGame(void)
 {
+	UpdateDeltaTime(); // ← 最初に呼ぶ
+
 #ifdef _DEBUG
 	if (GetKeyboardTrigger(DIK_V))
 	{
@@ -207,6 +216,9 @@ void UpdateGame(void)
 
 	// スコアの更新処理
 	UpdateScore();
+
+	// タイムの更新処理
+	UpdateTime();
 
 	// 風の更新処理
 	wind.UpdateSGwind();
@@ -261,6 +273,8 @@ void DrawGame0(void)
 	// スコアの描画処理
 	DrawScore();
 
+	// タイムの描画処理
+	DrawTime();
 
 	// ライティングを有効に
 	SetLightEnable(TRUE);

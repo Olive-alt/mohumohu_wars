@@ -170,6 +170,7 @@
     <ClInclude Include="sprite.h" />
     <ClInclude Include="SG_wind.h" />
     <ClInclude Include="stage_select.h" />
+    <ClInclude Include="time.h" />
     <ClInclude Include="title.h" />
   </ItemGroup>
   <ItemGroup>
@@ -205,6 +206,7 @@
     <ClCompile Include="sprite.cpp" />
     <ClCompile Include="SG_wind.cpp" />
     <ClCompile Include="stage_select.cpp" />
+    <ClCompile Include="time.cpp" />
     <ClCompile Include="title.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
