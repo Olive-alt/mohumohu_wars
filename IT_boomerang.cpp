@@ -439,12 +439,25 @@ void BOOM::HitITboom(int p_Index)
 	// 自分自身に当たるのを防ぐ
 	if (p_Index == PlayerIndex) return;
 
+	// ノックバック方向を計算（ボールと同じように）
+	XMFLOAT3 hitDir;
+	hitDir.x = GetPlayer(p_Index)->pos.x - pos.x;
+	hitDir.y = 0.0f;
+	hitDir.z = GetPlayer(p_Index)->pos.z - pos.z;
+	float len = sqrtf(hitDir.x * hitDir.x + hitDir.z * hitDir.z);
+	if (len > 0.001f) {
+		hitDir.x /= len;
+		hitDir.z /= len;
+	}
+	else {
+		hitDir.x = 1.0f; hitDir.z = 0.0f;
+	}
+
+	// プレイヤーを吹っ飛ばす
+	OnPlayerHit(p_Index, hitDir);
+
 	// 当たったプレイヤーから武器を外す
 	GetPlayer(p_Index)->haveWeapon = FALSE;
-
-	// 当たったプレイヤーを消す（無効化）
-	GetPlayer(p_Index)->use = FALSE;
-
 }
 
 

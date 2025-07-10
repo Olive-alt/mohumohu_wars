@@ -310,12 +310,30 @@ void BALL::SetITball(XMFLOAT3 set_pos, XMFLOAT3 p_rot)
 
 void BALL::HitITball(int p_Index)
 {
-	if (p_Index == PlayerIndex)return;
+	if (p_Index == PlayerIndex) return;
 
 	use = FALSE;
 	to_throw = FALSE;
+
 	PLAYER* player = GetPlayer(p_Index);
-	player->use = FALSE;
+	// player->use = FALSE; // ←これをやめる
+
+	// ---- 追加：hitDirection計算とOnPlayerHit呼び出し ----
+	XMFLOAT3 hitDir;
+	// 「ボール → プレイヤー」の方向に吹っ飛ばしたいならこう
+	hitDir.x = player->pos.x - pos.x;
+	hitDir.y = 0.0f; // 地面方向だけ
+	hitDir.z = player->pos.z - pos.z;
+	float len = sqrtf(hitDir.x * hitDir.x + hitDir.z * hitDir.z);
+	if (len > 0.001f) {
+		hitDir.x /= len;
+		hitDir.z /= len;
+	}
+	else {
+		hitDir.x = 1.0f; hitDir.z = 0.0f;
+	}
+	OnPlayerHit(p_Index, hitDir);
+
 	PlayerIndex = -1;
 }
 

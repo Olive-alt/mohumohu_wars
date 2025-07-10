@@ -18,6 +18,7 @@
 #include <d3dcompiler.h>
 
 #include <DirectXMath.h>
+#include <random>
 
 
 // –{—ˆ‚Íƒwƒbƒ_‚É‘‚©‚È‚¢•û‚ª—Ç‚¢
@@ -92,3 +93,5 @@ void SetMode(int mode);
 int GetMode(void);
 
 
+int GetRand(int min, int max);
+float GetRandf(float min, float max);

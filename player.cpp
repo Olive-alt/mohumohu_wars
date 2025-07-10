@@ -18,24 +18,26 @@
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
-#define	MODEL_PLAYER		"data/MODEL/cone.obj"			// 読み込むモデル名
-#define	MODEL_PLAYER_LEFT	"data/MODEL/torus.obj"			// 読み込むモデル名
-#define	MODEL_PLAYER_RIGHT	"data/MODEL/torus.obj"			// 読み込むモデル名
 
-#define	VALUE_MOVE			(2.0f)							// 移動量
+#define	VALUE_MOVE			(1.0f)							// 移動量
 #define	VALUE_ROTATE		(D3DX_PI * 0.02f)				// 回転量
 
 #define PLAYER_SHADOW_SIZE	(0.4f)							// 影の大きさ
-#define PLAYER_OFFSET_Y		(7.0f)							// プレイヤーの足元をあわせる
-
-#define PLAYER_PARTS_MAX	(2)								// プレイヤーのパーツの数
+#define PLAYER_OFFSET_Y		(14.0f)							// プレイヤーの足元をあわせる
 
 
+#define	MODEL_PLAYER_HEAD			"data/MODEL/character/model_bird/cha_bird_head.obj"				// 頭
+#define	MODEL_PLAYER				"data/MODEL/character/model_bird/cha_bird_body.obj"				// ボディー（本体）
+#define	MODEL_PLAYER_L_ARM			"data/MODEL/character/model_bird/cha_bird_leftarm.obj"			// (左)手
+#define	MODEL_PLAYER_R_ARM			"data/MODEL/character/model_bird/cha_bird_rightarm.obj"			// (右)手
+#define	MODEL_PLAYER_L_LEG			"data/MODEL/character/model_bird/cha_bird_leftleg.obj"	// (左)股関節
+#define	MODEL_PLAYER_R_LEG			"data/MODEL/character/model_bird/cha_bird_rightleg.obj"	// (左)股関節
 
 // 
 //*****************************************************************************
 // プロトタイプ宣言
-//*****************************************************************************
+//***********************************************************************
+// ******
 
 
 //*****************************************************************************
@@ -48,9 +50,17 @@ static PLAYER		g_Parts[MAX_PLAYER][PLAYER_PARTS_MAX];		// プレイヤーのパ�
 static float		roty = 0.0f;
 
 static LIGHT		g_Light;
+static float noiseTable[MAX_PLAYER][PLAYER_PARTS_MAX] = { 0 };
+
+extern unsigned int dwFrameCount;
 
 //HP初期化
 static ID3D11Buffer* g_PlayerHpBarVertexBuffer = NULL; // Bar vertex buffer
+
+// 状態管理の実体（初期化もしておく）
+PLAYER_STATE g_PlayerState[MAX_PLAYER] = { PLAYER_NORMAL };
+int g_PlayerAnimTimer[MAX_PLAYER] = { 0 };
+XMFLOAT3 g_PlayerKnockback[MAX_PLAYER] = { XMFLOAT3(0,0,0) };
 
 //HP初期化
 void InitPlayerHpBarVertexBuffer() {
@@ -82,26 +92,55 @@ void InitPlayerHpBarVertexBuffer() {
 
 // プレイヤーの階層アニメーションデータ
 
+static DX11_MODEL g_SharedModels[PLAYER_PARTS_MAX];
 
-// プレイヤーの頭を左右に動かしているアニメデータ
-static INTERPOLATION_DATA move_tbl_left[] = {	// pos, rot, scl, frame
-	{ XMFLOAT3(-20.0f, 10.0f, 0.0f), XMFLOAT3(XM_PI / 2, 0.0f, 0.0f), XMFLOAT3(1.0f, 1.0f, 1.0f), 240 },
-	{ XMFLOAT3(-20.0f, 10.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f),      XMFLOAT3(1.0f, 1.0f, 1.0f), 120 },
+static INTERPOLATION_DATA walk_move_tbl_head[] =
+{	// pos,							rot,							 scl,						 frame
+	{ XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f),      XMFLOAT3(1.0f, 1.0f, 1.0f), 30 },
+	{ XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f),      XMFLOAT3(1.0f, 1.0f, 1.0f), 30 },
 
 };
 
 
-static INTERPOLATION_DATA move_tbl_right[] = {	// pos, rot, scl, frame
-	{ XMFLOAT3(20.0f, 10.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f),      XMFLOAT3(1.0f, 1.0f, 1.0f), 120 },
-	{ XMFLOAT3(20.0f, 10.0f, 0.0f), XMFLOAT3(XM_PI / 2, 0.0f, 0.0f),   XMFLOAT3(1.0f, 1.0f, 1.0f), 240 },
+static INTERPOLATION_DATA walk_move_tbl_l_arm[] =
+{	// pos,							rot,										 scl,						 frame
+	{ XMFLOAT3(-4.0f, 1.0f, 0.0f), XMFLOAT3(XM_PI / 3, 0.0f, -XM_PI / 2),	XMFLOAT3(1.0f, 1.0f, 1.0f), 20 },
+	{ XMFLOAT3(-4.0f, 1.0f, 0.0f), XMFLOAT3(-XM_PI / 3, 0.0f, -XM_PI / 2),	XMFLOAT3(1.0f, 1.0f, 1.0f), 20 },
+
+};
+
+
+static INTERPOLATION_DATA walk_move_tbl_r_arm[] =
+{	// pos,							rot,							 scl,						 frame
+	{ XMFLOAT3(4.0f, 1.0f, 0.0f), XMFLOAT3(-XM_PI / 3, 0.0f, XM_PI / 2),	XMFLOAT3(1.0f, 1.0f, 1.0f), 20 },
+	{ XMFLOAT3(4.0f, 1.0f, 0.0f), XMFLOAT3(XM_PI / 3, 0.0f, XM_PI / 2),	XMFLOAT3(1.0f, 1.0f, 1.0f), 20 },
+
+};
+
+
+static INTERPOLATION_DATA walk_move_tbl_l_leg[] =
+{	// pos,							rot,							 scl,						 frame
+	{ XMFLOAT3(2.0f, -5.0f, 0.0f), XMFLOAT3(-XM_PI / 3, 0.0f, 0.0f),      XMFLOAT3(1.0f, 1.0f, 1.0f), 20 },
+	{ XMFLOAT3(2.0f, -5.0f, 0.0f), XMFLOAT3(XM_PI / 3, 0.0f, 0.0f),      XMFLOAT3(1.0f, 1.0f, 1.0f), 20 },
+
+};
+
+
+static INTERPOLATION_DATA walk_move_tbl_r_leg[] =
+{	// pos,							rot,							 scl,						 frame
+	{ XMFLOAT3(-2.0f, -5.0f, 0.0f), XMFLOAT3(XM_PI / 3, 0.0f, 0.0f),      XMFLOAT3(1.0f, 1.0f, 1.0f), 20 },
+	{ XMFLOAT3(-2.0f, -5.0f, 0.0f), XMFLOAT3(-XM_PI / 3, 0.0f, 0.0f),      XMFLOAT3(1.0f, 1.0f, 1.0f), 20 },
 
 };
 
 
 static INTERPOLATION_DATA* g_MoveTblAdr[] =
 {
-	move_tbl_left,
-	move_tbl_right,
+	walk_move_tbl_head,
+	walk_move_tbl_l_arm,
+	walk_move_tbl_r_arm,
+	walk_move_tbl_l_leg,
+	walk_move_tbl_r_leg,
 
 };
 
@@ -115,14 +154,21 @@ static INTERPOLATION_DATA* g_MoveTblAdr[] =
 //=============================================================================
 HRESULT InitPlayer(void)
 {
+	// モデルを一度だけロード
+	LoadModel(MODEL_PLAYER_HEAD, &g_SharedModels[0]);         // 頭
+	LoadModel(MODEL_PLAYER_L_ARM, &g_SharedModels[1]);        // 左腕
+	LoadModel(MODEL_PLAYER_R_ARM, &g_SharedModels[2]);        // 右腕
+	LoadModel(MODEL_PLAYER_L_LEG, &g_SharedModels[3]);       // 左腿
+	LoadModel(MODEL_PLAYER_R_LEG, &g_SharedModels[4]);       // 右腿
+
 	for (int i = 0; i < MAX_PLAYER; i++)
 	{
 		g_Player[i].load = TRUE;
 		LoadModel(MODEL_PLAYER, &g_Player[i].model);
 
-		g_Player[i].pos = XMFLOAT3(-10.0f, PLAYER_OFFSET_Y + 50.0f, -50.0f);
+		g_Player[i].pos = XMFLOAT3(-10.0f, PLAYER_OFFSET_Y+100.0f, -50.0f);
 		g_Player[i].rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
-		g_Player[i].scl = XMFLOAT3(1.0f, 1.0f, 1.0f);
+		g_Player[i].scl = XMFLOAT3(2.0f, 2.0f, 2.0f);
 
 		g_Player[i].spd = 0.0f;			// 移動スピードクリア
 		g_Player[i].hp = 3.0f;
@@ -145,8 +191,6 @@ HRESULT InitPlayer(void)
 
 		g_Player[i].gateUse = FALSE;
 		g_Player[i].gateCoolTime = 0;
-		g_Player[i].big = FALSE;
-		g_Player[i].invisible = FALSE;
 
 		// ここでプレイヤー用の影を作成している
 		XMFLOAT3 pos = g_Player[i].pos;
@@ -172,12 +216,16 @@ HRESULT InitPlayer(void)
 			// 位置・回転・スケールの初期設定
 			g_Parts[i][j].pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
 			g_Parts[i][j].rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
-			g_Parts[i][j].scl = XMFLOAT3(1.0f, 1.0f, 1.0f);
+			g_Parts[i][j].scl = XMFLOAT3(2.0f, 2.0f, 2.0f);
 
 			// 親子関係
-			g_Parts[i][j].parent = &g_Player[i];		// ← ここに親のアドレスを入れる
-			//	g_Parts[腕].parent= &g_Player[i];		// 腕だったら親は本体（プレイヤー）
-			//	g_Parts[手].parent= &g_Paerts[腕];	// 指が腕の子供だった場合の例
+			g_Parts[i][0].parent = &g_Player[i];		// 頭→ボディーにペアレント
+
+			g_Parts[i][1].parent = &g_Player[i];	// 指が腕の子供
+			g_Parts[i][2].parent = &g_Player[i];	// 指が腕の子供
+			g_Parts[i][3].parent = &g_Player[i];	// 指が腕の子供
+			g_Parts[i][4].parent = &g_Player[i];	// 指が腕の子供
+
 
 				// 階層アニメーション用のメンバー変数の初期化
 			g_Parts[i][j].time = 0.0f;			// 線形補間用のタイマーをクリア
@@ -190,28 +238,51 @@ HRESULT InitPlayer(void)
 	}
 
 	for (int i = 0; i < MAX_PLAYER; i++)
-
 	{
 		g_Parts[i][0].use = TRUE;
 		g_Parts[i][0].parent = &g_Player[i];	// 親をセット
 		g_Parts[i][0].tblNo = 0;			// 再生するアニメデータの先頭アドレスをセット
-		g_Parts[i][0].tblMax = sizeof(move_tbl_left) / sizeof(INTERPOLATION_DATA);	// 再生するアニメデータのレコード数をセット
+		g_Parts[i][0].tblMax = sizeof(walk_move_tbl_head) / sizeof(INTERPOLATION_DATA);	// 再生するアニメデータのレコード数をセット
 		g_Parts[i][0].load = TRUE;
-		LoadModel(MODEL_PLAYER_LEFT, &g_Parts[i][0].model);
+		g_Parts[i][0].model = g_SharedModels[0]; // 共有モデルを参照
+
 
 		g_Parts[i][1].use = TRUE;
 		g_Parts[i][1].parent = &g_Player[i];	// 親をセット
 		g_Parts[i][1].tblNo = 1;			// 再生するアニメデータの先頭アドレスをセット
-		g_Parts[i][1].tblMax = sizeof(move_tbl_right) / sizeof(INTERPOLATION_DATA);	// 再生するアニメデータのレコード数をセット
+		g_Parts[i][1].tblMax = sizeof(walk_move_tbl_l_arm) / sizeof(INTERPOLATION_DATA);	// 再生するアニメデータのレコード数をセット
 		g_Parts[i][1].load = TRUE;
-		LoadModel(MODEL_PLAYER_RIGHT, &g_Parts[i][1].model);
+		g_Parts[i][1].model = g_SharedModels[1]; // 共有モデルを参照
+
+		g_Parts[i][2].use = TRUE;
+		g_Parts[i][2].parent = &g_Player[i];	// 親をセット
+		g_Parts[i][2].tblNo = 2;			// 再生するアニメデータの先頭アドレスをセット
+		g_Parts[i][2].tblMax = sizeof(walk_move_tbl_r_arm) / sizeof(INTERPOLATION_DATA);	// 再生するアニメデータのレコード数をセット
+		g_Parts[i][2].load = TRUE;
+		g_Parts[i][2].model = g_SharedModels[2]; // 共有モデルを参照
+
+		g_Parts[i][3].use = TRUE;
+		g_Parts[i][3].parent = &g_Player[i];	// 親をセット
+		g_Parts[i][3].tblNo = 3;			// 再生するアニメデータの先頭アドレスをセット
+		g_Parts[i][3].tblMax = sizeof(walk_move_tbl_l_leg) / sizeof(INTERPOLATION_DATA);	// 再生するアニメデータのレコード数をセット
+		g_Parts[i][3].load = TRUE;
+		g_Parts[i][3].model = g_SharedModels[3]; // 共有モデルを参照
+
+		g_Parts[i][4].use = TRUE;
+		g_Parts[i][4].parent = &g_Player[i];	// 親をセット
+		g_Parts[i][4].tblNo = 4;			// 再生するアニメデータの先頭アドレスをセット
+		g_Parts[i][4].tblMax = sizeof(walk_move_tbl_r_leg) / sizeof(INTERPOLATION_DATA);	// 再生するアニメデータのレコード数をセット
+		g_Parts[i][4].load = TRUE;
+		g_Parts[i][4].model = g_SharedModels[4]; // 共有モデルを参照
 
 
 
 
 		// クォータニオンの初期化
 		XMStoreFloat4(&g_Player[i].Quaternion, XMQuaternionIdentity());
+
 	}
+
 
 	// HPバー初期化
 	InitPlayerHpBarVertexBuffer();
@@ -233,20 +304,7 @@ void UninitPlayer(void)
 			g_Player[i].load = FALSE;
 		}
 
-		// パーツの解放処理
-		for (int j = 0; j < PLAYER_PARTS_MAX; j++)
-		{
-			if (g_Parts[i][j].load == TRUE)
-			{
-				// パーツの解放処理
-				UnloadModel(&g_Parts[i][j].model);
-				g_Parts[i][j].load = FALSE;
-			}
-		}
 	}
-
-
-
 }
 
 //=============================================================================
@@ -277,13 +335,9 @@ void UpdatePlayer(void)
 		if (GetKeyboardTrigger(DIK_SPACE))
 		{
 			BALL* ball = GetBall();
-			for (int ballCnt = 0; ballCnt < 10; ballCnt++)
+			if (ball && ball->IsUsedITball())  // すでに使われてるボールは撃たないようにする
 			{
-				if (ball[ballCnt].IsUsedITball() && ball[ballCnt].IsPickedITball())  // すでに使われてるボールは撃たないようにする
-				{
-					ball[ballCnt].SetITball(g_Player[i].pos, g_Player[i].rot);  // プレイヤーの位置と向きでボールを発射
-					break;
-				}
+				ball->SetITball(g_Player[i].pos, g_Player[i].rot);  // プレイヤーの位置と向きでボールを発射
 			}
 		}
 
@@ -317,17 +371,21 @@ void UpdatePlayer(void)
 			SetPositionShadow(g_Player[i].shadowIdx, sh);
 		}
 
-		// ▼ 階層アニメーション（子パーツ）更新
+		float blendDuration = 12.0f; // ブレンド時間
+
 		for (int j = 0; j < PLAYER_PARTS_MAX; j++)
 		{
 			if (g_Parts[i][j].use && g_Parts[i][j].tblMax > 0)
 			{
+				if (!g_PlayerIsMoving[i])
+					continue; // 歩き中のみ進行
+
 				int nowNo = (int)g_Parts[i][j].time;
 				int maxNo = g_Parts[i][j].tblMax;
 				int nextNo = (nowNo + 1) % maxNo;
 				INTERPOLATION_DATA* tbl = g_MoveTblAdr[g_Parts[i][j].tblNo];
 
-				// キーフレーム読み込み
+				// キーフレーム補間
 				XMVECTOR nowPos = XMLoadFloat3(&tbl[nowNo].pos);
 				XMVECTOR nowRot = XMLoadFloat3(&tbl[nowNo].rot);
 				XMVECTOR nowScl = XMLoadFloat3(&tbl[nowNo].scl);
@@ -341,9 +399,40 @@ void UpdatePlayer(void)
 				XMVECTOR deltaScl = nextScl - nowScl;
 				float alpha = g_Parts[i][j].time - nowNo;
 
-				XMStoreFloat3(&g_Parts[i][j].pos, nowPos + deltaPos * alpha);
-				XMStoreFloat3(&g_Parts[i][j].rot, nowRot + deltaRot * alpha);
-				XMStoreFloat3(&g_Parts[i][j].scl, nowScl + deltaScl * alpha);
+				// 補間した値を一時変数に格納
+				XMFLOAT3 pos, rot, scl;
+				XMStoreFloat3(&pos, nowPos + deltaPos * alpha);
+				XMStoreFloat3(&rot, nowRot + deltaRot * alpha);
+				XMStoreFloat3(&scl, nowScl + deltaScl * alpha);
+
+				// --- モーションブレンド ---
+				if (g_PlayerAnimBlendMode[i] == 1 && g_PlayerAnimBlendTimer[i] < blendDuration) {
+					float t = g_PlayerAnimBlendTimer[i] / blendDuration;
+					rot.x *= t;
+				}
+				else if (g_PlayerAnimBlendMode[i] == 2 && g_PlayerAnimBlendTimer[i] < blendDuration) {
+					float t = g_PlayerAnimBlendTimer[i] / blendDuration;
+					rot.x = g_PlayerAnimBlendFrom[i][j] * (1.0f - t);
+				}
+
+				// --- 歩き中のみ、もともとのノイズ方式でノイズ合成 ---
+				// 頭(j==0)だけノイズ弱め
+				float t = (float)dwFrameCount * 0.08f + (i * 50 + j * 23);
+				float shake = sinf(t) * ((j == 0) ? 0.04f : 0.12f); // 頭だけ0.04f、それ以外0.12f
+				rot.x += shake;
+
+				float last = noiseTable[i][j];
+				float target = GetRand(-1000, 1000) / 10.0f * ((j == 0) ? 0.04f : 0.15f);
+				float smooth = 0.07f;
+				float newVal = last + (target - last) * smooth;
+				noiseTable[i][j] = newVal;
+				rot.y += newVal;
+				// --- ノイズここまで ---
+
+				// 結果を格納
+				g_Parts[i][j].pos = pos;
+				g_Parts[i][j].rot = rot;
+				g_Parts[i][j].scl = scl;
 
 				// 時間進行
 				g_Parts[i][j].time += 1.0f / tbl[nowNo].frame;
@@ -353,6 +442,12 @@ void UpdatePlayer(void)
 				}
 			}
 		}
+
+		if (g_PlayerState[i] == PLAYER_HIT) {
+			UpdatePlayerKnockback(i);
+			return; // やられ中は他の入力やアニメ処理を飛ばす（好みで）
+		}
+		UpdatePlayerPartsAnimation(i);
 
 		// ▼ 地面法線による姿勢制御（クォータニオン補間）
 		{
@@ -374,15 +469,6 @@ void UpdatePlayer(void)
 		g_Player[i].capsuleB.x = g_Player[i].pos.x;
 		g_Player[i].capsuleB.y = g_Player[i].pos.y + PLAYER_HEIGHT / 2.0f;
 		g_Player[i].capsuleB.z = g_Player[i].pos.z;
-
-		// --- Squish reset logic ---
-		if (g_Player[i].squished) {
-			g_Player[i].squishTimer -= 1.0f / 60.0f; // assuming 60fps; use deltaTime if available
-			if (g_Player[i].squishTimer <= 0.0f) {
-				g_Player[i].scl = g_Player[i].originalScl;
-				g_Player[i].squished = false;
-			}
-		}
 
 
 #ifdef _DEBUG
@@ -640,67 +726,238 @@ void DrawPlayerHpBar() {
 }
 
 
+
 //=============================================================================
 // プレイヤー移動処理
 //=============================================================================
 void MovePlayers(void)
 {
-	// プレイヤー1 とプレイヤー2 のポインターを取得
-	PLAYER* p0 = GetPlayer(0);  // プレイヤー1
-	PLAYER* p1 = GetPlayer(1);  // プレイヤー2
+	PLAYER* p0 = GetPlayer(0);
+	PLAYER* p1 = GetPlayer(1);
 
-	//------------------------------------------------------------
-	// プレイヤー1 の移動（WASD）
-	//------------------------------------------------------------
+	// 移動フラグをリセット
+	g_PlayerIsMoving[0] = false;
+	g_PlayerIsMoving[1] = false;
+
+	// プレイヤー1
 	if (p0 && p0->use)
 	{
-		// 今回はキーごとに “どちらか一方向” だけ動くように else if で列挙
 		if (GetKeyboardPress(DIK_A))
 		{
 			p0->pos.x -= VALUE_MOVE;
-			p0->rot.y = XM_PI / 2;      // 左向き
+			p0->rot.y = XM_PI / 2;
+			g_PlayerIsMoving[0] = true;
 		}
 		else if (GetKeyboardPress(DIK_D))
 		{
 			p0->pos.x += VALUE_MOVE;
-			p0->rot.y = -XM_PI / 2;     // 右向き
+			p0->rot.y = -XM_PI / 2;
+			g_PlayerIsMoving[0] = true;
 		}
 		else if (GetKeyboardPress(DIK_W))
 		{
 			p0->pos.z += VALUE_MOVE;
-			p0->rot.y = XM_PI;          // 奥向き
+			p0->rot.y = XM_PI;
+			g_PlayerIsMoving[0] = true;
 		}
 		else if (GetKeyboardPress(DIK_S))
 		{
 			p0->pos.z -= VALUE_MOVE;
-			p0->rot.y = 0.0f;           // 手前向き
+			p0->rot.y = 0.0f;
+			g_PlayerIsMoving[0] = true;
 		}
 	}
 
-	//------------------------------------------------------------
-	// プレイヤー2 の移動（矢印キー）
-	//------------------------------------------------------------
+	// プレイヤー2
 	if (p1 && p1->use)
 	{
 		if (GetKeyboardPress(DIK_LEFT))
 		{
 			p1->pos.x -= VALUE_MOVE;
-			p1->rot.y = XM_PI / 2;      // 左向き
+			p1->rot.y = XM_PI / 2;
+			g_PlayerIsMoving[1] = true;
 		}
 		else if (GetKeyboardPress(DIK_RIGHT))
 		{
 			p1->pos.x += VALUE_MOVE;
-			p1->rot.y = -XM_PI / 2;     // 右向き
+			p1->rot.y = -XM_PI / 2;
+			g_PlayerIsMoving[1] = true;
 		}
 		else if (GetKeyboardPress(DIK_UP))
 		{
 			p1->pos.z += VALUE_MOVE;
-			p1->rot.y = XM_PI;          // 奥向き
+			p1->rot.y = XM_PI;
+			g_PlayerIsMoving[1] = true;
 		}
 		else if (GetKeyboardPress(DIK_DOWN))
 		{
 			p1->pos.z -= VALUE_MOVE;
-			p1->rot.y = 0.0f;           // 手前向き
+			p1->rot.y = 0.0f;
+			g_PlayerIsMoving[1] = true;
 		}
 	}
+}
+
+
+void UpdatePlayerPartsAnimation(int playerIndex)
+{
+	// 状態管理（ファイル先頭やplayer.hで宣言しておく）
+	static bool g_PlayerPrevMoving[MAX_PLAYER] = { false };
+	static int  g_PlayerAnimBlendTimer[MAX_PLAYER] = { 0 }; // blend進行度
+	static int  g_PlayerAnimBlendMode[MAX_PLAYER] = { 0 };  // 0:通常, 1:ブレンドIN, 2:ブレンドOUT
+	static float g_PlayerAnimBlendFrom[MAX_PLAYER][PLAYER_PARTS_MAX] = { 0 }; // ブレンドOUT用
+
+	float blendDuration = 12.0f;
+	bool isMoving = g_PlayerIsMoving[playerIndex];
+
+	// --- 状態遷移チェック ---
+	if (isMoving && !g_PlayerPrevMoving[playerIndex]) {
+		// ブレンドIN開始
+		g_PlayerAnimBlendTimer[playerIndex] = 0;
+		g_PlayerAnimBlendMode[playerIndex] = 1;
+	}
+	else if (!isMoving && g_PlayerPrevMoving[playerIndex]) {
+		// ブレンドOUT開始
+		g_PlayerAnimBlendTimer[playerIndex] = 0;
+		g_PlayerAnimBlendMode[playerIndex] = 2;
+		// 現在のrot.x値を保存
+		for (int j = 0; j < PLAYER_PARTS_MAX; j++) {
+			g_PlayerAnimBlendFrom[playerIndex][j] = g_Parts[playerIndex][j].rot.x;
+		}
+	}
+	g_PlayerPrevMoving[playerIndex] = isMoving;
+
+	for (int j = 0; j < PLAYER_PARTS_MAX; j++)
+	{
+		if (g_Parts[playerIndex][j].use && g_Parts[playerIndex][j].tblMax > 0)
+		{
+			int nowNo = (int)g_Parts[playerIndex][j].time;
+			int maxNo = g_Parts[playerIndex][j].tblMax;
+			int nextNo = (nowNo + 1) % maxNo;
+			INTERPOLATION_DATA* tbl = g_MoveTblAdr[g_Parts[playerIndex][j].tblNo];
+
+			// キーフレーム読み込み
+			XMVECTOR nowPos = XMLoadFloat3(&tbl[nowNo].pos);
+			XMVECTOR nowRot = XMLoadFloat3(&tbl[nowNo].rot);
+			XMVECTOR nowScl = XMLoadFloat3(&tbl[nowNo].scl);
+			XMVECTOR nextPos = XMLoadFloat3(&tbl[nextNo].pos);
+			XMVECTOR nextRot = XMLoadFloat3(&tbl[nextNo].rot);
+			XMVECTOR nextScl = XMLoadFloat3(&tbl[nextNo].scl);
+
+			// 差分と補間
+			float alpha = g_Parts[playerIndex][j].time - nowNo;
+			XMFLOAT3 pos, rot, scl;
+			XMStoreFloat3(&pos, nowPos + (nextPos - nowPos) * alpha);
+			XMStoreFloat3(&rot, nowRot + (nextRot - nowRot) * alpha);
+			XMStoreFloat3(&scl, nowScl + (nextScl - nowScl) * alpha);
+
+			// --- ブレンド処理 ---
+			if (g_PlayerAnimBlendMode[playerIndex] == 1 && g_PlayerAnimBlendTimer[playerIndex] < blendDuration) {
+				// ブレンドIN
+				float t = g_PlayerAnimBlendTimer[playerIndex] / blendDuration;
+				rot.x *= t; // 0→目標値
+			}
+			else if (g_PlayerAnimBlendMode[playerIndex] == 2 && g_PlayerAnimBlendTimer[playerIndex] < blendDuration) {
+				// ブレンドOUT
+				float t = g_PlayerAnimBlendTimer[playerIndex] / blendDuration;
+				rot.x = g_PlayerAnimBlendFrom[playerIndex][j] * (1.0f - t); // 今の値→0へ補間
+			}
+			else if (!isMoving) {
+				rot.x = 0.0f; // 静止時は0
+			}
+			if (isMoving) {
+				float tNoise = (float)dwFrameCount * 0.08f + (playerIndex * 50 + j * 23);
+				rot.x += GetPeriodicNoise(playerIndex * 50 + j * 23, tNoise, 0.7f); // 強めでまずテスト
+				rot.y += GetSmoothNoise(noiseTable[playerIndex][j], 1.0f);
+			}
+			// elseは普通にキーフレーム値
+
+			g_Parts[playerIndex][j].pos = pos;
+			g_Parts[playerIndex][j].rot = rot;
+			g_Parts[playerIndex][j].scl = scl;
+
+			// アニメ時間進行（歩き中だけ進める）
+			if (isMoving)
+			{
+				g_Parts[playerIndex][j].time += 1.0f / tbl[nowNo].frame;
+				if ((int)g_Parts[playerIndex][j].time >= maxNo)
+				{
+					g_Parts[playerIndex][j].time -= maxNo;
+				}
+			}
+		}
+	}
+
+	// --- ループ後、タイマー進行と状態管理 ---
+	if ((g_PlayerAnimBlendMode[playerIndex] == 1 || g_PlayerAnimBlendMode[playerIndex] == 2) && g_PlayerAnimBlendTimer[playerIndex] < blendDuration)
+	{
+		g_PlayerAnimBlendTimer[playerIndex]++;
+	}
+	else if (g_PlayerAnimBlendMode[playerIndex] != 0 && g_PlayerAnimBlendTimer[playerIndex] >= blendDuration)
+	{
+		g_PlayerAnimBlendMode[playerIndex] = 0; // 通常状態に戻す
+	}
+}
+
+void UpdatePlayerKnockback(int playerIndex)
+{
+	if (g_PlayerState[playerIndex] == PLAYER_HIT) {
+		// 吹っ飛び
+		g_Player[playerIndex].pos.x += g_PlayerKnockback[playerIndex].x;
+		g_Player[playerIndex].pos.y += g_PlayerKnockback[playerIndex].y;
+		g_Player[playerIndex].pos.z += g_PlayerKnockback[playerIndex].z;
+
+		// 徐々に減速（摩擦/空気抵抗）
+		g_PlayerKnockback[playerIndex].x *= 0.92f;
+		g_PlayerKnockback[playerIndex].y *= 0.80f; // 重力も入れたいなら -0.03f ずつ引くなど
+		g_PlayerKnockback[playerIndex].z *= 0.92f;
+
+		// パーツ崩れ
+		for (int j = 0; j < PLAYER_PARTS_MAX; j++) {
+			// 派手にブルブル揺らすor完全にガクッと崩す（例）
+			g_Parts[playerIndex][j].rot.x = sinf(g_PlayerAnimTimer[playerIndex] * 0.6f + j) * 0.7f;
+			g_Parts[playerIndex][j].rot.y = sinf(g_PlayerAnimTimer[playerIndex] * 0.7f + j * 2) * 0.6f;
+			g_Parts[playerIndex][j].rot.z = sinf(g_PlayerAnimTimer[playerIndex] * 0.5f + j * 3) * 0.5f;
+		}
+
+		g_PlayerAnimTimer[playerIndex]++;
+		// 一定時間で通常に戻す
+		if (g_PlayerAnimTimer[playerIndex] > 36) {
+			g_PlayerState[playerIndex] = PLAYER_NORMAL;
+			g_PlayerAnimTimer[playerIndex] = 0;
+			g_PlayerKnockback[playerIndex] = { 0,0,0 };
+		}
+	}
+	else {
+		// 通常処理（階層アニメーション＋モーションブレンドなど）
+	}
+}
+
+void OnPlayerHit(int i, const XMFLOAT3& hitDirection)
+{
+	g_PlayerState[i] = PLAYER_HIT;
+	g_PlayerAnimTimer[i] = 0;
+	// hitDirectionは正規化された方向ベクトル
+	float knockbackPower = 1.2f; // 吹っ飛びの強さ
+	g_PlayerKnockback[i].x = hitDirection.x * knockbackPower;
+	g_PlayerKnockback[i].y = 0.2f; // ちょっとジャンプ気味もOK
+	g_PlayerKnockback[i].z = hitDirection.z * knockbackPower;
+}
+
+float GetNoise(float strength)
+{
+	return GetRand(-1000, 1000) / 10000.0f * strength;
+}
+
+float GetPeriodicNoise(int seed, float time, float strength)
+{
+	return sinf(time + seed) * strength;
+}
+
+float GetSmoothNoise(float& last, float strength)
+{
+	float target = GetRand(-1000, 1000) / 10000.0f * strength;
+	float smooth = 0.07f;
+	last += (target - last) * smooth;
+	return last;
 }

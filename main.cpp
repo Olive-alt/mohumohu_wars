@@ -47,6 +47,7 @@ void CheckHit(void);
 long g_MouseX = 0;
 long g_MouseY = 0;
 
+unsigned int dwFrameCount = 0;
 
 #ifdef _DEBUG
 int		g_CountFPS;							// FPSカウンタ
@@ -536,4 +537,47 @@ void SetMode(int mode)
 int GetMode(void)
 {
 	return g_Mode;
+}
+
+
+
+//=============================================================================
+// ランダムの取得(int)
+//=============================================================================
+int GetRand(int min, int max)
+{
+	static int flagRand = 0;
+	static std::mt19937 g_mt;
+
+	if (flagRand == 0)
+	{
+		// ランダム生成準備
+		std::random_device rnd;	// 非決定的な乱数生成器
+		g_mt.seed(rnd());		// メルセンヌ・ツイスタ版　引数は初期SEED
+		flagRand = 1;
+	}
+
+	std::uniform_int_distribution<> random(min, max);	// 生成ランダムは0～100の範囲
+	int answer = random(g_mt);
+	return answer;
+}
+
+//=============================================================================
+// ランダムの取得(float)
+//=============================================================================
+float GetRandf(float min, float max)
+{
+	static int flagRand = 0;
+	static std::mt19937 g_mt;
+
+	if (flagRand == 0)
+	{
+		std::random_device rnd;
+		g_mt.seed(rnd());
+		flagRand = 1;
+	}
+
+	std::uniform_real_distribution<float> random(min, max);  // ★float用
+	float answer = random(g_mt);
+	return answer;
 }

@@ -12,10 +12,28 @@
 // マクロ定義
 //*****************************************************************************
 #define MAX_PLAYER		(2)					// プレイヤーの数
+#define PLAYER_PARTS_MAX	(5)								// プレイヤーのパーツの数
 
 #define	PLAYER_SIZE		(15.0f)				// 当たり判定の大きさ
 
 #define PLAYER_HEIGHT   (20.0f)  // カプセルの高さ（モデルの頭から足までの長さ）
+
+static bool g_PlayerIsMoving[MAX_PLAYER] = { false, false };
+
+// 状態管理（移動開始の瞬間を検出）
+static bool g_PlayerPrevMoving[MAX_PLAYER] = { false };
+static int  g_PlayerAnimBlendTimer[MAX_PLAYER] = { 0 }; // blend進行度
+static int  g_PlayerAnimBlendMode[MAX_PLAYER] = { 0 };  // 0:通常, 1:ブレンドIN, 2:ブレンドOUT
+static float g_PlayerAnimBlendFrom[MAX_PLAYER][PLAYER_PARTS_MAX] = { 0 }; // ブレンドOUT用
+
+enum PLAYER_STATE { PLAYER_NORMAL, PLAYER_HIT, PLAYER_DEAD };
+extern PLAYER_STATE g_PlayerState[MAX_PLAYER];
+extern int g_PlayerAnimTimer[MAX_PLAYER];
+extern XMFLOAT3 g_PlayerKnockback[MAX_PLAYER]; // 吹っ飛び速度
+
+static float partAngle[MAX_PLAYER][PLAYER_PARTS_MAX] = { 0 };    // バネ用の一時値
+static float partVelocity[MAX_PLAYER][PLAYER_PARTS_MAX] = { 0 }; // バネ用速度
+
 //*****************************************************************************
 // 構造体定義
 //*****************************************************************************
@@ -92,3 +110,9 @@ void DrawPlayerHpBar();
 void HandlePlayerInput(void);	//弾発射処理
 void MovePlayers(void);			//移動処理
 
+void UpdatePlayerPartsAnimation(int playerIndex);
+void UpdatePlayerKnockback(int playerIndex);
+void OnPlayerHit(int i, const XMFLOAT3& hitDirection);
+float GetNoise(float strength = 0.12f);
+float GetPeriodicNoise(int seed, float time, float strength = 0.12f);
+float GetSmoothNoise(float& last, float strength = 0.12f);
