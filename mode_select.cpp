@@ -177,7 +177,7 @@ void DrawModeSelect(void)
 
         // 配置：左(1) 中央-200px、右(2) 中央+200px（距離調整可）
         float posX = SCREEN_WIDTH / 2 + (i == 1 ? -200 : 200);
-        float posY = SCREEN_HEIGHT / 2;
+        float posY = SCREEN_HEIGHT / 2+50.0f;
 
         // alpha：選択中は点滅、非選択はやや透明
         float iconAlpha = (i == g_SelectedMode) ? alpha : 0.6f;
