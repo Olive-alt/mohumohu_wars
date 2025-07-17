@@ -17,12 +17,14 @@
 static int g_SelectedPlayer = 0; // 0-3 for 4 players
 
 static ID3D11Buffer* g_VertexBuffer = NULL;
-static ID3D11ShaderResourceView* g_Texture[2] = { NULL };
+static ID3D11ShaderResourceView* g_Texture[3] = { NULL };
 static ID3D11ShaderResourceView* g_PlayerIcons[MAX_PLAYERS] = { NULL };
 
-static const char* g_TexturName[2] = {
-    "data/TEXTURE/bg001.jpg",
-    "data/TEXTURE/copy.png"
+static const char* g_TexturName[3] = {
+    "data/TEXTURE/bg003.jpg",
+    "data/TEXTURE/copy.png",
+    "data/TEXTURE//Select_player/player_title.png"
+
 };
 
 static const char* g_PlayerIconNames[MAX_PLAYERS] = {
@@ -41,7 +43,7 @@ HRESULT InitPlayerSelect(void)
     ID3D11Device* pDevice = GetDevice();
 
     // テクスチャ生成（背景とロゴ）
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 3; i++)
     {
         g_Texture[i] = NULL;
         D3DX11CreateShaderResourceViewFromFile(GetDevice(),
@@ -91,7 +93,7 @@ void UninitPlayerSelect(void)
         g_VertexBuffer = NULL;
     }
 
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 3; i++)
     {
         if (g_Texture[i])
         {
@@ -197,6 +199,17 @@ void DrawPlayerSelect(void)
         GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[1]);
         SetSpriteColor(g_VertexBuffer, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 6, TEXTURE_WIDTH_LOGO, TEXTURE_HEIGHT_LOGO,
             0.0f, 0.0f, 1.0f, 1.0f, XMFLOAT4(1.0f, 1.0f, 1.0f, alpha));
+        GetDeviceContext()->Draw(4, 0);
+    }
+    // タイトル
+    {
+        float titleWidth = 500.0f;
+        float titleHeight = 100.0f;
+        float titlePosX = SCREEN_WIDTH / 2;
+        float titlePosY = 60.0f;
+
+        GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[2]); // player_title.png
+        SetSprite(g_VertexBuffer, titlePosX, titlePosY, titleWidth, titleHeight, 0, 0, 1, 1);
         GetDeviceContext()->Draw(4, 0);
     }
 
