@@ -65,11 +65,12 @@ void INVISIBLE::UpdateITinvisible(void)
 		PLAYER* player = GetPlayer(0);
 
 
-		for (int j = 0; j < player->model.SubsetNum; j++)
+		for (unsigned int j = 0; j < player->model.SubsetNum; j++)
 		{
 			SetModelDiffuse(&player->model, j, old_diffuse[j]);
 		}
 	}
+
 
 
 
@@ -92,7 +93,7 @@ void INVISIBLE::DrawITinvisible(void)
 {
 	if (!use || invisibleUse)return;
 
-	XMMATRIX mtxScl, mtxRot, mtxTranslate, mtxWorld, quatMatrix;
+	XMMATRIX mtxScl, mtxRot, mtxTranslate, mtxWorld;
 
 	// ƒJƒŠƒ“ƒO–³Œø
 	SetCullingMode(CULL_MODE_NONE);
@@ -139,7 +140,7 @@ void INVISIBLE::FinishITinvisible(void)
 	PLAYER* player = GetPlayer(PlayerIndex);
 	player->invisible = FALSE;
 
-	for (int j = 0; j < player->model.SubsetNum; j++)
+	for (unsigned int j = 0; j < player->model.SubsetNum; j++)
 	{
 		SetModelDiffuse(&player->model, j, old_diffuse[j]);
 	}
@@ -157,7 +158,7 @@ void INVISIBLE::PickITinvisible(int p_Index)
 	{
 		player->invisible = TRUE;
 		GetModelDiffuse(&player->model, &old_diffuse[0]);
-		for (int j = 0; j < player->model.SubsetNum; j++)
+		for (unsigned int j = 0; j < player->model.SubsetNum; j++)
 		{
 			SetModelDiffuse(&player->model, j, XMFLOAT4(1.0f, 1.0f, 1.0f, 0.0f));
 		}
