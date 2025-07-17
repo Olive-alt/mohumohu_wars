@@ -306,6 +306,8 @@ void BALL::SetITballObject(XMFLOAT3 set_pos)
 
 void BALL::SetITball(XMFLOAT3 set_pos, XMFLOAT3 p_rot)
 {
+	if (PlayerIndex == -1) return;
+
 	pick = FALSE;
 	to_throw = TRUE;
 	PLAYER* player = GetPlayer(PlayerIndex);
