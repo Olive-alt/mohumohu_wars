@@ -70,6 +70,12 @@ HAMR* GetHammer()  // アクセス用の関数を作成
 	return &hamr;  // ハンマーのインスタンスを返す
 }
 
+BOMB bomb[ITEM_MAX];
+BOMB* GetBomb()  // アクセス用の関数を作成
+{
+	return &bomb[0];
+}
+
 //=============================================================================
 // 初期化処理
 //=============================================================================
@@ -93,6 +99,12 @@ HRESULT InitItem(void)
 	{
 		//ボールアイテムの初期化
 		ball[i].InitITball();
+	}
+
+	for (int i = 0; i < ITEM_MAX; i++)
+	{
+		//ボムアイテムの初期化
+		bomb[i].InitITbomb();
 	}
 
 	// ブーメランの初期化
@@ -129,6 +141,12 @@ void UninitItem(void)
 	{
 		//ボールアイテムの終了処理
 		ball[i].UninitITball();
+	}
+
+	for (int i = 0; i < ITEM_MAX; i++)
+	{
+		//ボムアイテムの終了処理
+		bomb[i].UninitITbomb();
 	}
 
 	// ブーメランの終了処理
@@ -192,6 +210,18 @@ void UpdateItem(void)
 		}
 	}
 
+	if (GetKeyboardTrigger(DIK_9))
+	{
+		for (int i = 0; i < 10; i++)
+		{
+			if (!bomb[i].IsUsedITbomb())
+			{
+				bomb[i].SetITbombObject(XMFLOAT3(-300.0f, 0.0f, -100.0f));
+				break;
+			}
+		}
+	}
+
 #endif
 
 	if (g_bPause == FALSE)
@@ -218,6 +248,12 @@ void UpdateItem(void)
 		ball[i].UpdateITball();
 	}
 
+	for (int i = 0; i < ITEM_MAX; i++)
+	{
+		// ボムアイテムの更新処理
+		bomb[i].UpdateITbomb();
+	}
+
 	// ブーメランの更新処理
 	boom.UpdateITboom();
 
@@ -238,6 +274,12 @@ void DrawItem(void)
 	{
 		// ボールアイテムの描画処理
 		ball[i].DrawITball();
+	}
+
+	for (int i = 0; i < ITEM_MAX; i++)
+	{
+		// ボムアイテムの描画処理
+		bomb[i].DrawITbomb();
 	}
 
 	// ブーメランの描画処理
@@ -341,6 +383,40 @@ void CheckHitItem(void)
 					if (CollisionBC(player[j].pos, ball_pos, player[j].size, BALL_SIZE))
 					{
 						ball[i].HitITball(j);
+					}
+				}
+			}
+		}
+	}
+
+	for (int i = 0; i < ITEM_MAX; i++)
+	{
+		//ボム
+		if (bool use = bomb[i].IsUsedITbomb())
+		{
+			XMFLOAT3 bomb_pos = bomb[i].GetPositionITbomb();
+			BOOL pick = bomb[i].IsPickedITbomb();
+			BOOL expuse = bomb[i].IsExpUseITbomb();
+			BOOL to_throw = bomb[i].IsThrewITbomb();
+
+			if (!pick && !expuse && !to_throw)
+			{
+				for (int j = 0; j < MAX_PLAYER; j++)
+				{
+					if (CollisionBC(player[j].pos, bomb_pos, player[j].size, BOMB_SIZE))
+					{
+						bomb[i].PickITbomb(j);
+					}
+				}
+			}
+			else if (expuse)
+			{
+				float expsize = bomb[i].GetExpSizeITbomb();
+				for (int j = 0; j < MAX_PLAYER; j++)
+				{
+					if (CollisionBC(player[j].pos, bomb_pos, player[j].size, expsize))
+					{
+						bomb[i].HitITbomb(j);
 					}
 				}
 			}

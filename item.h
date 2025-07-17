@@ -8,6 +8,7 @@
 #include "IT_ball.h"
 #include "IT_boomerang.h"
 #include "IT_hammer.h"
+#include "IT_bomb.h"
 
 //*****************************************************************************
 // プロトタイプ宣言
@@ -21,5 +22,5 @@ void CheckHitItem(void);
 BALL* GetBall();  // アクセス用の関数を作成
 BOOM* GetBoomerang();  // アクセス用の関数を作成
 HAMR* GetHammer();  // アクセス用の関数を作成	
-
+BOMB* GetBomb();  // アクセス用の関数を作成
 //void DrawDebugSphereOutline(const XMFLOAT3& center, float radius, const XMFLOAT4& color, int slices); //debug用の関数

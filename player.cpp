@@ -341,6 +341,19 @@ void UpdatePlayer(void)
 			}
 		}
 
+		// ボム発射
+		if (GetKeyboardTrigger(DIK_J))
+		{
+			BOMB* bomb = GetBomb();
+			for (int bombCnt = 0; bombCnt < 10; bombCnt++)
+			{
+				if (bomb[bombCnt].IsUsedITbomb() && bomb[bombCnt].IsPickedITbomb())  // すでに使われてるボールは撃たないようにする
+				{
+					bomb[bombCnt].SetITbomb(g_Player[i].pos, g_Player[i].rot);  // プレイヤーの位置と向きでボールを発射
+					break;
+				}
+			}
+		}
 
 		// ▼ ワープゲート用クールタイム
 		if (g_Player[i].gateUse)
