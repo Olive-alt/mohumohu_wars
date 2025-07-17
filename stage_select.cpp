@@ -20,7 +20,7 @@ static ID3D11Buffer* g_VertexBuffer = NULL;
 static ID3D11ShaderResourceView* g_Texture[4] = { NULL };
 
 static const char* g_TexturName[4] = {
-    "data/TEXTURE/bg002.jpg",
+    "data/TEXTURE/bg003.jpg",
     "data/TEXTURE/Select_stage/stage1.png",
     "data/TEXTURE/Select_stage/stage2.png",
     "data/TEXTURE/Select_stage/stage_title.png"

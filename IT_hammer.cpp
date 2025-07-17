@@ -6,6 +6,7 @@
 #include "camera.h"
 #include "debugproc.h"
 #include "shadow.h"
+#include "sound.h"
 
 //*****************************************************************************
 // É}ÉNÉçíËã`
@@ -147,6 +148,8 @@ void HAMR::UpdateITHamr(void)
 			{
 				to_swing = true;
 				// Start swing timer, animation, etc.
+				PlaySound(SOUND_LABEL_SE_shot002);
+
 			}
 		}
 
