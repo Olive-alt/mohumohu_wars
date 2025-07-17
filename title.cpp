@@ -157,15 +157,20 @@ void UpdateTitle(void)
 	if (GetKeyboardTrigger(DIK_DOWN))
 	{
 		selectedMenuItem += 1;
+		PlaySound(SOUND_LABEL_SE_switch01);
+
 	}
 	else if (selectedMenuItem >= 3)
 	{
 		selectedMenuItem = 0;
+
 	}
 
 	if (GetKeyboardTrigger(DIK_UP))
 	{
 		selectedMenuItem -= 1;
+		PlaySound(SOUND_LABEL_SE_switch01);
+
 	}
 	else if (selectedMenuItem <= -1)
 	{

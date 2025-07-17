@@ -119,11 +119,15 @@ void UpdatePlayerSelect(void)
     {
         g_SelectedPlayer--;
         if (g_SelectedPlayer < 0) g_SelectedPlayer = MAX_PLAYERS - 1;
+        PlaySound(SOUND_LABEL_SE_switch01);
+
     }
     else if (GetKeyboardTrigger(DIK_RIGHT))
     {
         g_SelectedPlayer++;
         if (g_SelectedPlayer >= MAX_PLAYERS) g_SelectedPlayer = 0;
+        PlaySound(SOUND_LABEL_SE_switch01);
+
     }
 
     // åàíËÉLÅ[

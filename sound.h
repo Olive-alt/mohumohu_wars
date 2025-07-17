@@ -30,6 +30,7 @@ enum
 	SOUND_LABEL_SE_shot000,		// 
 	SOUND_LABEL_SE_shot001,		// 
 	SOUND_LABEL_SE_shot002,		// 
+	SOUND_LABEL_SE_switch01,		// 
 	SOUND_LABEL_MAX,
 };
 

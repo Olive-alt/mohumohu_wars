@@ -7,6 +7,8 @@
 #include "sprite.h"
 #include "player.h"
 #include "debugproc.h"
+#include "sound.h"
+
 
 #define MAX_STAGES 2
 #define TEXTURE_WIDTH_STAGE_ICON (200)
@@ -84,12 +86,16 @@ void UpdateStageSelect(void)
         g_SelectedStage--;
         if (g_SelectedStage < 1) g_SelectedStage = MAX_STAGES;
         PrintDebugProc("Selected Stage: %d\n", g_SelectedStage);
+        PlaySound(SOUND_LABEL_SE_switch01);
+
     }
     else if (GetKeyboardTrigger(DIK_RIGHT))
     {
         g_SelectedStage++;
         if (g_SelectedStage > MAX_STAGES) g_SelectedStage = 1;
         PrintDebugProc("Selected Stage: %d\n", g_SelectedStage);
+        PlaySound(SOUND_LABEL_SE_switch01);
+
     }
 
     if (GetKeyboardTrigger(DIK_RETURN))

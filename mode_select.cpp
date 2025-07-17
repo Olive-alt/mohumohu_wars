@@ -82,12 +82,16 @@ void UpdateModeSelect(void)
         g_SelectedMode--;
         if (g_SelectedMode < 1) g_SelectedMode = MAX_MODES;
         PrintDebugProc("Selected Mode: %d\n", g_SelectedMode);
+        PlaySound(SOUND_LABEL_SE_switch01);
+
     }
     else if (GetKeyboardTrigger(DIK_RIGHT))
     {
         g_SelectedMode++;
         if (g_SelectedMode > MAX_MODES) g_SelectedMode = 1;
         PrintDebugProc("Selected Mode: %d\n", g_SelectedMode);
+        PlaySound(SOUND_LABEL_SE_switch01);
+
     }
 
     // åàíËÅiEnterÅj
