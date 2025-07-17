@@ -23,14 +23,16 @@
 //*****************************************************************************
 // グローバル変数
 //*****************************************************************************
+BOOL		invisible_load;
+DX11_MODEL	invisible_model;				// モデル情報
 
 //=============================================================================
 // 初期化処理
 //=============================================================================
 HRESULT INVISIBLE::InitITinvisible(void)
 {
-	load = TRUE;
-	LoadModel(MODEL_INVISIBLE, &model);
+	invisible_load = TRUE;
+	LoadModel(MODEL_INVISIBLE, &invisible_model);
 
 	use = FALSE;
 	pick = FALSE;
@@ -49,10 +51,10 @@ void INVISIBLE::UninitITinvisible(void)
 {
 	use = FALSE;
 	// モデルの解放処理
-	if (load == TRUE)
+	if (invisible_load == TRUE)
 	{
-		UnloadModel(&model);
-		load = FALSE;
+		UnloadModel(&invisible_model);
+		invisible_load = FALSE;
 	}
 }
 
@@ -61,6 +63,7 @@ void INVISIBLE::UpdateITinvisible(void)
 	if (GetKeyboardPress(DIK_0))
 	{
 		PLAYER* player = GetPlayer(0);
+
 
 		for (int j = 0; j < player->model.SubsetNum; j++)
 		{
@@ -115,7 +118,7 @@ void INVISIBLE::DrawITinvisible(void)
 	XMStoreFloat4x4(&m_mtxWorld, mtxWorld);
 
 	// モデル描画
-	DrawModel(&model);
+	DrawModel(&invisible_model);
 
 	// カリング設定を戻す
 	SetCullingMode(CULL_MODE_BACK);

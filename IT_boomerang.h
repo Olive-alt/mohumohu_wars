@@ -29,8 +29,6 @@ private:
 	BOOL			use;
 	BOOL			to_throw;
 	BOOL			pick;
-	BOOL			load;
-	DX11_MODEL		model;				// モデル情報
 	XMFLOAT4		diffuse[MODEL_MAX_MATERIAL];	// モデルの色
 
 	float			spd;				// 移動スピード
@@ -66,7 +64,6 @@ public:
 
 	void SetITboomObject(XMFLOAT3 set_pos, int playerIndex);
 
-	void SetITboom(XMFLOAT3 set_pos, XMFLOAT3 p_rot);
 	void HitITboom(int p_Index);
 	void PickITboom(int p_Index);
 

@@ -28,8 +28,6 @@ private:
 	BOOL			use;
 	BOOL			to_throw;
 	BOOL			pick;
-	BOOL			load;
-	DX11_MODEL		model;				// モデル情報
 	XMFLOAT4		diffuse[MODEL_MAX_MATERIAL];	// モデルの色
 
 	float			spd;				// 移動スピード

@@ -18,8 +18,6 @@ private:
 	XMFLOAT3	rot;
 	XMFLOAT3	scl;
 	MATERIAL	material;		// マテリアル
-	BOOL		load;
-	DX11_MODEL	model;				// モデル情報
 	XMFLOAT4	old_diffuse[MODEL_MAX_MATERIAL];
 	int			shadowIdx;			// 影のインデックス番号
 

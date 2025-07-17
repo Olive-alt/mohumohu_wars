@@ -24,8 +24,8 @@
 //*****************************************************************************
 // グローバル変数
 //*****************************************************************************
-BOOL		load = FALSE;
-DX11_MODEL	model;				// モデル情報
+BOOL		giant_load = FALSE;
+DX11_MODEL	giant_model;				// モデル情報
 
 
 //=============================================================================
@@ -34,10 +34,10 @@ DX11_MODEL	model;				// モデル情報
 
 HRESULT GIANT::InitITgiant(void)
 {
-	if (!load)
+	if (!giant_load)
 	{
-		load = TRUE;
-		LoadModel(MODEL_GIANT, &model);
+		giant_load = TRUE;
+		LoadModel(MODEL_GIANT, &giant_model);
 	}
 
 	use = FALSE;
@@ -59,10 +59,10 @@ void GIANT::UninitITgiant(void)
 {
 	use = FALSE;
 	// モデルの解放処理
-	if (load == TRUE)
+	if (giant_load == TRUE)
 	{
-		UnloadModel(&model);
-		load = FALSE;
+		UnloadModel(&giant_model);
+		giant_load = FALSE;
 	}
 }
 
@@ -112,7 +112,7 @@ void GIANT::DrawITgiant(void)
 	XMStoreFloat4x4(&m_mtxWorld, mtxWorld);
 
 	// モデル描画
-	DrawModel(&model);
+	DrawModel(&giant_model);
 
 	// カリング設定を戻す
 	SetCullingMode(CULL_MODE_BACK);

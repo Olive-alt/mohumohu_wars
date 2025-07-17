@@ -38,6 +38,9 @@ static ID3D11Buffer* g_VertexBuffer = NULL;	// 頂点バッファ
 static ID3D11ShaderResourceView* g_Texture[TEXTURE_MAX] = { NULL };	// テクスチャ情報
 static BOOL					g_bAlpaTest;		// アルファテストON/OFF
 
+BOOL			hammer_load;
+DX11_MODEL		hammer_model;				// モデル情報
+
 static char* g_TextureName[] =
 {
 	"data/TEXTURE/tree001.png",
@@ -48,8 +51,8 @@ static char* g_TextureName[] =
 //=============================================================================
 HRESULT HAMR::InitITHamr(void)
 {
-	load = TRUE;
-	LoadModel(MODEL_HAMR, &model);
+	hammer_load = TRUE;
+	LoadModel(MODEL_HAMR, &hammer_model);
 
 	use = FALSE;
 	to_swing = FALSE;
@@ -95,10 +98,10 @@ void HAMR::UninitITHamr(void)
 {
 	use = FALSE;
 	// モデルの解放処理
-	if (load == TRUE)
+	if (hammer_load == TRUE)
 	{
-		UnloadModel(&model);
-		load = FALSE;
+		UnloadModel(&hammer_model);
+		hammer_load = FALSE;
 	}
 
 	for (int nCntTex = 0; nCntTex < TEXTURE_MAX; nCntTex++)
@@ -126,7 +129,7 @@ void HAMR::UpdateITHamr(void)
 
 	if (use)
 	{
-		if (!load) return;
+		if (!hammer_load) return;
 
 
 		if (pick)
@@ -230,7 +233,7 @@ void HAMR::DrawITHamr(void)
 		XMStoreFloat4x4(&m_mtxWorld, mtxWorld);
 
 		// モデル描画
-		DrawModel(&model);
+		DrawModel(&hammer_model);
 
 		// カリング設定を戻す
 		SetCullingMode(CULL_MODE_BACK);
@@ -279,7 +282,7 @@ void HAMR::DrawITHamr(void)
 		// Set and draw
 		SetWorldMatrix(&mtxWorld);
 		XMStoreFloat4x4(&m_mtxWorld, mtxWorld);
-		DrawModel(&model);
+		DrawModel(&hammer_model);
 
 
 		// カリング設定を戻す

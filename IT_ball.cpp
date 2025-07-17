@@ -37,6 +37,9 @@ static ID3D11Buffer* g_VertexBuffer = NULL;	// 頂点バッファ
 static ID3D11ShaderResourceView* g_Texture[TEXTURE_MAX] = { NULL };	// テクスチャ情報
 static BOOL					g_bAlpaTest;		// アルファテストON/OFF
 
+BOOL			ball_load;
+DX11_MODEL		ball_model;				// モデル情報
+
 static char* g_TextureName[] =
 {
 	"data/TEXTURE/tree001.png",
@@ -47,8 +50,12 @@ static char* g_TextureName[] =
 //=============================================================================
 HRESULT BALL::InitITball(void)
 {
-	load = TRUE;
-	LoadModel(MODEL_BALL, &model);
+	if (!ball_load)
+	{
+		ball_load = TRUE;
+		LoadModel(MODEL_BALL, &ball_model);
+	}
+
 
 	use = FALSE;
 	to_throw = FALSE;
@@ -94,10 +101,10 @@ void BALL::UninitITball(void)
 {
 	use = FALSE;
 	// モデルの解放処理
-	if (load == TRUE)
+	if (ball_load == TRUE)
 	{
-		UnloadModel(&model);
-		load = FALSE;
+		UnloadModel(&ball_model);
+		ball_load = FALSE;
 	}
 
 	for (int nCntTex = 0; nCntTex < TEXTURE_MAX; nCntTex++)
@@ -125,7 +132,7 @@ void BALL::UpdateITball(void)
 
 	if (use)
 	{
-		if (!load) return;
+		if (!ball_load) return;
 
 		if (to_throw && !pick)
 		{
@@ -212,7 +219,7 @@ void BALL::DrawITball(void)
 		XMStoreFloat4x4(&m_mtxWorld, mtxWorld);
 
 		// モデル描画
-		DrawModel(&model);
+		DrawModel(&ball_model);
 
 		// カリング設定を戻す
 		SetCullingMode(CULL_MODE_BACK);

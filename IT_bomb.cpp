@@ -39,6 +39,9 @@ static ID3D11Buffer* g_VertexBuffer = NULL;	// 頂点バッファ
 static ID3D11ShaderResourceView* g_Texture[TEXTURE_MAX] = { NULL };	// テクスチャ情報
 static BOOL					g_bAlpaTest;		// アルファテストON/OFF
 
+BOOL			bomb_load;
+DX11_MODEL		bomb_model;				// モデル情報
+
 static char* g_TextureName[] =
 {
 	"data/TEXTURE/tree001.png",
@@ -49,8 +52,12 @@ static char* g_TextureName[] =
 //=============================================================================
 HRESULT BOMB::InitITbomb(void)
 {
-	load = TRUE;
-	LoadModel(MODEL_BOMB, &model);
+	if (!bomb_load)
+	{
+		bomb_load = TRUE;
+		LoadModel(MODEL_BOMB, &bomb_model);
+	}
+
 
 	use = FALSE;
 	to_throw = FALSE;
@@ -98,10 +105,10 @@ void BOMB::UninitITbomb(void)
 {
 	use = FALSE;
 	// モデルの解放処理
-	if (load == TRUE)
+	if (bomb_load == TRUE)
 	{
-		UnloadModel(&model);
-		load = FALSE;
+		UnloadModel(&bomb_model);
+		bomb_load = FALSE;
 	}
 
 	for (int nCntTex = 0; nCntTex < TEXTURE_MAX; nCntTex++)
@@ -129,7 +136,7 @@ void BOMB::UpdateITbomb(void)
 
 	if (use)
 	{
-		if (!load) return;
+		if (!bomb_load) return;
 
 		if (pick)
 		{
@@ -236,7 +243,7 @@ void BOMB::DrawITbomb(void)
 		XMStoreFloat4x4(&m_mtxWorld, mtxWorld);
 
 		// モデル描画
-		DrawModel(&model);
+		DrawModel(&bomb_model);
 
 		// カリング設定を戻す
 		SetCullingMode(CULL_MODE_BACK);

@@ -37,6 +37,9 @@ static ID3D11Buffer* g_VertexBuffer = NULL;	// 頂点バッファ
 static ID3D11ShaderResourceView* g_Texture[TEXTURE_MAX] = { NULL };	// テクスチャ情報
 static BOOL					g_bAlpaTest;		// アルファテストON/OFF
 
+BOOL			boom_load = FALSE;
+DX11_MODEL		boom_model;				// モデル情報
+
 static char* g_TextureName[] =
 {
 	"data/TEXTURE/tree001.png",
@@ -47,8 +50,12 @@ static char* g_TextureName[] =
 //=============================================================================
 HRESULT BOOM::InitITboom(void)
 {
-	load = TRUE;
-	LoadModel(MODEL_BOOM, &model);
+	if (!boom_load)
+	{
+		boom_load = TRUE;
+		LoadModel(MODEL_BOOM, &boom_model);
+	}
+
 
 	use = FALSE;
 	to_throw = FALSE;
@@ -102,10 +109,10 @@ void BOOM::UninitITboom(void)
 {
 	use = FALSE;
 	// モデルの解放処理
-	if (load == TRUE)
+	if (boom_load == TRUE)
 	{
-		UnloadModel(&model);
-		load = FALSE;
+		UnloadModel(&boom_model);
+		boom_load = FALSE;
 	}
 
 	for (int nCntTex = 0; nCntTex < TEXTURE_MAX; nCntTex++)
@@ -133,7 +140,7 @@ void BOOM::UpdateITboom(void)
 
 	if (use)
 	{
-		if (!load) return;
+		if (!boom_load) return;
 
 		if (to_throw)
 		{
@@ -342,7 +349,7 @@ void BOOM::DrawITboom(void)
 		XMStoreFloat4x4(&m_mtxWorld, mtxWorld);
 
 		// モデル描画
-		DrawModel(&model);
+		DrawModel(&boom_model);
 
 		// カリング設定を戻す
 		SetCullingMode(CULL_MODE_BACK);
