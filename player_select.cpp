@@ -14,7 +14,11 @@
 #define TEXTURE_HEIGHT_PLAYER_ICON (128)
 #define SELECTION_BORDER_SIZE (15)
 
-static int g_SelectedPlayer = 0; // 0-3 for 4 players
+static int g_SelectedPlayer = 0;             // 現在選んでるキャラ番号（アイコンのインデックス）
+static int g_SelectingPlayerIndex = 0;       // どっちを選択中か（0=P1, 1=P2）
+
+static int g_SelectedCharIndex[MAX_PLAYER] = { 0, 1 }; // 確定済みキャラ
+
 
 static ID3D11Buffer* g_VertexBuffer = NULL;
 static ID3D11ShaderResourceView* g_Texture[3] = { NULL };
@@ -120,24 +124,38 @@ void UpdatePlayerSelect(void)
     if (GetKeyboardTrigger(DIK_LEFT))
     {
         g_SelectedPlayer--;
-        if (g_SelectedPlayer < 0) g_SelectedPlayer = MAX_PLAYERS - 1;
+        if (g_SelectedPlayer < 0) g_SelectedPlayer = 0;
         PlaySound(SOUND_LABEL_SE_switch01);
 
     }
     else if (GetKeyboardTrigger(DIK_RIGHT))
     {
         g_SelectedPlayer++;
-        if (g_SelectedPlayer >= MAX_PLAYERS) g_SelectedPlayer = 0;
+        if (g_SelectedPlayer >= MAX_PLAYERS) g_SelectedPlayer = MAX_PLAYERS - 1;
         PlaySound(SOUND_LABEL_SE_switch01);
 
     }
 
-    // 決定キー
+    // 決定キー（エンター）
     if (GetKeyboardTrigger(DIK_RETURN))
     {
-        SetFade(FADE_OUT, MODE_STAGE_SELECT);
+        // 選択キャラを記録
+        g_SelectedCharIndex[g_SelectingPlayerIndex] = g_SelectedPlayer;
+
+        if (g_SelectingPlayerIndex == 0)
+        {
+            // P1選択終了→P2選択へ
+            g_SelectingPlayerIndex = 1;
+            // カーソルをP2用の初期位置へ（同じにするならこのままでOK）
+            g_SelectedPlayer = 0;
+        }
+        else
+        {
+            // P2も選択済み→本編へ
+            SetFade(FADE_OUT, MODE_STAGE_SELECT);
+        }
     }
-    // キャンセルキー
+    // キャンセルキー（スペース）
     else if (GetKeyboardTrigger(DIK_SPACE))
     {
         SetFade(FADE_OUT, MODE_TITLE);
@@ -251,4 +269,13 @@ void DrawPlayerSelect(void)
     // 深度テストとライティングを有効化
     SetLightEnable(TRUE);
     SetDepthEnable(TRUE);
+}
+
+void SetSelectedCharIndex(int playerIndex, int charIndex)
+{
+    g_SelectedCharIndex[playerIndex] = charIndex;
+}
+int GetSelectedCharIndex(int playerIndex)
+{
+    return g_SelectedCharIndex[playerIndex];
 }
