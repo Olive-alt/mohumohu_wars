@@ -7,7 +7,7 @@
 #include "sound.h"
 #include "sprite.h"
 
-#define MAX_PLAYERS 4
+#define MAX_PLAYERS 2
 #define TEXTURE_WIDTH_LOGO (480)
 #define TEXTURE_HEIGHT_LOGO (80)
 #define TEXTURE_WIDTH_PLAYER_ICON (128)
@@ -34,8 +34,8 @@ static const char* g_TexturName[3] = {
 static const char* g_PlayerIconNames[MAX_PLAYERS] = {
     "data/TEXTURE/Select_player/player1.png",
     "data/TEXTURE/Select_player/player2.png",
-    "data/TEXTURE/Select_player/player3.png",
-    "data/TEXTURE/Select_player/player4.png"
+    //"data/TEXTURE/Select_player/player3.png",
+    //"data/TEXTURE/Select_player/player4.png"
 };
 
 static float alpha;
