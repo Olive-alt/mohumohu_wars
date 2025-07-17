@@ -327,194 +327,226 @@ void UninitPlayer(void)
 //=============================================================================
 void UpdatePlayer(void)
 {
-	CAMERA* cam = GetCamera();
-
-	// 1) キー入力による移動＆向き設定
-	MovePlayers();
-
-	// 2) 各プレイヤーの状態更新
-	for (int i = 0; i < MAX_PLAYER; i++)
+	if (GetMode() == MODE_GAME)
 	{
-		// ▼ 速度減衰 ＋ HP テスト
-		g_Player[i].spd *= 0.7f;
-		if (GetKeyboardTrigger(DIK_L))
-		{
-			g_Player[i].hp = max(g_Player[i].hp - 1.0f, 0.0f);
-		}
-		if (GetKeyboardTrigger(DIK_O))
-		{
-			g_Player[i].hp = min(g_Player[i].hp + 1.0f, 3.0f);
-		}
+		// 1) キー入力による移動＆向き設定
+		MovePlayers();
 
-		// 弾発射
-		if (GetKeyboardTrigger(DIK_SPACE))
+		// 2) 各プレイヤーの状態更新
+		for (int i = 0; i < MAX_PLAYER; i++)
 		{
-			BALL* ball = GetBall();
-			for (int ballCnt = 0; ballCnt < 10; ballCnt++)
+			// ▼ 速度減衰 ＋ HP テスト
+			g_Player[i].spd *= 0.7f;
+			if (GetKeyboardTrigger(DIK_L))
 			{
-				if (ball[ballCnt].IsUsedITball() && ball[ballCnt].IsPickedITball())  // すでに使われてるボールは撃たないようにする
+				g_Player[i].hp = max(g_Player[i].hp - 1.0f, 0.0f);
+			}
+			if (GetKeyboardTrigger(DIK_O))
+			{
+				g_Player[i].hp = min(g_Player[i].hp + 1.0f, 3.0f);
+			}
+
+			// 弾発射
+			if (GetKeyboardTrigger(DIK_SPACE))
+			{
+				BALL* ball = GetBall();
+				if (ball && ball->IsUsedITball())  // すでに使われてるボールは撃たないようにする
 				{
-					ball[ballCnt].SetITball(g_Player[i].pos, g_Player[i].rot);  // プレイヤーの位置と向きでボールを発射
-					break;
+					ball->SetITball(g_Player[i].pos, g_Player[i].rot);  // プレイヤーの位置と向きでボールを発射
 				}
 			}
-		}
 
-		// ボム発射
-		if (GetKeyboardTrigger(DIK_J))
-		{
-			BOMB* bomb = GetBomb();
-			for (int bombCnt = 0; bombCnt < 10; bombCnt++)
+
+			// ▼ ワープゲート用クールタイム
+			if (g_Player[i].gateUse)
 			{
-				if (bomb[bombCnt].IsUsedITbomb() && bomb[bombCnt].IsPickedITbomb())  // すでに使われてるボールは撃たないようにする
+				if (++g_Player[i].gateCoolTime >= 300)
 				{
-					bomb[bombCnt].SetITbomb(g_Player[i].pos, g_Player[i].rot);  // プレイヤーの位置と向きでボールを発射
-					break;
+					g_Player[i].gateCoolTime = 0;
+					g_Player[i].gateUse = FALSE;
 				}
 			}
-		}
 
-		// ▼ ワープゲート用クールタイム
-		if (g_Player[i].gateUse)
-		{
-			if (++g_Player[i].gateCoolTime >= 300)
+			// ▼ 地形との当たり判定で Y 座標調整
+			XMFLOAT3 HitPos, Normal;
+			if (RayHitField(g_Player[i].pos, &HitPos, &Normal))
 			{
-				g_Player[i].gateCoolTime = 0;
-				g_Player[i].gateUse = FALSE;
+				g_Player[i].pos.y = HitPos.y + PLAYER_OFFSET_Y;
 			}
-		}
-
-		// ▼ 地形との当たり判定で Y 座標調整
-		XMFLOAT3 HitPos, Normal;
-		if (RayHitField(g_Player[i].pos, &HitPos, &Normal))
-		{
-			g_Player[i].pos.y = HitPos.y + PLAYER_OFFSET_Y;
-		}
-		else
-		{
-			g_Player[i].pos.y = PLAYER_OFFSET_Y;
-			Normal = XMFLOAT3(0.0f, 1.0f, 0.0f);
-		}
-
-		// ▼ 影の位置も更新
-		{
-			XMFLOAT3 sh = g_Player[i].pos;
-			sh.y -= (PLAYER_OFFSET_Y - 0.1f);
-			SetPositionShadow(g_Player[i].shadowIdx, sh);
-		}
-
-		float blendDuration = 12.0f; // ブレンド時間
-
-		for (int j = 0; j < PLAYER_PARTS_MAX; j++)
-		{
-			if (g_Parts[i][j].use && g_Parts[i][j].tblMax > 0)
+			else
 			{
-				if (!g_PlayerIsMoving[i])
-					continue; // 歩き中のみ進行
+				g_Player[i].pos.y = PLAYER_OFFSET_Y;
+				Normal = XMFLOAT3(0.0f, 1.0f, 0.0f);
+			}
 
-				int nowNo = (int)g_Parts[i][j].time;
-				int maxNo = g_Parts[i][j].tblMax;
-				int nextNo = (nowNo + 1) % maxNo;
-				INTERPOLATION_DATA* tbl = g_MoveTblAdr[g_Parts[i][j].tblNo];
+			// ▼ 影の位置も更新
+			{
+				XMFLOAT3 sh = g_Player[i].pos;
+				sh.y -= (PLAYER_OFFSET_Y - 0.1f);
+				SetPositionShadow(g_Player[i].shadowIdx, sh);
+			}
 
-				// キーフレーム補間
-				XMVECTOR nowPos = XMLoadFloat3(&tbl[nowNo].pos);
-				XMVECTOR nowRot = XMLoadFloat3(&tbl[nowNo].rot);
-				XMVECTOR nowScl = XMLoadFloat3(&tbl[nowNo].scl);
-				XMVECTOR nextPos = XMLoadFloat3(&tbl[nextNo].pos);
-				XMVECTOR nextRot = XMLoadFloat3(&tbl[nextNo].rot);
-				XMVECTOR nextScl = XMLoadFloat3(&tbl[nextNo].scl);
+			float blendDuration = 12.0f; // ブレンド時間
 
-				// 差分と補間
-				XMVECTOR deltaPos = nextPos - nowPos;
-				XMVECTOR deltaRot = nextRot - nowRot;
-				XMVECTOR deltaScl = nextScl - nowScl;
-				float alpha = g_Parts[i][j].time - nowNo;
-
-				// 補間した値を一時変数に格納
-				XMFLOAT3 pos, rot, scl;
-				XMStoreFloat3(&pos, nowPos + deltaPos * alpha);
-				XMStoreFloat3(&rot, nowRot + deltaRot * alpha);
-				XMStoreFloat3(&scl, nowScl + deltaScl * alpha);
-
-				// --- モーションブレンド ---
-				if (g_PlayerAnimBlendMode[i] == 1 && g_PlayerAnimBlendTimer[i] < blendDuration) {
-					float t = g_PlayerAnimBlendTimer[i] / blendDuration;
-					rot.x *= t;
-				}
-				else if (g_PlayerAnimBlendMode[i] == 2 && g_PlayerAnimBlendTimer[i] < blendDuration) {
-					float t = g_PlayerAnimBlendTimer[i] / blendDuration;
-					rot.x = g_PlayerAnimBlendFrom[i][j] * (1.0f - t);
-				}
-
-				// --- 歩き中のみ、もともとのノイズ方式でノイズ合成 ---
-				// 頭(j==0)だけノイズ弱め
-				float t = (float)dwFrameCount * 0.08f + (i * 50 + j * 23);
-				float shake = sinf(t) * ((j == 0) ? 0.04f : 0.12f); // 頭だけ0.04f、それ以外0.12f
-				rot.x += shake;
-
-				float last = noiseTable[i][j];
-				float target = GetRand(-1000, 1000) / 10.0f * ((j == 0) ? 0.04f : 0.15f);
-				float smooth = 0.07f;
-				float newVal = last + (target - last) * smooth;
-				noiseTable[i][j] = newVal;
-				rot.y += newVal;
-				// --- ノイズここまで ---
-
-				// 結果を格納
-				g_Parts[i][j].pos = pos;
-				g_Parts[i][j].rot = rot;
-				g_Parts[i][j].scl = scl;
-
-				// 時間進行
-				g_Parts[i][j].time += 1.0f / tbl[nowNo].frame;
-				if ((int)g_Parts[i][j].time >= maxNo)
+			for (int j = 0; j < PLAYER_PARTS_MAX; j++)
+			{
+				if (g_Parts[i][j].use && g_Parts[i][j].tblMax > 0)
 				{
-					g_Parts[i][j].time -= maxNo;
+					if (!g_PlayerIsMoving[i])
+						continue; // 歩き中のみ進行
+
+					int nowNo = (int)g_Parts[i][j].time;
+					int maxNo = g_Parts[i][j].tblMax;
+					int nextNo = (nowNo + 1) % maxNo;
+					INTERPOLATION_DATA* tbl = g_MoveTblAdr[g_Parts[i][j].tblNo];
+
+					// キーフレーム補間
+					XMVECTOR nowPos = XMLoadFloat3(&tbl[nowNo].pos);
+					XMVECTOR nowRot = XMLoadFloat3(&tbl[nowNo].rot);
+					XMVECTOR nowScl = XMLoadFloat3(&tbl[nowNo].scl);
+					XMVECTOR nextPos = XMLoadFloat3(&tbl[nextNo].pos);
+					XMVECTOR nextRot = XMLoadFloat3(&tbl[nextNo].rot);
+					XMVECTOR nextScl = XMLoadFloat3(&tbl[nextNo].scl);
+
+					// 差分と補間
+					XMVECTOR deltaPos = nextPos - nowPos;
+					XMVECTOR deltaRot = nextRot - nowRot;
+					XMVECTOR deltaScl = nextScl - nowScl;
+					float alpha = g_Parts[i][j].time - nowNo;
+
+					// 補間した値を一時変数に格納
+					XMFLOAT3 pos, rot, scl;
+					XMStoreFloat3(&pos, nowPos + deltaPos * alpha);
+					XMStoreFloat3(&rot, nowRot + deltaRot * alpha);
+					XMStoreFloat3(&scl, nowScl + deltaScl * alpha);
+
+					// --- モーションブレンド ---
+					if (g_PlayerAnimBlendMode[i] == 1 && g_PlayerAnimBlendTimer[i] < blendDuration) {
+						float t = g_PlayerAnimBlendTimer[i] / blendDuration;
+						rot.x *= t;
+					}
+					else if (g_PlayerAnimBlendMode[i] == 2 && g_PlayerAnimBlendTimer[i] < blendDuration) {
+						float t = g_PlayerAnimBlendTimer[i] / blendDuration;
+						rot.x = g_PlayerAnimBlendFrom[i][j] * (1.0f - t);
+					}
+
+
+					// 結果を格納
+					g_Parts[i][j].pos = pos;
+					g_Parts[i][j].rot = rot;
+					g_Parts[i][j].scl = scl;
+
+					// 時間進行
+					g_Parts[i][j].time += 1.0f / tbl[nowNo].frame;
+					if ((int)g_Parts[i][j].time >= maxNo)
+					{
+						g_Parts[i][j].time -= maxNo;
+					}
 				}
 			}
-		}
 
-		if (g_PlayerState[i] == PLAYER_HIT) {
-			UpdatePlayerKnockback(i);
-			return; // やられ中は他の入力やアニメ処理を飛ばす（好みで）
-		}
-		UpdatePlayerPartsAnimation(i);
+			if (g_PlayerState[i] == PLAYER_HIT) {
+				UpdatePlayerKnockback(i);
+				return; // やられ中は他の入力やアニメ処理を飛ばす（好みで）
+			}
+			UpdatePlayerPartsAnimation(i);
 
-		// ▼ 地面法線による姿勢制御（クォータニオン補間）
-		{
-			XMVECTOR up = XMVectorSet(0, 1, 0, 0);
-			XMVECTOR normV = XMLoadFloat3(&Normal);
-			XMVECTOR axis = XMVector3Normalize(XMVector3Cross(up, normV));
-			float   length = XMVectorGetX(XMVector3Length(XMVector3Cross(up, normV)));
-			float   angle = asinf(length);
-			XMVECTOR targetQuat = XMQuaternionRotationNormal(axis, angle);
-			XMVECTOR currentQuat = XMLoadFloat4(&g_Player[i].Quaternion);
-			XMVECTOR newQuat = XMQuaternionSlerp(currentQuat, targetQuat, 0.05f);
-			XMStoreFloat4(&g_Player[i].Quaternion, newQuat);
-		}
+			// ▼ 地面法線による姿勢制御（クォータニオン補間）
+			{
+				XMVECTOR up = XMVectorSet(0, 1, 0, 0);
+				XMVECTOR normV = XMLoadFloat3(&Normal);
+				XMVECTOR axis = XMVector3Normalize(XMVector3Cross(up, normV));
+				float   length = XMVectorGetX(XMVector3Length(XMVector3Cross(up, normV)));
+				float   angle = asinf(length);
+				XMVECTOR targetQuat = XMQuaternionRotationNormal(axis, angle);
+				XMVECTOR currentQuat = XMLoadFloat4(&g_Player[i].Quaternion);
+				XMVECTOR newQuat = XMQuaternionSlerp(currentQuat, targetQuat, 0.05f);
+				XMStoreFloat4(&g_Player[i].Quaternion, newQuat);
+			}
 
-		g_Player[i].capsuleA.x = g_Player[i].pos.x;
-		g_Player[i].capsuleA.y = g_Player[i].pos.y - PLAYER_HEIGHT / 2.0f;
-		g_Player[i].capsuleA.z = g_Player[i].pos.z;
+			g_Player[i].capsuleA.x = g_Player[i].pos.x;
+			g_Player[i].capsuleA.y = g_Player[i].pos.y - PLAYER_HEIGHT / 2.0f;
+			g_Player[i].capsuleA.z = g_Player[i].pos.z;
 
-		g_Player[i].capsuleB.x = g_Player[i].pos.x;
-		g_Player[i].capsuleB.y = g_Player[i].pos.y + PLAYER_HEIGHT / 2.0f;
-		g_Player[i].capsuleB.z = g_Player[i].pos.z;
+			g_Player[i].capsuleB.x = g_Player[i].pos.x;
+			g_Player[i].capsuleB.y = g_Player[i].pos.y + PLAYER_HEIGHT / 2.0f;
+			g_Player[i].capsuleB.z = g_Player[i].pos.z;
 
 
 #ifdef _DEBUG
-		PrintDebugProc(
-			"Player[%d] Pos:(%f,%f,%f) HP:%f\n",
-			i,
-			g_Player[i].pos.x,
-			g_Player[i].pos.y,
-			g_Player[i].pos.z,
-			g_Player[i].hp
-		);
+			PrintDebugProc(
+				"Player[%d] Pos:(%f,%f,%f) HP:%f\n",
+				i,
+				g_Player[i].pos.x,
+				g_Player[i].pos.y,
+				g_Player[i].pos.z,
+				g_Player[i].hp
+			);
 #endif
+		}
+	}
+	else if (GetMode() == MODE_RESULT)
+	{
+		for (int i = 0; i < MAX_PLAYER; i++)
+		{
+			if (i == 0)
+			{
+				PSetAnimation(i, PLAYER_RESULT_WIN);
+			}
+			else if (i == 1)
+			{
+				PSetAnimation(i, PLAYER_RESULT_LOSE);
+			}
+
+			for (int j = 0; j < PLAYER_PARTS_MAX; j++)
+			{
+				if (g_Parts[i][j].use && g_Parts[i][j].tblMax > 0)
+				{
+
+					int nowNo = (int)g_Parts[i][j].time;
+					int maxNo = g_Parts[i][j].tblMax;
+					int nextNo = (nowNo + 1) % maxNo;
+					INTERPOLATION_DATA* tbl = g_MoveTblAdr[g_Parts[i][j].tblNo];
+
+					// キーフレーム補間
+					XMVECTOR nowPos = XMLoadFloat3(&tbl[nowNo].pos);
+					XMVECTOR nowRot = XMLoadFloat3(&tbl[nowNo].rot);
+					XMVECTOR nowScl = XMLoadFloat3(&tbl[nowNo].scl);
+					XMVECTOR nextPos = XMLoadFloat3(&tbl[nextNo].pos);
+					XMVECTOR nextRot = XMLoadFloat3(&tbl[nextNo].rot);
+					XMVECTOR nextScl = XMLoadFloat3(&tbl[nextNo].scl);
+
+					// 差分と補間
+					XMVECTOR deltaPos = nextPos - nowPos;
+					XMVECTOR deltaRot = nextRot - nowRot;
+					XMVECTOR deltaScl = nextScl - nowScl;
+					float alpha = g_Parts[i][j].time - nowNo;
+
+					// 補間した値を一時変数に格納
+					XMFLOAT3 pos, rot, scl;
+					XMStoreFloat3(&pos, nowPos + deltaPos * alpha);
+					XMStoreFloat3(&rot, nowRot + deltaRot * alpha);
+					XMStoreFloat3(&scl, nowScl + deltaScl * alpha);
+
+
+					// 結果を格納
+					g_Parts[i][j].pos = pos;
+					g_Parts[i][j].rot = rot;
+					g_Parts[i][j].scl = scl;
+
+					// 時間進行
+					g_Parts[i][j].time += 1.0f / tbl[nowNo].frame;
+					if ((int)g_Parts[i][j].time >= maxNo)
+					{
+						g_Parts[i][j].time -= maxNo;
+					}
+				}
+			}
+
+		}
 	}
 }
+
 //=============================================================================
 // 描画処理
 //=============================================================================

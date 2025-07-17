@@ -167,7 +167,7 @@ void UpdateNewResult(void)
 	UpdateMeshField();
 
 	// プレイヤーの更新処理
-	//UpdatePlayer();
+	UpdatePlayer();
 
 	// エネミーの更新処理
 	//UpdateEnemy();

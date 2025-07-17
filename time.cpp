@@ -8,6 +8,7 @@
 #include "renderer.h"
 #include "time.h"
 #include "sprite.h"
+#include "fade.h"
 #include <windows.h>
 
 //*****************************************************************************
@@ -132,6 +133,11 @@ void UpdateTime(void)
 			g_timeOver = true;
 		}
 	}
+	else
+	{
+		SetFade(FADE_OUT, MODE_RESULT);
+	}
+
 }
 
 //=============================================================================
