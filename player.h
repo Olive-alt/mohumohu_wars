@@ -26,7 +26,17 @@ static int  g_PlayerAnimBlendTimer[MAX_PLAYER] = { 0 }; // blend進行度
 static int  g_PlayerAnimBlendMode[MAX_PLAYER] = { 0 };  // 0:通常, 1:ブレンドIN, 2:ブレンドOUT
 static float g_PlayerAnimBlendFrom[MAX_PLAYER][PLAYER_PARTS_MAX] = { 0 }; // ブレンドOUT用
 
-enum PLAYER_STATE { PLAYER_NORMAL, PLAYER_HIT, PLAYER_DEAD };
+typedef enum
+{
+	PLAYER_NORMAL,
+	PLAYER_WALK,
+	PLAYER_HIT,
+	PLAYER_DEAD,
+	PLAYER_RESULT_WIN,
+	PLAYER_RESULT_LOSE,
+} PLAYER_STATE;
+
+
 extern PLAYER_STATE g_PlayerState[MAX_PLAYER];
 extern int g_PlayerAnimTimer[MAX_PLAYER];
 extern XMFLOAT3 g_PlayerKnockback[MAX_PLAYER]; // 吹っ飛び速度
@@ -89,6 +99,9 @@ struct PLAYER
 	float squishTimer;
 	XMFLOAT3 originalScl;
 
+	// アニメーション状態
+	PLAYER_STATE currentAnimation;
+
 };
 
 
@@ -116,3 +129,4 @@ void OnPlayerHit(int i, const XMFLOAT3& hitDirection);
 float GetNoise(float strength = 0.12f);
 float GetPeriodicNoise(int seed, float time, float strength = 0.12f);
 float GetSmoothNoise(float& last, float strength = 0.12f);
+void PSetAnimation(int playerIndex, PLAYER_STATE animation);

@@ -14,6 +14,7 @@
 #include "debugproc.h"
 #include "meshfield.h"
 #include "item.h"
+#include "player_select.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -26,12 +27,36 @@
 #define PLAYER_OFFSET_Y		(14.0f)							// プレイヤーの足元をあわせる
 
 
-#define	MODEL_PLAYER_HEAD			"data/MODEL/character/model_bird/cha_bird_head.obj"				// 頭
-#define	MODEL_PLAYER				"data/MODEL/character/model_bird/cha_bird_body.obj"				// ボディー（本体）
-#define	MODEL_PLAYER_L_ARM			"data/MODEL/character/model_bird/cha_bird_leftarm.obj"			// (左)手
-#define	MODEL_PLAYER_R_ARM			"data/MODEL/character/model_bird/cha_bird_rightarm.obj"			// (右)手
-#define	MODEL_PLAYER_L_LEG			"data/MODEL/character/model_bird/cha_bird_leftleg.obj"	// (左)股関節
-#define	MODEL_PLAYER_R_LEG			"data/MODEL/character/model_bird/cha_bird_rightleg.obj"	// (左)股関節
+static const char* CHARACTER_MODEL_PATHS[][6] = {
+	// 0: 鳥
+	{
+		"data/MODEL/character/model_bird/cha_bird_head.obj",
+		"data/MODEL/character/model_bird/cha_bird_body.obj",
+		"data/MODEL/character/model_bird/cha_bird_leftarm.obj",
+		"data/MODEL/character/model_bird/cha_bird_rightarm.obj",
+		"data/MODEL/character/model_bird/cha_bird_leftleg.obj",
+		"data/MODEL/character/model_bird/cha_bird_rightleg.obj"
+	},
+	// 1: 犬
+	{
+		"data/MODEL/character/model_fox/cha_fox_head.obj",
+		"data/MODEL/character/model_fox/cha_fox_body.obj",
+		"data/MODEL/character/model_fox/cha_fox_leftarm.obj",
+		"data/MODEL/character/model_fox/cha_fox_rightarm.obj",
+		"data/MODEL/character/model_fox/cha_fox_leftleg.obj",
+		"data/MODEL/character/model_fox/cha_fox_rightleg.obj"
+	},
+	// ...他キャラ分も同様に追加
+};
+
+#define B_WALK_L_ARM_ANIMATION_INDEX		1  // 左腕用歩きモーション
+#define B_WALK_R_ARM_ANIMATION_INDEX		2  // 右腕用歩きモーション
+
+#define B_RESULT_WIN_L_ARM_ANIMATION_INDEX	   5  // 左腕用攻撃モーション
+#define B_RESULT_WIN_R_ARM_ANIMATION_INDEX	   6  // 右腕用攻撃モーション
+#define B_RESULT_LOSE_L_ARM_ANIMATION_INDEX	   7  // 左腕用攻撃モーション
+#define B_RESULT_LOSE_R_ARM_ANIMATION_INDEX	   8  // 右腕用攻撃モーション
+
 
 // 
 //*****************************************************************************
@@ -104,7 +129,7 @@ static INTERPOLATION_DATA walk_move_tbl_head[] =
 
 static INTERPOLATION_DATA walk_move_tbl_l_arm[] =
 {	// pos,							rot,										 scl,						 frame
-	{ XMFLOAT3(-4.0f, 1.0f, 0.0f), XMFLOAT3(XM_PI / 3, 0.0f, -XM_PI / 2),	XMFLOAT3(1.0f, 1.0f, 1.0f), 20 },
+	{ XMFLOAT3(-4.0f, 1.0f, 0.0f), XMFLOAT3(XM_PI / 3, 0.0f,-XM_PI / 2),	XMFLOAT3(1.0f, 1.0f, 1.0f), 20 },
 	{ XMFLOAT3(-4.0f, 1.0f, 0.0f), XMFLOAT3(-XM_PI / 3, 0.0f, -XM_PI / 2),	XMFLOAT3(1.0f, 1.0f, 1.0f), 20 },
 
 };
@@ -134,6 +159,36 @@ static INTERPOLATION_DATA walk_move_tbl_r_leg[] =
 };
 
 
+// リザルト用
+
+//勝ち
+static INTERPOLATION_DATA move_tbl_wave_l_arm[] =
+{
+	{ XMFLOAT3(-4.0f, 1.0f, 0.0f), XMFLOAT3(XM_PI / 1.25f , 0.0f, -XM_PI / 2), XMFLOAT3(1.0f, 1.0f, 1.0f), 20 },
+	{ XMFLOAT3(-4.0f, 1.0f, 0.0f), XMFLOAT3(XM_PI / 1.6f, 0.0f, -2.8f), XMFLOAT3(1.0f, 1.0f, 1.0f), 20 },
+};
+static INTERPOLATION_DATA move_tbl_wave_r_arm[] =
+{
+	{ XMFLOAT3(4.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f,XM_PI / 2),	XMFLOAT3(1.0f, 1.0f, 1.0f), 20 },
+	{ XMFLOAT3(4.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f,XM_PI / 2),	XMFLOAT3(1.0f, 1.0f, 1.0f), 20 },
+};
+
+
+//負け
+static INTERPOLATION_DATA move_tbl_clap_l_arm[] =
+{
+	{ XMFLOAT3(-4.0f, 1.0f, 0.0f), XMFLOAT3(XM_PI / 2, 0.0f, XM_PI / 8), XMFLOAT3(1.0f, 1.0f, 1.0f), 10 },
+	{ XMFLOAT3(-4.0f, 1.0f, 0.0f), XMFLOAT3(XM_PI / 2, 0.0f, XM_PI / 2), XMFLOAT3(1.0f, 1.0f, 1.0f), 10 },
+};
+
+static INTERPOLATION_DATA move_tbl_clap_r_arm[] =
+{
+	{ XMFLOAT3(4.0f, 1.0f, 0.0f), XMFLOAT3(-XM_PI / 3, 0.0f, XM_PI / 2 - 1.0f), XMFLOAT3(1.0f, 1.0f, 1.0f),10 },
+	{ XMFLOAT3(4.0f, 1.0f, 0.0f), XMFLOAT3(-XM_PI / 3, 0.0f, XM_PI / 2),         XMFLOAT3(1.0f, 1.0f, 1.0f), 10 },
+};
+
+
+
 static INTERPOLATION_DATA* g_MoveTblAdr[] =
 {
 	walk_move_tbl_head,
@@ -141,6 +196,11 @@ static INTERPOLATION_DATA* g_MoveTblAdr[] =
 	walk_move_tbl_r_arm,
 	walk_move_tbl_l_leg,
 	walk_move_tbl_r_leg,
+
+	move_tbl_wave_l_arm,
+	move_tbl_wave_r_arm,
+	move_tbl_clap_l_arm,
+	move_tbl_clap_r_arm,
 
 };
 
@@ -154,19 +214,52 @@ static INTERPOLATION_DATA* g_MoveTblAdr[] =
 //=============================================================================
 HRESULT InitPlayer(void)
 {
-	// モデルを一度だけロード
-	LoadModel(MODEL_PLAYER_HEAD, &g_SharedModels[0]);         // 頭
-	LoadModel(MODEL_PLAYER_L_ARM, &g_SharedModels[1]);        // 左腕
-	LoadModel(MODEL_PLAYER_R_ARM, &g_SharedModels[2]);        // 右腕
-	LoadModel(MODEL_PLAYER_L_LEG, &g_SharedModels[3]);       // 左腿
-	LoadModel(MODEL_PLAYER_R_LEG, &g_SharedModels[4]);       // 右腿
-
 	for (int i = 0; i < MAX_PLAYER; i++)
 	{
-		g_Player[i].load = TRUE;
-		LoadModel(MODEL_PLAYER, &g_Player[i].model);
+		int selectedChar = GetSelectedCharIndex(i);
 
-		g_Player[i].pos = XMFLOAT3(-10.0f, PLAYER_OFFSET_Y+100.0f, -50.0f);
+		// 本体モデル
+		g_Player[i].load = TRUE;
+		LoadModel(CHARACTER_MODEL_PATHS[selectedChar][1], &g_Player[i].model);
+
+		// パーツごと
+		for (int j = 0; j < PLAYER_PARTS_MAX; j++)
+		{
+			g_Parts[i][j].use = TRUE;
+			g_Parts[i][j].parent = &g_Player[i];   // 全部親は本体でOK
+			g_Parts[i][j].time = 0.0f;
+			g_Parts[i][j].tblNo = j;              // アニメテーブルの番号はjと一致（0:頭, 1:左腕, 2:右腕, ...）
+			// パーツ数とテーブル数が一致している前提
+			switch (j)
+			{
+			case 0:
+				LoadModel(CHARACTER_MODEL_PATHS[selectedChar][0], &g_Parts[i][j].model); // 頭
+				g_Parts[i][j].tblMax = sizeof(walk_move_tbl_head) / sizeof(INTERPOLATION_DATA);
+				break;
+			case 1:
+				LoadModel(CHARACTER_MODEL_PATHS[selectedChar][2], &g_Parts[i][j].model); // 左腕
+				g_Parts[i][j].tblMax = sizeof(walk_move_tbl_l_arm) / sizeof(INTERPOLATION_DATA);
+				break;
+			case 2:
+				LoadModel(CHARACTER_MODEL_PATHS[selectedChar][3], &g_Parts[i][j].model); // 右腕
+				g_Parts[i][j].tblMax = sizeof(walk_move_tbl_r_arm) / sizeof(INTERPOLATION_DATA);
+				break;
+			case 3:
+				LoadModel(CHARACTER_MODEL_PATHS[selectedChar][4], &g_Parts[i][j].model); // 左足
+				g_Parts[i][j].tblMax = sizeof(walk_move_tbl_l_leg) / sizeof(INTERPOLATION_DATA);
+				break;
+			case 4:
+				LoadModel(CHARACTER_MODEL_PATHS[selectedChar][5], &g_Parts[i][j].model); // 右足
+				g_Parts[i][j].tblMax = sizeof(walk_move_tbl_r_leg) / sizeof(INTERPOLATION_DATA);
+				break;
+			}
+			g_Parts[i][j].scl = XMFLOAT3(2.0f, 2.0f, 2.0f);
+			g_Parts[i][j].rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
+			g_Parts[i][j].pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
+			g_Parts[i][j].load = TRUE;
+		}
+
+		g_Player[i].pos = XMFLOAT3(-10.0f, PLAYER_OFFSET_Y + 100.0f, -50.0f);
 		g_Player[i].rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
 		g_Player[i].scl = XMFLOAT3(2.0f, 2.0f, 2.0f);
 
@@ -203,84 +296,6 @@ HRESULT InitPlayer(void)
 		roty = 0.0f;
 
 		g_Player[i].parent = NULL;			// 本体（親）なのでNULLを入れる
-	}
-
-
-	// 階層アニメーションの初期化
-	for (int i = 0; i < MAX_PLAYER; i++)
-	{
-		for (int j = 0; j < PLAYER_PARTS_MAX; j++)
-		{
-			g_Parts[i][j].use = FALSE;
-
-			// 位置・回転・スケールの初期設定
-			g_Parts[i][j].pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
-			g_Parts[i][j].rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
-			g_Parts[i][j].scl = XMFLOAT3(2.0f, 2.0f, 2.0f);
-
-			// 親子関係
-			g_Parts[i][0].parent = &g_Player[i];		// 頭→ボディーにペアレント
-
-			g_Parts[i][1].parent = &g_Player[i];	// 指が腕の子供
-			g_Parts[i][2].parent = &g_Player[i];	// 指が腕の子供
-			g_Parts[i][3].parent = &g_Player[i];	// 指が腕の子供
-			g_Parts[i][4].parent = &g_Player[i];	// 指が腕の子供
-
-
-				// 階層アニメーション用のメンバー変数の初期化
-			g_Parts[i][j].time = 0.0f;			// 線形補間用のタイマーをクリア
-			g_Parts[i][j].tblNo = 0;			// 再生する行動データテーブルNoをセット
-			g_Parts[i][j].tblMax = 0;			// 再生する行動データテーブルのレコード数をセット
-
-			// パーツの読み込みはまだしていない
-			g_Parts[i][j].load = FALSE;
-		}
-	}
-
-	for (int i = 0; i < MAX_PLAYER; i++)
-	{
-		g_Parts[i][0].use = TRUE;
-		g_Parts[i][0].parent = &g_Player[i];	// 親をセット
-		g_Parts[i][0].tblNo = 0;			// 再生するアニメデータの先頭アドレスをセット
-		g_Parts[i][0].tblMax = sizeof(walk_move_tbl_head) / sizeof(INTERPOLATION_DATA);	// 再生するアニメデータのレコード数をセット
-		g_Parts[i][0].load = TRUE;
-		g_Parts[i][0].model = g_SharedModels[0]; // 共有モデルを参照
-
-
-		g_Parts[i][1].use = TRUE;
-		g_Parts[i][1].parent = &g_Player[i];	// 親をセット
-		g_Parts[i][1].tblNo = 1;			// 再生するアニメデータの先頭アドレスをセット
-		g_Parts[i][1].tblMax = sizeof(walk_move_tbl_l_arm) / sizeof(INTERPOLATION_DATA);	// 再生するアニメデータのレコード数をセット
-		g_Parts[i][1].load = TRUE;
-		g_Parts[i][1].model = g_SharedModels[1]; // 共有モデルを参照
-
-		g_Parts[i][2].use = TRUE;
-		g_Parts[i][2].parent = &g_Player[i];	// 親をセット
-		g_Parts[i][2].tblNo = 2;			// 再生するアニメデータの先頭アドレスをセット
-		g_Parts[i][2].tblMax = sizeof(walk_move_tbl_r_arm) / sizeof(INTERPOLATION_DATA);	// 再生するアニメデータのレコード数をセット
-		g_Parts[i][2].load = TRUE;
-		g_Parts[i][2].model = g_SharedModels[2]; // 共有モデルを参照
-
-		g_Parts[i][3].use = TRUE;
-		g_Parts[i][3].parent = &g_Player[i];	// 親をセット
-		g_Parts[i][3].tblNo = 3;			// 再生するアニメデータの先頭アドレスをセット
-		g_Parts[i][3].tblMax = sizeof(walk_move_tbl_l_leg) / sizeof(INTERPOLATION_DATA);	// 再生するアニメデータのレコード数をセット
-		g_Parts[i][3].load = TRUE;
-		g_Parts[i][3].model = g_SharedModels[3]; // 共有モデルを参照
-
-		g_Parts[i][4].use = TRUE;
-		g_Parts[i][4].parent = &g_Player[i];	// 親をセット
-		g_Parts[i][4].tblNo = 4;			// 再生するアニメデータの先頭アドレスをセット
-		g_Parts[i][4].tblMax = sizeof(walk_move_tbl_r_leg) / sizeof(INTERPOLATION_DATA);	// 再生するアニメデータのレコード数をセット
-		g_Parts[i][4].load = TRUE;
-		g_Parts[i][4].model = g_SharedModels[4]; // 共有モデルを参照
-
-
-
-
-		// クォータニオンの初期化
-		XMStoreFloat4(&g_Player[i].Quaternion, XMQuaternionIdentity());
-
 	}
 
 
@@ -973,4 +988,32 @@ float GetSmoothNoise(float& last, float strength)
 	float smooth = 0.07f;
 	last += (target - last) * smooth;
 	return last;
+}
+
+void PSetAnimation(int playerIndex, PLAYER_STATE animation)
+{
+	// プレイヤーの現在のアニメーションを設定
+	g_Player[playerIndex].currentAnimation = animation;
+
+	// アニメーションタイプに基づいて処理
+	switch (animation)
+	{
+	case PLAYER_WALK:
+		// 歩行アニメーション
+		g_Parts[playerIndex][1].tblNo = B_WALK_L_ARM_ANIMATION_INDEX;  // 左腕
+		g_Parts[playerIndex][2].tblNo = B_WALK_R_ARM_ANIMATION_INDEX;  // 右腕
+		break;
+
+	case PLAYER_RESULT_WIN:
+		// 攻撃アニメーション
+		g_Parts[playerIndex][1].tblNo = B_RESULT_WIN_L_ARM_ANIMATION_INDEX;  // 左腕
+		g_Parts[playerIndex][2].tblNo = B_RESULT_WIN_R_ARM_ANIMATION_INDEX;  // 右腕
+		break;
+	case PLAYER_RESULT_LOSE:
+		// 攻撃アニメーション
+		g_Parts[playerIndex][1].tblNo = B_RESULT_LOSE_L_ARM_ANIMATION_INDEX;  // 左腕
+		g_Parts[playerIndex][2].tblNo = B_RESULT_LOSE_R_ARM_ANIMATION_INDEX;  // 右腕
+		break;
+	}
+
 }

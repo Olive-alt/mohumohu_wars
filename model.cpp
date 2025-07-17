@@ -52,13 +52,13 @@ struct MODEL
 //*****************************************************************************
 // プロトタイプ宣言
 //*****************************************************************************
-void LoadObj(char* FileName, MODEL* Model);
+void LoadObj(const char* FileName, MODEL* Model);
 void LoadMaterial(char* FileName, MODEL_MATERIAL** MaterialArray, unsigned int* MaterialNum);
 
 //=============================================================================
 // 初期化処理
 //=============================================================================
-void LoadModel(char* FileName, DX11_MODEL* Model)
+void LoadModel(const char* FileName, DX11_MODEL* Model)
 {
     MODEL model;
 
@@ -168,7 +168,7 @@ void DrawModel(DX11_MODEL* Model)
 //=============================================================================
 // モデル読込
 //=============================================================================
-void LoadObj(char* FileName, MODEL* Model)
+void LoadObj(const char* FileName, MODEL* Model)
 {
     FILE* file = fopen(FileName, "rt");
     if (file == NULL)
