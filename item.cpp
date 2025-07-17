@@ -108,8 +108,8 @@ HRESULT InitItem(void)
 	}
 
 	// ブーメランの初期化
-	//boom.InitITboom();
-	//boom.SetITboomObject(XMFLOAT3(-150.0f, 0.0f, -150.0f), 0);
+	boom.InitITboom();
+	boom.SetITboomObject(XMFLOAT3(-150.0f, 0.0f, -150.0f), 0);
 
 	// ハンマーの初期化
 	hamr.InitITHamr();
