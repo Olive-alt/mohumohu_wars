@@ -1,3 +1,9 @@
+newmtl cha_bird_body:lambert5SG
+illum 4
+Kd 0.96 0.46 0.23
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
 newmtl cha_bird_body:lambert7SG
 illum 4
 Kd 0.46 0.25 0.16
@@ -10,13 +16,19 @@ Kd 1.72 1.72 1.72
 Ka 0.00 0.00 0.00
 Tf 1.00 1.00 1.00
 Ni 1.00
+newmtl cha_bird_body1:lambert7SG
+illum 4
+Kd 0.46 0.25 0.16
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
 newmtl cha_bird_leftleg:lambert3SG
 illum 4
 Kd 1.31 0.48 0.22
 Ka 0.00 0.00 0.00
 Tf 1.00 1.00 1.00
 Ni 1.00
-newmtl enemy:unnamed
+newmtl enemy1:unnamed
 illum 4
 Kd 0.00 0.00 0.00
 Ka 0.50 0.50 0.50
