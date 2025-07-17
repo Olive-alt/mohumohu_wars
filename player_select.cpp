@@ -49,6 +49,7 @@ static BOOL g_Load = FALSE;
 HRESULT InitPlayerSelect(void)
 {
     ID3D11Device* pDevice = GetDevice();
+    PlaySound(SOUND_LABEL_BGM_bgm_a);
 
     for (int i = 0; i < 3; i++)
     {
@@ -151,6 +152,7 @@ void UpdatePlayerSelect(void)
         else
         {
             SetFade(FADE_OUT, MODE_STAGE_SELECT);
+
         }
     }
     else if (GetKeyboardTrigger(DIK_SPACE))
