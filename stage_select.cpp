@@ -34,6 +34,7 @@ static BOOL g_Load = FALSE;
 HRESULT InitStageSelect(void)
 {
     ID3D11Device* pDevice = GetDevice();
+    PlaySound(SOUND_LABEL_BGM_bgm_a);
 
     for (int i = 0; i < 4; i++)
     {

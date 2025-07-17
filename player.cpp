@@ -350,9 +350,13 @@ void UpdatePlayer(void)
 		if (GetKeyboardTrigger(DIK_SPACE))
 		{
 			BALL* ball = GetBall();
-			if (ball && ball->IsUsedITball())  // すでに使われてるボールは撃たないようにする
+			for (int ballCnt = 0; ballCnt < 10; ballCnt++)
 			{
-				ball->SetITball(g_Player[i].pos, g_Player[i].rot);  // プレイヤーの位置と向きでボールを発射
+				if (ball[ballCnt].IsUsedITball() && ball[ballCnt].IsPickedITball())  // すでに使われてるボールは撃たないようにする
+				{
+					ball[ballCnt].SetITball(g_Player[i].pos, g_Player[i].rot);  // プレイヤーの位置と向きでボールを発射
+					break;
+				}
 			}
 		}
 

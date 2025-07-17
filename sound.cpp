@@ -40,6 +40,7 @@ SOUNDPARAM g_aParam[SOUND_LABEL_MAX] =
 	{ (char*)"data/BGM/war_1.wav", -1 },	// BGM2
 	{ (char*)"data/BGM/war_2.wav", -1 },	// BGM2
 	{ (char*)"data/BGM/party.wav", -1 },	// BGM2
+	{ (char*)"data/BGM/bgm_a.wav", -1 },	// BGM2
 	{ (char*)"data/SE/bomb000.wav", 0 },		// ’e”­ŽË‰¹
 	{ (char*)"data/SE/defend000.wav", 0 },		// ’e”­ŽË‰¹
 	{ (char*)"data/SE/defend001.wav", 0 },		// ’e”­ŽË‰¹

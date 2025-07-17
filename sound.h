@@ -21,6 +21,7 @@ enum
 	SOUND_LABEL_BGM_war_1,	// BGM2
 	SOUND_LABEL_BGM_war_2,	// BGM2
 	SOUND_LABEL_BGM_party,	// BGM2
+	SOUND_LABEL_BGM_bgm_a,	// BGM2
 	SOUND_LABEL_SE_bomb000,		// ”š”­‰¹
 	SOUND_LABEL_SE_defend000,	// 
 	SOUND_LABEL_SE_defend001,	// 

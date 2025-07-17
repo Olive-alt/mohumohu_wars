@@ -49,6 +49,7 @@ static BOOL g_Load = FALSE;
 HRESULT InitPlayerSelect(void)
 {
     ID3D11Device* pDevice = GetDevice();
+    PlaySound(SOUND_LABEL_BGM_bgm_a);
 
     for (int i = 0; i < 3; i++)
     {
@@ -151,6 +152,7 @@ void UpdatePlayerSelect(void)
         else
         {
             SetFade(FADE_OUT, MODE_STAGE_SELECT);
+
         }
     }
     else if (GetKeyboardTrigger(DIK_SPACE))
@@ -226,7 +228,7 @@ void DrawPlayerSelect(void)
             if (g_SelectedCharIndex[p] == i && g_SelectFrameTex[p])
             {
                 GetDeviceContext()->PSSetShaderResources(0, 1, &g_SelectFrameTex[p]);
-                SetSpriteColor(g_VertexBuffer, x, yPos, TEXTURE_WIDTH_PLAYER_ICON, TEXTURE_HEIGHT_PLAYER_ICON,
+                SetSpriteColor(g_VertexBuffer, x, yPos-15.0f, TEXTURE_WIDTH_PLAYER_ICON*1.2, TEXTURE_HEIGHT_PLAYER_ICON*1.5,
                     0, 0, 1, 1, XMFLOAT4(1, 1, 1, 0.6f));
                 GetDeviceContext()->Draw(4, 0);
             }
