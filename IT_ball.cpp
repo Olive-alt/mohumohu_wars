@@ -163,12 +163,12 @@ void BALL::UpdateITball(void)
 
 	}
 #ifdef _DEBUG
-	PrintDebugProc(
-		"ballPos:(%f,%f,%f)\n",
-		pos.x,
-		pos.y,
-		pos.z
-	);
+	//PrintDebugProc(
+	//	"ballPos:(%f,%f,%f)\n",
+	//	pos.x,
+	//	pos.y,
+	//	pos.z
+	//);
 #endif
 
 }

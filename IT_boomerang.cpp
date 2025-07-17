@@ -284,12 +284,12 @@ void BOOM::UpdateITboom(void)
 		}
 	}
 #ifdef _DEBUG
-	PrintDebugProc(
-		"boomPos:(%f,%f,%f)\n",
-		pos.x,
-		pos.y,
-		pos.z
-	);
+	//PrintDebugProc(
+	//	"boomPos:(%f,%f,%f)\n",
+	//	pos.x,
+	//	pos.y,
+	//	pos.z
+	//);
 #endif
 }
 

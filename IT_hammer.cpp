@@ -178,12 +178,12 @@ void HAMR::UpdateITHamr(void)
 
 	}
 #ifdef _DEBUG
-	PrintDebugProc(
-		"HamrPos:(%f,%f,%f)\n",
-		pos.x,
-		pos.y,
-		pos.z
-	);
+	//PrintDebugProc(
+	//	"HamrPos:(%f,%f,%f)\n",
+	//	pos.x,
+	//	pos.y,
+	//	pos.z
+	//);
 #endif
 
 }

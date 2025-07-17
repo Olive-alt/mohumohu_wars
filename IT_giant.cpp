@@ -73,7 +73,7 @@ void GIANT::UpdateITgiant(void)
 		if (giantUse)
 		{
 			giantTimer += 1;
-			PrintDebugProc("giantTimer %d\n", giantTimer);
+			//PrintDebugProc("giantTimer %d\n", giantTimer);
 			if (giantTimer > GIANT_TIME)
 			{
 				FinishITgiant();

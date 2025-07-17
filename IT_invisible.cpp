@@ -75,7 +75,7 @@ void INVISIBLE::UpdateITinvisible(void)
 		if (invisibleUse)
 		{
 			invisibleTimer += 1;
-			PrintDebugProc("invisibleTimer %d\n", invisibleTimer);
+			//PrintDebugProc("invisibleTimer %d\n", invisibleTimer);
 
 			if (invisibleTimer > INVISIBLE_TIME)
 			{
@@ -83,11 +83,6 @@ void INVISIBLE::UpdateITinvisible(void)
 			}
 		}
 	}
-	for (int j = 0; j < MODEL_MAX_MATERIAL; j++)
-	{
-		PrintDebugProc("old_col %d\n", old_diffuse[j]);
-	}
-
 }
 
 void INVISIBLE::DrawITinvisible(void)
