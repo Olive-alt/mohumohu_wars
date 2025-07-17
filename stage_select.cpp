@@ -15,6 +15,7 @@
 #define TEXTURE_HEIGHT_STAGE_ICON (300)
 
 static int g_SelectedStage = 1;
+char g_SelectedStageFile[32] = "stage1.txt";
 
 static ID3D11Buffer* g_VertexBuffer = NULL;
 static ID3D11ShaderResourceView* g_Texture[4] = { NULL };
@@ -98,18 +99,15 @@ void UpdateStageSelect(void)
 
     }
 
+    // 決定キー（Enter）
     if (GetKeyboardTrigger(DIK_RETURN))
     {
-        if (g_SelectedStage == 1)
-        {
-            PrintDebugProc("Loading Stage 1\n");
-        }
-        else if (g_SelectedStage == 2)
-        {
-            PrintDebugProc("Loading Stage 2\n");
-        }
+        // 選択したステージ番号に応じたファイル名をセット
+        sprintf(g_SelectedStageFile, "stage%d.txt", g_SelectedStage);
 
-        SetFade(FADE_OUT, MODE_MODE_SELECT);
+        PrintDebugProc("Loading %s\n", g_SelectedStageFile);
+
+        SetFade(FADE_OUT, MODE_GAME);
     }
     else if (GetKeyboardTrigger(DIK_SPACE))
     {

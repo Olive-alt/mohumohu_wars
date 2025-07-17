@@ -19,6 +19,7 @@
 
 #include <DirectXMath.h>
 #include <random>
+#include <fstream>
 
 
 // 本来はヘッダに書かない方が良い
@@ -81,6 +82,7 @@ enum
 	MODE_MAX
 };
 
+extern char g_SelectedStageFile[32];
 
 //*****************************************************************************
 // プロトタイプ宣言

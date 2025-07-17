@@ -22,6 +22,7 @@
 #include "collision.h"
 #include "debugproc.h"
 #include "player_select.h"
+#include "stageobject.h"
 
 //ステージギミック用
 #include "SG_wind.h"
@@ -71,6 +72,9 @@ HRESULT InitGame(void)
 
 	// ライトを有効化	// 影の初期化処理
 	InitShadow();
+
+	InitStageModels();
+	LoadStageObjects(g_SelectedStageFile);  // ← ここで選んだファイルをロード
 
 	// プレイヤーの初期化
 	InitPlayer();
@@ -243,6 +247,8 @@ void DrawGame0(void)
 
 	// 影の描画処理
 	DrawShadow();
+
+	DrawStageObjects();
 
 	// プレイヤーの描画処理
 	DrawPlayer();
