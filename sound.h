@@ -19,6 +19,8 @@ enum
 	SOUND_LABEL_BGM_mofu_1,	// BGM2
 	SOUND_LABEL_BGM_title,	// BGM2
 	SOUND_LABEL_BGM_war_1,	// BGM2
+	SOUND_LABEL_BGM_war_2,	// BGM2
+	SOUND_LABEL_BGM_party,	// BGM2
 	SOUND_LABEL_SE_bomb000,		// ”š”­‰¹
 	SOUND_LABEL_SE_defend000,	// 
 	SOUND_LABEL_SE_defend001,	// 
@@ -27,6 +29,7 @@ enum
 	SOUND_LABEL_SE_lockon000,	// 
 	SOUND_LABEL_SE_shot000,		// 
 	SOUND_LABEL_SE_shot001,		// 
+	SOUND_LABEL_SE_shot002,		// 
 	SOUND_LABEL_MAX,
 };
 

@@ -38,6 +38,8 @@ SOUNDPARAM g_aParam[SOUND_LABEL_MAX] =
 	{ (char*)"data/BGM/mofu_1.wav", -1 },	// BGM2
 	{ (char*)"data/BGM/title.wav", -1 },	// BGM2
 	{ (char*)"data/BGM/war_1.wav", -1 },	// BGM2
+	{ (char*)"data/BGM/war_2.wav", -1 },	// BGM2
+	{ (char*)"data/BGM/party.wav", -1 },	// BGM2
 	{ (char*)"data/SE/bomb000.wav", 0 },		// ’e”­ŽË‰¹
 	{ (char*)"data/SE/defend000.wav", 0 },		// ’e”­ŽË‰¹
 	{ (char*)"data/SE/defend001.wav", 0 },		// ’e”­ŽË‰¹
@@ -46,6 +48,7 @@ SOUNDPARAM g_aParam[SOUND_LABEL_MAX] =
 	{ (char*)"data/SE/lockon000.wav", 0 },		// ’e”­ŽË‰¹
 	{ (char*)"data/SE/shot000.wav", 0 },		// ’e”­ŽË‰¹
 	{ (char*)"data/SE/shot001.wav", 0 },		// ƒqƒbƒg‰¹
+	{ (char*)"data/SE/shot002.wav", 0 },		// ƒqƒbƒg‰¹
 };
 
 //=============================================================================

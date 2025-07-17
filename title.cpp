@@ -118,7 +118,7 @@ HRESULT InitTitle(void)
 	ResetScore();
 
 	// BGMçƒê∂
-	PlaySound(SOUND_LABEL_BGM_title);
+	PlaySound(SOUND_LABEL_BGM_mofu_1);
 
 	g_Load = TRUE;
 	return S_OK;
