@@ -29,12 +29,14 @@
 // マクロ定義
 //*****************************************************************************
 #define ITEM_MAX	(10)
+#define ITEM_TOTAL_MAX	(6)
 
 
 //*****************************************************************************
 // プロトタイプ宣言
 //*****************************************************************************
 //void DrawDebugSphereOutline(const XMFLOAT3& center, float radius, const XMFLOAT4& color, int slices = 20);
+void ItemSpown(void);
 
 
 
@@ -44,7 +46,7 @@
 static int	g_ViewPortType_Game = TYPE_FULL_SCREEN;
 
 static BOOL	g_bPause = TRUE;	// ポーズON/OFF
-
+int SpownTime = 0;
 
 //アイテム用
 //アイテム用
@@ -82,6 +84,7 @@ BOMB* GetBomb()  // アクセス用の関数を作成
 HRESULT InitItem(void)
 {
 	g_ViewPortType_Game = TYPE_FULL_SCREEN;
+	SpownTime = 0;
 
 	for (int i = 0; i < ITEM_MAX; i++)
 	{
@@ -226,6 +229,13 @@ void UpdateItem(void)
 
 	if (g_bPause == FALSE)
 		return;
+
+	SpownTime += 1;
+	if (SpownTime >= 300)
+	{
+		ItemSpown();
+		SpownTime = 0;
+	}
 
 	// 当たり判定処理
 	CheckHitItem();
@@ -495,6 +505,79 @@ void CheckHitItem(void)
 
 }
 
+//=============================================================================
+// アイテムのランダム生成処理
+//=============================================================================
+void ItemSpown(void)
+{
+	//int itemNo = GetRand(0, ITEM_TOTAL_MAX - 1);//本来
+	int itemNo = GetRand(0, 3);//仮置き
+	XMFLOAT3 SpownPos = XMFLOAT3(0 + GetRand(-500, 500), 0.0f, 0 + GetRand(-500, 500));
+
+	switch (itemNo)
+	{
+	case (-1):
+		break;
+
+	case (0):
+		for (int i = 0; i < 10; i++)
+		{
+			if (!giant[i].IsUsedITgiant())
+			{
+				giant[i].SetITgiant(SpownPos);
+				break;
+			}
+		}
+		break;
+
+	case (1):
+		for (int i = 0; i < 1; i++)
+		{
+			if (!invisible[i].IsUsedITinvisible())
+			{
+				invisible[i].SetITinvisible(SpownPos);
+				break;
+			}
+		}
+		break;
+
+	case (2):
+		for (int i = 0; i < 10; i++)
+		{
+			if (!ball[i].IsUsedITball())
+			{
+				ball[i].SetITballObject(SpownPos);
+				break;
+			}
+		}
+		break;
+
+	case (3):
+		for (int i = 0; i < 10; i++)
+		{
+			if (!bomb[i].IsUsedITbomb())
+			{
+				bomb[i].SetITbombObject(SpownPos);
+				break;
+			}
+		}
+		break;
+
+	case (4):
+		//for (int i = 0; i < 10; i++)
+		//{
+		//	if (!bomb[i].IsUsedITbomb())
+		//	{
+		//		hamr.SetITHamrObject(XMFLOAT3(100.0f, 0.0f, -100.0f));
+		//		break;
+		//	}
+		//}
+		break;
+
+	case (5):
+		break;
+	}
+}
 
 //// 球のワイヤーフレームを描画する関数
 //void DrawDebugSphereOutline(const XMFLOAT3& center, float radius, const XMFLOAT4& color, int slices)
