@@ -817,64 +817,61 @@ void MovePlayers(void)
 	PLAYER* p0 = GetPlayer(0);
 	PLAYER* p1 = GetPlayer(1);
 
-	// 移動フラグをリセット
 	g_PlayerIsMoving[0] = false;
 	g_PlayerIsMoving[1] = false;
 
 	// プレイヤー1
 	if (p0 && p0->use)
 	{
-		if (GetKeyboardPress(DIK_A))
+		float dx = 0.0f;
+		float dz = 0.0f;
+
+		if (GetKeyboardPress(DIK_A)) dx -= 1.0f;
+		if (GetKeyboardPress(DIK_D)) dx += 1.0f;
+		if (GetKeyboardPress(DIK_W)) dz += 1.0f;
+		if (GetKeyboardPress(DIK_S)) dz -= 1.0f;
+
+		if (dx != 0.0f || dz != 0.0f)
 		{
-			p0->pos.x -= VALUE_MOVE;
-			p0->rot.y = XM_PI / 2;
-			g_PlayerIsMoving[0] = true;
-		}
-		else if (GetKeyboardPress(DIK_D))
-		{
-			p0->pos.x += VALUE_MOVE;
-			p0->rot.y = -XM_PI / 2;
-			g_PlayerIsMoving[0] = true;
-		}
-		else if (GetKeyboardPress(DIK_W))
-		{
-			p0->pos.z += VALUE_MOVE;
-			p0->rot.y = XM_PI;
-			g_PlayerIsMoving[0] = true;
-		}
-		else if (GetKeyboardPress(DIK_S))
-		{
-			p0->pos.z -= VALUE_MOVE;
-			p0->rot.y = 0.0f;
+			// 正規化して速度一定に
+			float len = sqrtf(dx * dx + dz * dz);
+			dx /= len;
+			dz /= len;
+
+			p0->pos.x += dx * VALUE_MOVE;
+			p0->pos.z += dz * VALUE_MOVE;
+
+			// 回転角設定（atan2で斜め含む）
+			p0->rot.y = atan2f(-dx, -dz);
+
 			g_PlayerIsMoving[0] = true;
 		}
 	}
 
-	// プレイヤー2
+	// プレイヤー2（必要なら同様に斜め対応可能）
 	if (p1 && p1->use)
 	{
-		if (GetKeyboardPress(DIK_LEFT))
+		float dx = 0.0f;
+		float dz = 0.0f;
+
+		if (GetKeyboardPress(DIK_LEFT))	 dx -= 1.0f;
+		if (GetKeyboardPress(DIK_RIGHT)) dx += 1.0f;
+		if (GetKeyboardPress(DIK_UP))    dz += 1.0f;
+		if (GetKeyboardPress(DIK_DOWN))  dz -= 1.0f;
+
+		if (dx != 0.0f || dz != 0.0f)
 		{
-			p1->pos.x -= VALUE_MOVE;
-			p1->rot.y = XM_PI / 2;
-			g_PlayerIsMoving[1] = true;
-		}
-		else if (GetKeyboardPress(DIK_RIGHT))
-		{
-			p1->pos.x += VALUE_MOVE;
-			p1->rot.y = -XM_PI / 2;
-			g_PlayerIsMoving[1] = true;
-		}
-		else if (GetKeyboardPress(DIK_UP))
-		{
-			p1->pos.z += VALUE_MOVE;
-			p1->rot.y = XM_PI;
-			g_PlayerIsMoving[1] = true;
-		}
-		else if (GetKeyboardPress(DIK_DOWN))
-		{
-			p1->pos.z -= VALUE_MOVE;
-			p1->rot.y = 0.0f;
+			// 正規化して速度一定に
+			float len = sqrtf(dx * dx + dz * dz);
+			dx /= len;
+			dz /= len;
+
+			p1->pos.x += dx * VALUE_MOVE;
+			p1->pos.z += dz * VALUE_MOVE;
+
+			// 回転角設定（atan2で斜め含む）
+			p1->rot.y = atan2f(-dx, -dz);
+
 			g_PlayerIsMoving[1] = true;
 		}
 	}
