@@ -826,10 +826,17 @@ void MovePlayers(void)
 		float dx = 0.0f;
 		float dz = 0.0f;
 
-		if (GetKeyboardPress(DIK_A)) dx -= 1.0f;
-		if (GetKeyboardPress(DIK_D)) dx += 1.0f;
+		// キーボード1（WASD）
 		if (GetKeyboardPress(DIK_W)) dz += 1.0f;
 		if (GetKeyboardPress(DIK_S)) dz -= 1.0f;
+		if (GetKeyboardPress(DIK_A)) dx -= 1.0f;
+		if (GetKeyboardPress(DIK_D)) dx += 1.0f;
+
+		// パッド1
+		if (IsButtonPressed(0, BUTTON_UP))    dz += 1.0f;
+		if (IsButtonPressed(0, BUTTON_DOWN))  dz -= 1.0f;
+		if (IsButtonPressed(0, BUTTON_LEFT))  dx -= 1.0f;
+		if (IsButtonPressed(0, BUTTON_RIGHT)) dx += 1.0f;
 
 		if (dx != 0.0f || dz != 0.0f)
 		{
@@ -841,8 +848,10 @@ void MovePlayers(void)
 			p0->pos.x += dx * VALUE_MOVE;
 			p0->pos.z += dz * VALUE_MOVE;
 
-			// 回転角設定（atan2で斜め含む）
-			p0->rot.y = atan2f(-dx, -dz);
+			// 目標角度
+			float targetAngle = atan2f(-dx, -dz);
+			// 滑らかに補間
+			p0->rot.y = SmoothAngle(p0->rot.y, targetAngle, 0.15f); // ← 0.1～0.2で調整
 
 			g_PlayerIsMoving[0] = true;
 		}
@@ -854,10 +863,17 @@ void MovePlayers(void)
 		float dx = 0.0f;
 		float dz = 0.0f;
 
-		if (GetKeyboardPress(DIK_LEFT))	 dx -= 1.0f;
-		if (GetKeyboardPress(DIK_RIGHT)) dx += 1.0f;
+		// キーボード2（矢印キー）
 		if (GetKeyboardPress(DIK_UP))    dz += 1.0f;
 		if (GetKeyboardPress(DIK_DOWN))  dz -= 1.0f;
+		if (GetKeyboardPress(DIK_LEFT))  dx -= 1.0f;
+		if (GetKeyboardPress(DIK_RIGHT)) dx += 1.0f;
+
+		// パッド2
+		if (IsButtonPressed(1, BUTTON_UP))    dz += 1.0f;
+		if (IsButtonPressed(1, BUTTON_DOWN))  dz -= 1.0f;
+		if (IsButtonPressed(1, BUTTON_LEFT))  dx -= 1.0f;
+		if (IsButtonPressed(1, BUTTON_RIGHT)) dx += 1.0f;
 
 		if (dx != 0.0f || dz != 0.0f)
 		{
@@ -870,7 +886,8 @@ void MovePlayers(void)
 			p1->pos.z += dz * VALUE_MOVE;
 
 			// 回転角設定（atan2で斜め含む）
-			p1->rot.y = atan2f(-dx, -dz);
+			float targetAngle = atan2f(-dx, -dz);
+			p1->rot.y = SmoothAngle(p1->rot.y, targetAngle, 0.15f);
 
 			g_PlayerIsMoving[1] = true;
 		}
@@ -1067,4 +1084,32 @@ void PSetAnimation(int playerIndex, PLAYER_STATE animation)
 		break;
 	}
 
+}
+float NormalizeAngle(float angle)
+{
+	while (angle > XM_PI) angle -= XM_2PI;
+	while (angle < -XM_PI) angle += XM_2PI;
+	return angle;
+}
+
+float SmoothAngle(float current, float target, float smoothFactor)
+{
+	current = NormalizeAngle(current);
+	target = NormalizeAngle(target);
+	float diff = NormalizeAngle(target - current);
+	return current + diff * smoothFactor;
+}
+
+float turning(float target, float current)
+{
+	// 角度の差分を求める（-π～πの範囲に収める）
+	float diff = target - current;
+	while (diff > XM_PI) diff -= XM_2PI;
+	while (diff < -XM_PI) diff += XM_2PI;
+
+	// 補間速度（0.1～0.3くらいが自然）
+	const float rotateSpeed = 0.15f;
+
+	// 補間
+	return current + diff * rotateSpeed;
 }

@@ -130,3 +130,6 @@ float GetNoise(float strength = 0.12f);
 float GetPeriodicNoise(int seed, float time, float strength = 0.12f);
 float GetSmoothNoise(float& last, float strength = 0.12f);
 void PSetAnimation(int playerIndex, PLAYER_STATE animation);
+float NormalizeAngle(float angle);
+float SmoothAngle(float current, float target, float smoothFactor = 0.1f);
+float turning(float target, float current);
