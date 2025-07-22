@@ -27,6 +27,7 @@
 //ステージギミック用
 #include "SG_wind.h"
 #include "SG_warpgate.h"
+#include "SG_car.h"
 //アイテム用
 #include "item.h"
 //タイム用
@@ -120,6 +121,9 @@ HRESULT InitGame(void)
 		warpgate[i].SetSGwarpgate(XMFLOAT3(0.0f + (300.0f * i), 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(1.0f, 1.0f, 1.0f));
 	}
 
+	// 車ギミックの初期化
+	g_CarSystem.Init();
+
 	//アイテムの初期化
 	InitItem();
 
@@ -164,6 +168,9 @@ void UninitGame(void)
 		warpgate[i].UninitSGwarpgate();
 	}
 
+	// 車ギミックの終了処理
+	g_CarSystem.Uninit();
+
 	//アイテムの終了処理
 	UninitItem();
 
@@ -206,8 +213,9 @@ void UpdateGame(void)
 	//アイテムの更新処理
 	UpdateItem();
 
-	//// パーティクルの更新処理
-	//UpdateParticle();
+	// 車処理の更新
+	g_CarSystem.Update();
+	g_CarSystem.CheckCarHitPlayers(); // プレイヤーと車の当たり判定
 
 	// 影の更新処理
 	UpdateShadow();
@@ -252,6 +260,9 @@ void DrawGame0(void)
 
 	// プレイヤーの描画処理
 	DrawPlayer();
+
+	// 車の描画処理
+	g_CarSystem.Draw();
 
 	//アイテムの描画処理
 	DrawItem();

@@ -165,6 +165,7 @@
     <ClInclude Include="podium.h" />
     <ClInclude Include="renderer.h" />
     <ClInclude Include="score.h" />
+    <ClInclude Include="SG_car.h" />
     <ClInclude Include="SG_warpgate.h" />
     <ClInclude Include="shadow.h" />
     <ClInclude Include="sound.h" />
@@ -203,6 +204,7 @@
     <ClCompile Include="podium.cpp" />
     <ClCompile Include="renderer.cpp" />
     <ClCompile Include="score.cpp" />
+    <ClCompile Include="SG_car.cpp" />
     <ClCompile Include="SG_warpgate.cpp" />
     <ClCompile Include="shadow.cpp" />
     <ClCompile Include="sound.cpp" />

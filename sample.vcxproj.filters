@@ -132,6 +132,12 @@
     <ClInclude Include="IT_bomb.h">
       <Filter>ヘッダー ファイル\ITEM</Filter>
     </ClInclude>
+    <ClInclude Include="stageobject.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="SG_car.h">
+      <Filter>ヘッダー ファイル\STAGE_GIMMICK</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="input.cpp">
@@ -238,6 +244,12 @@
     </ClCompile>
     <ClCompile Include="IT_bomb.cpp">
       <Filter>ソース ファイル\ITEM</Filter>
+    </ClCompile>
+    <ClCompile Include="stageobject.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="SG_car.cpp">
+      <Filter>ソース ファイル\STAGE_GIMMICK</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

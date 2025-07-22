@@ -335,6 +335,23 @@ void UpdatePlayer(void)
 		// 2) 各プレイヤーの状態更新
 		for (int i = 0; i < MAX_PLAYER; i++)
 		{
+			PLAYER& pl = g_Player[i];
+			if (!pl.use) continue;
+
+			if (pl.stunTimer > 0.0f)
+			{
+				// スタン中はノックバックさせる
+				pl.pos.x += pl.knockbackVel.x;
+				pl.pos.z += pl.knockbackVel.z;
+				pl.stunTimer -= 1.0f / 60.0f;
+				if (pl.stunTimer <= 0.0f) {
+					pl.stunTimer = 0.0f;
+					pl.knockbackVel = { 0,0,0 };
+				}
+				continue; // スタン中は通常移動処理スキップ
+			}
+
+
 			// ▼ 速度減衰 ＋ HP テスト
 			g_Player[i].spd *= 0.7f;
 			if (GetKeyboardTrigger(DIK_L))

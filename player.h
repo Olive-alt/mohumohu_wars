@@ -102,6 +102,10 @@ struct PLAYER
 	// アニメーション状態
 	PLAYER_STATE currentAnimation;
 
+	float stunTimer;      // スタン中か（0なら非スタン）
+	XMFLOAT3 knockbackVel;// ノックバック速度
+	float radius;         // 当たり判定半径
+
 };
 
 
