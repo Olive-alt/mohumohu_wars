@@ -311,3 +311,12 @@ BOOL CollisionCapsuleSphere(
 	return (distSq <= sumR * sumR);
 }
 
+//=============================================================================
+// XZ•½–Ê‚Ì2D‹éŒ`”»’è
+//=============================================================================
+BOOL CollisionRect2D_XZ(const XMFLOAT3& boxPos, const XMFLOAT3& pointPos, float width, float depth)
+{
+	float dx = pointPos.x - boxPos.x;
+	float dz = pointPos.z - boxPos.z;
+	return (fabsf(dx) < width * 0.5f) && (fabsf(dz) < depth * 0.5f);
+}

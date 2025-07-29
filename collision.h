@@ -30,4 +30,5 @@ BOOL RayCast(XMFLOAT3 p0, XMFLOAT3 p1, XMFLOAT3 p2, XMFLOAT3 pos0, XMFLOAT3 pos1
 BOOL CollisionCapsule(const XMFLOAT3& p1a, const XMFLOAT3& p1b, float r1, const XMFLOAT3& p2a, const XMFLOAT3& p2b, float r2);
 BOOL CollisionCapsuleSphere(const XMFLOAT3& capA, const XMFLOAT3& capB, float capRadius, const XMFLOAT3& spherePos, float sphereRadius);
 
+BOOL CollisionRect2D_XZ(const XMFLOAT3& boxPos, const XMFLOAT3& pointPos, float width, float depth);
 
