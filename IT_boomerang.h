@@ -55,7 +55,7 @@ private:
 
 	float spinAngle; // Radians
 	float spinSpeed; // Radians per frame (or per time)
-
+	bool wantToThrow = false;
 public:
 	HRESULT InitITboom(void);
 	void UninitITboom(void);
@@ -71,6 +71,8 @@ public:
 	bool IsPickedITboom() const { return pick; }
 	bool IsThrewITboom() const { return to_throw; }
 	XMFLOAT3 GetPositionITboom() const { return pos; }
+	void SetThrowFlag(bool flag) { wantToThrow = flag; }
+	bool GetThrowFlag() const { return wantToThrow; }
 };
 
 //*****************************************************************************

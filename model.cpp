@@ -428,7 +428,7 @@ void LoadMaterial(char* FileName, MODEL_MATERIAL** MaterialArray, unsigned int* 
 // モデルの全マテリアルのディフューズを取得する。Max16個分にしてある
 void GetModelDiffuse(DX11_MODEL* Model, XMFLOAT4* diffuse)
 {
-    int max = (Model->SubsetNum < MODEL_MAX_MATERIAL) ? Model->SubsetNum : MODEL_MAX_MATERIAL;
+    unsigned int max = (Model->SubsetNum < MODEL_MAX_MATERIAL) ? Model->SubsetNum : MODEL_MAX_MATERIAL;
     for (unsigned int i = 0; i < max; i++)
     {
         diffuse[i] = Model->SubsetArray[i].Material.Material.Diffuse;

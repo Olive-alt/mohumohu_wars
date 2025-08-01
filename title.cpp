@@ -1,7 +1,6 @@
 //=============================================================================
 //
 // タイトル画面処理 [title.cpp]
-// Author : 
 //
 //=============================================================================
 #include "main.h"
@@ -13,405 +12,261 @@
 #include "title.h"
 #include "meshfield.h"
 #include "score.h"
-//*****************************************************************************
-// マクロ定義
-//*****************************************************************************
-#define TEXTURE_WIDTH				(SCREEN_WIDTH)	// 背景サイズ
-#define TEXTURE_HEIGHT				(SCREEN_HEIGHT)	// 
-#define TEXTURE_MAX					(9)				// テクスチャの数
-
-#define TEXTURE_WIDTH_LOGO			(480)			// ロゴサイズ
-#define TEXTURE_HEIGHT_LOGO			(80)			// 
 
 //*****************************************************************************
-// プロトタイプ宣言
+// テクスチャ番号定義
 //*****************************************************************************
+#define TEXTURE_BG         0   // タイトル背景
+#define TEXTURE_BTN_START  1   // スタートボタン（非選択）
+#define TEXTURE_BTN_START_ON 2 // スタートボタン（選択中）
+#define TEXTURE_BTN_SET    3   // 設定ボタン（非選択）
+#define TEXTURE_BTN_SET_ON 4   // 設定ボタン（選択中）
+#define TEXTURE_BTN_END    5   // 終了ボタン（非選択）
+#define TEXTURE_BTN_END_ON 6   // 終了ボタン（選択中）
+#define TEXTURE_BLACK      7   // 設定画面用 黒ベール
+#define TEXTURE_BAR_BG     8   // 音量バー背景（白画像）
+#define TEXTURE_VOL_TITLE  9   // "SOUND"ラベル画像（※未使用可）
+#define TEXTURE_PAW        10  // 音量バー用 肉球ノッチ画像
 
+#define TEXTURE_MAX        11  // テクスチャ枚数
+
+#define TITLE_MENU_NUM     3   // メニュー項目数
+
+//*****************************************************************************
+// ボタン描画用テクスチャインデックスとY位置倍率
+//*****************************************************************************
+static const int g_MenuBtnTex[TITLE_MENU_NUM][2] = {
+    {TEXTURE_BTN_START, TEXTURE_BTN_START_ON},
+    {TEXTURE_BTN_SET,   TEXTURE_BTN_SET_ON},
+    {TEXTURE_BTN_END,   TEXTURE_BTN_END_ON}
+};
+// メニュー表示のY座標倍率（画面高さ依存で配置）
+static const float g_MenuYRate[TITLE_MENU_NUM] = { 12.5f, 15.0f, 17.5f };
 
 //*****************************************************************************
 // グローバル変数
 //*****************************************************************************
-static ID3D11Buffer* g_VertexBuffer = NULL;		// 頂点情報
-static ID3D11ShaderResourceView* g_Texture[TEXTURE_MAX] = { NULL };	// テクスチャ情報
-
+static ID3D11Buffer* g_VertexBuffer = NULL;            // 2Dスプライト用バッファ
+static ID3D11ShaderResourceView* g_Texture[TEXTURE_MAX] = { NULL }; // テクスチャ配列
 static char* g_TexturName[TEXTURE_MAX] = {
-	"data/TEXTURE/Title/ui_title_bg1280x720.png",
-	"data/TEXTURE/Title/ui_title_bt_start_off.png",
-	"data/TEXTURE/Title/ui_title_bt_start_on.png",
-	"data/TEXTURE/Title/ui_title_bt_set_off.png",
-	"data/TEXTURE/Title/ui_title_bt_set_on.png",
-	"data/TEXTURE/Title/ui_title_bt_end_off.png",
-	"data/TEXTURE/Title/ui_title_bt_end_on.png",
-	"data/TEXTURE/Title/002.png",
-
-	"data/TEXTURE/effect000.jpg",
+    "data/TEXTURE/Title/ui_title_bg1280x720.png",
+    "data/TEXTURE/Title/ui_title_bt_start_off.png",
+    "data/TEXTURE/Title/ui_title_bt_start_on.png",
+    "data/TEXTURE/Title/ui_title_bt_set_off.png",
+    "data/TEXTURE/Title/ui_title_bt_set_on.png",
+    "data/TEXTURE/Title/ui_title_bt_end_off.png",
+    "data/TEXTURE/Title/ui_title_bt_end_on.png",
+    "data/TEXTURE/Title/Black.png",
+    "data/TEXTURE/Title/white.png",
+    "data/TEXTURE/Title/Sound_Volume.png",
+    "data/TEXTURE/Title/ani_paw.png",
 };
 
-
-static BOOL						g_Use;						// TRUE:使っている  FALSE:未使用
-static float					g_w, g_h;					// 幅と高さ
-static XMFLOAT3					g_Pos;						// ポリゴンの座標
-static XMFLOAT3					g_RogPos;					// タイトルロゴの座標
-static XMFLOAT3					g_StartPos;					// タイトルロゴの座標
-static XMFLOAT3					g_ExitPos;					// タイトルロゴの座標
-static int						g_TexNo;					// テクスチャ番号
-
-static int						selectedMenuItem;			// タイトルでのモード選択
-
-float	alpha;
-BOOL	flag_alpha;
-
-BOOL	flag_settings;
-
-static BOOL						g_Load = FALSE;
-
-static bool isExitDialogShown = false;
+static BOOL g_Load = FALSE;                 // 読み込みフラグ
+static XMFLOAT3 g_Pos;                      // 画面中心座標
+static float g_w, g_h;                      // 画面の幅・高さ
+static int selectedMenuItem = 0;            // 現在選択中のメニュー
+static BOOL flag_settings = FALSE;          // 設定ウィンドウ表示フラグ
+static int setting_select = 0;              // 設定中の選択バー 0:BGM, 1:SE
+static float setting_delay = 0.0f;          // 入力連打防止ディレイ
 
 //=============================================================================
 // 初期化処理
 //=============================================================================
 HRESULT InitTitle(void)
 {
-	ID3D11Device* pDevice = GetDevice();
+    // --- テクスチャ読み込み ---
+    for (int i = 0; i < TEXTURE_MAX; i++)
+    {
+        g_Texture[i] = NULL;
+        D3DX11CreateShaderResourceViewFromFile(GetDevice(),
+            g_TexturName[i], NULL, NULL, &g_Texture[i], NULL);
+    }
 
-	//テクスチャ生成
-	for (int i = 0; i < TEXTURE_MAX; i++)
-	{
-		g_Texture[i] = NULL;
-		D3DX11CreateShaderResourceViewFromFile(GetDevice(),
-			g_TexturName[i],
-			NULL,
-			NULL,
-			&g_Texture[i],
-			NULL);
-	}
+    // --- 頂点バッファ生成 ---
+    D3D11_BUFFER_DESC bd = {};
+    bd.Usage = D3D11_USAGE_DYNAMIC;
+    bd.ByteWidth = sizeof(VERTEX_3D) * 4;
+    bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    GetDevice()->CreateBuffer(&bd, NULL, &g_VertexBuffer);
 
-	// 頂点バッファ生成
-	D3D11_BUFFER_DESC bd;
-	ZeroMemory(&bd, sizeof(bd));
-	bd.Usage = D3D11_USAGE_DYNAMIC;
-	bd.ByteWidth = sizeof(VERTEX_3D) * 4;
-	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	GetDevice()->CreateBuffer(&bd, NULL, &g_VertexBuffer);
+    // --- 画面サイズ・変数初期化 ---
+    g_w = SCREEN_WIDTH;
+    g_h = SCREEN_HEIGHT;
+    g_Pos = XMFLOAT3(g_w / 2, g_h / 2, 0.0f);
+    selectedMenuItem = 0;
+    flag_settings = FALSE;
 
+    ResetScore(); // スコアリセット
+    PlaySound(SOUND_LABEL_BGM_mofu_1); // タイトルBGM再生
 
-	// 変数の初期化
-	g_Use = TRUE;
-	g_w = TEXTURE_WIDTH;
-	g_h = TEXTURE_HEIGHT;
-	g_Pos = XMFLOAT3(g_w / 2, g_h / 2, 0.0f);
-	g_RogPos = XMFLOAT3(g_w / 2, g_h / 5, 0.0f);
-	//g_StartPos = XMFLOAT3(g_w/4, g_h/1.5, 0.0f);
-	//g_ExitPos = XMFLOAT3(g_w/4 * 3, g_h / 1.5, 0.0f);
-
-	selectedMenuItem = 0;
-
-	g_TexNo = 0;
-
-	alpha = 1.0f;
-	flag_alpha = TRUE;
-
-	flag_settings = FALSE;
-
-	//スコアをリセットする
-	ResetScore();
-
-	// BGM再生
-	PlaySound(SOUND_LABEL_BGM_mofu_1);
-
-	g_Load = TRUE;
-	return S_OK;
+    g_Load = TRUE;
+    return S_OK;
 }
 
 //=============================================================================
-// 終了処理
+// 終了処理（リソース解放）
 //=============================================================================
 void UninitTitle(void)
 {
-	if (g_Load == FALSE) return;
-
-	if (g_VertexBuffer)
-	{
-		g_VertexBuffer->Release();
-		g_VertexBuffer = NULL;
-	}
-
-	for (int i = 0; i < TEXTURE_MAX; i++)
-	{
-		if (g_Texture[i])
-		{
-			g_Texture[i]->Release();
-			g_Texture[i] = NULL;
-		}
-	}
-
-	g_Load = FALSE;
+    if (!g_Load) return;
+    if (g_VertexBuffer) { g_VertexBuffer->Release(); g_VertexBuffer = NULL; }
+    for (int i = 0; i < TEXTURE_MAX; i++)
+        if (g_Texture[i]) { g_Texture[i]->Release(); g_Texture[i] = NULL; }
+    g_Load = FALSE;
 }
 
 //=============================================================================
-// 更新処理
+// 更新処理（入力・メニュー遷移・音量調整）
 //=============================================================================
 void UpdateTitle(void)
 {
-	if (GetKeyboardTrigger(DIK_DOWN))
-	{
-		selectedMenuItem += 1;
-		PlaySound(SOUND_LABEL_SE_switch01);
+    // 設定ウィンドウ処理
+    if (flag_settings) {
+        // ディレイ（連打防止）
+        if (setting_delay > 0.0f) setting_delay -= 1.0f / 60.0f;
 
-	}
-	else if (selectedMenuItem >= 3)
-	{
-		selectedMenuItem = 0;
+        // BGM/SE 選択切替（上下キーorスティック）
+        if (setting_delay <= 0.0f) {
+            if (GetKeyboardTrigger(DIK_UP) || IsButtonTriggered(0, BUTTON_UP) ||
+                GetKeyboardTrigger(DIK_DOWN) || IsButtonTriggered(0, BUTTON_DOWN)) {
+                setting_select = (setting_select + 1) % 2;
+                setting_delay = 0.15f;
+            }
+        }
 
-	}
+        // 音量調整（左右キー/スティック）
+        if (setting_delay <= 0.0f) {
+            if (GetKeyboardTrigger(DIK_LEFT) || IsButtonTriggered(0, BUTTON_LEFT)) {
+                if (setting_select == 0) DecreaseBGMVolume();
+                else DecreaseSEVolume();
+                setting_delay = 0.08f;
+            }
+            if (GetKeyboardTrigger(DIK_RIGHT) || IsButtonTriggered(0, BUTTON_RIGHT)) {
+                if (setting_select == 0) IncreaseBGMVolume();
+                else IncreaseSEVolume();
+                setting_delay = 0.08f;
+            }
+        }
 
-	if (GetKeyboardTrigger(DIK_UP))
-	{
-		selectedMenuItem -= 1;
-		PlaySound(SOUND_LABEL_SE_switch01);
+        // 設定画面を閉じる（Enter or Bボタン）
+        if (GetKeyboardTrigger(DIK_RETURN) || IsButtonTriggered(0, BUTTON_B)) {
+            flag_settings = FALSE;
+        }
+        return;
+    }
 
-	}
-	else if (selectedMenuItem <= -1)
-	{
-		selectedMenuItem = 2;
-	}
+    // タイトルメニュー入力
+    // ↓メニュー項目ダウン（ループ）
+    if (GetKeyboardTrigger(DIK_DOWN) || IsButtonTriggered(0, BUTTON_DOWN)) {
+        selectedMenuItem = (selectedMenuItem + 1) % TITLE_MENU_NUM;
+        PlaySound(SOUND_LABEL_SE_switch01);
+    }
+    // ↑メニュー項目アップ（ループ）
+    if (GetKeyboardTrigger(DIK_UP) || IsButtonTriggered(0, BUTTON_UP)) {
+        selectedMenuItem = (selectedMenuItem + TITLE_MENU_NUM - 1) % TITLE_MENU_NUM;
+        PlaySound(SOUND_LABEL_SE_switch01);
+    }
 
-	if (selectedMenuItem == 0 && GetKeyboardTrigger(DIK_RETURN))
-	{// ゲーム開始アイコンでEnter押したら、ゲームスタート
-		SetFade(FADE_OUT, MODE_PLAYER_SELECT);
-		//SetFade(FADE_OUT, MODE_RESULT);
-	}
-	if (selectedMenuItem == 1 && GetKeyboardTrigger(DIK_RETURN))
-	{// 設定アイコンでEnter押したら、設定ウィンドウを出す
-		flag_settings == TRUE;
-
-		GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[8]);
-
-		SetSprite(g_VertexBuffer, g_Pos.x / 2, g_Pos.y / 2, g_w / 2, g_h / 2, 0.0f, 0.0f, 1.0f, 1.0f);
-
-		GetDeviceContext()->Draw(4, 0);
-
-
-
-
-	}
-	//if (selectedMenuItem == 2 && GetKeyboardTrigger(DIK_RETURN))
-	//{
-	//	int id = MessageBox(NULL, "ゲームを終了しますか？", "起動モード", MB_YESNOCANCEL | MB_ICONQUESTION);
-	//	switch (id)
-	//	{
-	//	case IDYES:        // Yesなら終了
-	//	std::exit(-1);
-	//	case IDNO:        // Noならタイトルに戻る
-	//		return;
-	//	case IDCANCEL:    // CANCELでもタイトルへ
-	//	default:
-	//		break;
-	//	}
-	//}
-
-	if (selectedMenuItem == 2 && GetKeyboardTrigger(DIK_RETURN) && !isExitDialogShown)
-	{
-		//isExitDialogShown = true; // 一度だけ表示
-
-		//int id = MessageBox(NULL, "ゲームを終了しますか？", "起動モード", MB_YESNOCANCEL | MB_ICONQUESTION);
-		//switch (id)
-		//{
-		//case IDYES:        // Yesなら終了
-		std::exit(-1);
-		//	break;
-
-		//case IDNO:	// Noならタイトルに戻る
-		//	SetMode(MODE_TITLE);
-		//	selectedMenuItem = 2;
-		//default:
-		//	SetMode(MODE_TITLE);
-		//	selectedMenuItem = 2;
-
-		//	isExitDialogShown = false; // ダイアログ閉じたら再表示OKに
-		//	break;
-		//}
-	}
-
-	// ゲームパッドで入力処理
-	else if (selectedMenuItem == 0 && IsButtonTriggered(0, BUTTON_START))
-	{
-		SetFade(FADE_OUT, MODE_GAME);
-	}
-	else if (selectedMenuItem == 0 && IsButtonTriggered(0, BUTTON_B))
-	{
-		SetFade(FADE_OUT, MODE_GAME);
-	}
-
-	if (flag_alpha == TRUE)
-	{
-		alpha -= 0.02f;
-		if (alpha <= 0.0f)
-		{
-			alpha = 0.0f;
-			flag_alpha = FALSE;
-		}
-	}
-	else
-	{
-		alpha += 0.02f;
-		if (alpha >= 1.0f)
-		{
-			alpha = 1.0f;
-			flag_alpha = TRUE;
-		}
-	}
-
-
-
-
-
-
-#ifdef _DEBUG	// デバッグ情報を表示する
-	//char *str = GetDebugStr();
-	//sprintf(&str[strlen(str)], " PX:%.2f PY:%.2f", g_Pos.x, g_Pos.y);
-
-#endif
-
+    // 決定（Enter or Aボタン）
+    if (GetKeyboardTrigger(DIK_RETURN) || IsButtonTriggered(0, BUTTON_A)) {
+        if (selectedMenuItem == 0) {
+            SetFade(FADE_OUT, MODE_PLAYER_SELECT); // ゲーム開始
+        }
+        else if (selectedMenuItem == 1) {
+            flag_settings = TRUE;
+            setting_select = 0;                   // 設定ウィンドウを開く
+        }
+        else if (selectedMenuItem == 2) {
+            std::exit(-1);                        // 終了
+        }
+    }
 }
 
 //=============================================================================
-// 描画処理
+// 描画処理（タイトル・メニュー・設定ウィンドウ）
 //=============================================================================
 void DrawTitle(void)
 {
-	// 頂点バッファ設定
-	UINT stride = sizeof(VERTEX_3D);
-	UINT offset = 0;
-	GetDeviceContext()->IASetVertexBuffers(0, 1, &g_VertexBuffer, &stride, &offset);
+    // 2D描画バッファ設定
+    UINT stride = sizeof(VERTEX_3D), offset = 0;
+    GetDeviceContext()->IASetVertexBuffers(0, 1, &g_VertexBuffer, &stride, &offset);
+    SetWorldViewProjection2D();
+    GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
-	// マトリクス設定
-	SetWorldViewProjection2D();
+    // タイトル背景描画
+    GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[TEXTURE_BG]);
+    SetSprite(g_VertexBuffer, g_Pos.x, g_Pos.y, g_w, g_h, 0, 0, 1, 1);
+    GetDeviceContext()->Draw(4, 0);
 
-	// プリミティブトポロジ設定
-	GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+    // メニュー項目（ボタン）描画
+    for (int i = 0; i < TITLE_MENU_NUM; i++) {
+        // 選択中はON画像、それ以外はOFF画像を使う
+        int texIdx = g_MenuBtnTex[i][selectedMenuItem == i ? 1 : 0];
+        float y = g_Pos.y / 10 * g_MenuYRate[i];
+        GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[texIdx]);
+        SetSprite(g_VertexBuffer, g_Pos.x / 3, y, 250.0f, 100.0f, 0, 0, 1, 1);
+        GetDeviceContext()->Draw(4, 0);
+    }
 
-	// マテリアル設定
-	MATERIAL material;
-	ZeroMemory(&material, sizeof(material));
-	material.Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	SetMaterial(material);
+    // 設定ウィンドウ描画
+    if (flag_settings) {
+        //--- 黒ベール（Black.png＋αで半透明化） ---
+        if (g_Texture[TEXTURE_BLACK]) {
+            SetSpriteColor(g_VertexBuffer, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2,
+                SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 1, 1, XMFLOAT4(1, 1, 1, 0.6f)); // α=0.6で透かし
+            GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[TEXTURE_BLACK]);
+            GetDeviceContext()->Draw(4, 0);
+        }
 
-	// タイトルの背景を描画
-	{
-		// テクスチャ設定
-		GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[0]);
-
-		// １枚のポリゴンの頂点とテクスチャ座標を設定
-		SetSprite(g_VertexBuffer, g_Pos.x, g_Pos.y, g_w, g_h, 0.0f, 0.0f, 1.0f, 1.0f);
-
-		// ポリゴン描画
-		GetDeviceContext()->Draw(4, 0);
-	}
-
-	// タイトルのロゴを描画
-	//{
-	//	// テクスチャ設定
-	//	GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[ ]);
-
-	//	// １枚のポリゴンの頂点とテクスチャ座標を設定
-	//	SetSprite(g_VertexBuffer, g_RogPos.x, g_RogPos.y, TEXTURE_WIDTH_LOGO, TEXTURE_HEIGHT_LOGO, 0.0f, 0.0f, 1.0f, 1.0f);
-	//	//SetSpriteColor(g_VertexBuffer, g_Pos.x, g_Pos.y, TEXTURE_WIDTH_LOGO, TEXTURE_HEIGHT_LOGO, 0.0f, 0.0f, 1.0f, 1.0f,
-	//	//				XMFLOAT4(1.0f, 1.0f, 1.0f, alpha));
-
-	//	// ポリゴン描画
-	//	GetDeviceContext()->Draw(4, 0);
-	//}
-
-	// スタートロゴを描画
-	{
-		GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[1]);
-
-		SetSprite(g_VertexBuffer, g_Pos.x / 3, g_Pos.y / 10 * 12.5, 250.0f, 100.0f, 0.0f, 0.0f, 1.0f, 1.0f);
-
-		GetDeviceContext()->Draw(4, 0);
-	}
-
-	// 設定ロゴを描画
-	{
-		GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[3]);
-
-		SetSprite(g_VertexBuffer, g_Pos.x / 3, g_Pos.y / 10 * 15, 250.0f, 100.0f, 0.0f, 0.0f, 1.0f, 1.0f);
-
-		GetDeviceContext()->Draw(4, 0);
-	}
-
-	// ゲーム終了ロゴを描画
-	{
-		GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[5]);
-
-		SetSprite(g_VertexBuffer, g_Pos.x / 3, g_Pos.y / 10 * 17.5, 250.0f, 100.0f, 0.0f, 0.0f, 1.0f, 1.0f);
-
-		GetDeviceContext()->Draw(4, 0);
-	}
-
-	if (selectedMenuItem == 0)
-	{
-		{
-			GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[2]);
-
-			SetSprite(g_VertexBuffer, g_Pos.x / 3, g_Pos.y / 10 * 12.5, 250.0f, 100.0f, 0.0f, 0.0f, 1.0f, 1.0f);
-
-			GetDeviceContext()->Draw(4, 0);
-		}
-	}
-
-	if (selectedMenuItem == 1)
-	{
-		{
-			GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[4]);
-
-			SetSprite(g_VertexBuffer, g_Pos.x / 3, g_Pos.y / 10 * 15, 250.0f, 100.0f, 0.0f, 0.0f, 1.0f, 1.0f);
-
-			GetDeviceContext()->Draw(4, 0);
-		}
-	}
-
-	if (selectedMenuItem == 2)
-	{
-		{
-			GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[6]);
-
-			SetSprite(g_VertexBuffer, g_Pos.x / 3, g_Pos.y / 10 * 17.5, 250.0f, 100.0f, 0.0f, 0.0f, 1.0f, 1.0f);
-
-			GetDeviceContext()->Draw(4, 0);
-		}
-	}
-
-	// 設定フラグが立ったら、設定ウィンドウを表示
-	if (flag_settings == TRUE)
-	{
-
-	}
-
-	//	// 加減算のテスト
-	//	SetBlendState(BLEND_MODE_ADD);		// 加算合成
-	////	SetBlendState(BLEND_MODE_SUBTRACT);	// 減算合成
-	//	for(int i=0; i<30; i++)
-	//	{
-	//		// テクスチャ設定
-	//		GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[2]);
-	//
-	//		// １枚のポリゴンの頂点とテクスチャ座標を設定
-	//		float dx = 100.0f;
-	//		float dy = 100.0f;
-	//		float sx = (float)(rand() % 100);
-	//		float sy = (float)(rand() % 100);
-	//
-	//
-	//		SetSpriteColor(g_VertexBuffer, dx+sx, dy+sy, 50, 50, 0.0f, 0.0f, 1.0f, 1.0f,
-	//			XMFLOAT4(0.3f, 0.3f, 1.0f, 0.5f));
-	//
-	//		// ポリゴン描画
-	//		GetDeviceContext()->Draw(4, 0);
-	//	}
-	//	SetBlendState(BLEND_MODE_ALPHABLEND);	// 半透明処理を元に戻す
-
+        //--- 音量バー（BGM, SE） ---
+        // ラベル画像化する場合はここでg_Texture[X]を描画
+        DrawVolumeBar(400, 300, 320, 32, GetBGMVolume(), setting_select == 0, "BGM");
+        DrawVolumeBar(400, 360, 320, 32, GetSEVolume(), setting_select == 1, "SE");
+        // ※操作ガイド表示などもここに追加可
+    }
 }
 
+
+//=============================================================================
+// 音量バー描画
+// x, y  : バー中心座標
+// w, h  : バー幅・高さ
+// volume: 音量 (0.0～1.0)
+// selected: 選択中ならtrue（色やノッチで強調）
+// label : "BGM"などのラベル（未使用可）
+//=============================================================================
+void DrawVolumeBar(float x, float y, float w, float h, float volume, bool selected, const char* label)
+{
+    //--- バー背景（白画像 or 灰色） ---
+    if (g_Texture[TEXTURE_BAR_BG]) {
+        GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[TEXTURE_BAR_BG]);
+        SetSprite(g_VertexBuffer, x, y, w, h, 0, 0, 1, 1);
+        GetDeviceContext()->Draw(4, 0);
+    }
+    else {
+        SetSpriteColor(g_VertexBuffer, x, y, w, h, 0, 0, 1, 1, XMFLOAT4(0.4f, 0.4f, 0.4f, 1.0f));
+        GetDeviceContext()->Draw(4, 0);
+    }
+
+    //--- バー本体（緑or黄色） ---
+    XMFLOAT4 barColor = selected ? XMFLOAT4(1.0f, 1.0f, 0.2f, 1.0f) : XMFLOAT4(0.2f, 1.0f, 0.2f, 1.0f);
+    SetSpriteColor(g_VertexBuffer, x - w / 2 + (w * volume) / 2, y, w * volume, h, 0, 0, 1, 1, barColor);
+    GetDeviceContext()->Draw(4, 0);
+
+    //--- ノッチ（肉球画像 or 矩形） ---
+    if (g_Texture[TEXTURE_PAW]) {
+        float pawX = x - w / 2 + w * volume;
+        GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[TEXTURE_PAW]);
+        SetSprite(g_VertexBuffer, pawX, y, 48, 48, 0, 0, 1, 1);
+        GetDeviceContext()->Draw(4, 0);
+    }
+    else if (selected) {
+        // 画像がなければ黄色ノッチで代用
+        float pawX = x - w / 2 + w * volume;
+        SetSpriteColor(g_VertexBuffer, pawX, y, 24, 24, 0, 0, 1, 1, XMFLOAT4(1, 1, 0.2f, 1));
+        GetDeviceContext()->Draw(4, 0);
+    }
+
+}

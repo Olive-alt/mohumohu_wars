@@ -44,6 +44,9 @@ extern XMFLOAT3 g_PlayerKnockback[MAX_PLAYER]; // 吹っ飛び速度
 static float partAngle[MAX_PLAYER][PLAYER_PARTS_MAX] = { 0 };    // バネ用の一時値
 static float partVelocity[MAX_PLAYER][PLAYER_PARTS_MAX] = { 0 }; // バネ用速度
 
+// プレイヤーがCPUかどうか
+extern bool g_IsCPU[MAX_PLAYER];
+
 //*****************************************************************************
 // 構造体定義
 //*****************************************************************************
@@ -105,6 +108,7 @@ struct PLAYER
 	float stunTimer;      // スタン中か（0なら非スタン）
 	XMFLOAT3 knockbackVel;// ノックバック速度
 	float radius;         // 当たり判定半径
+	XMFLOAT3 prevPos; // 前フレームの座標
 
 };
 
@@ -137,3 +141,4 @@ void PSetAnimation(int playerIndex, PLAYER_STATE animation);
 float NormalizeAngle(float angle);
 float SmoothAngle(float current, float target, float smoothFactor = 0.1f);
 float turning(float target, float current);
+void PlayerAttack(int playerIndex);

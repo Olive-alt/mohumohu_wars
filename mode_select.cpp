@@ -79,7 +79,7 @@ void UninitModeSelect(void)
 void UpdateModeSelect(void)
 {
     // ← → で選択
-    if (GetKeyboardTrigger(DIK_LEFT))
+    if (GetKeyboardTrigger(DIK_LEFT) || IsButtonTriggered(0, BUTTON_LEFT))
     {
         g_SelectedMode--;
         if (g_SelectedMode < 1) g_SelectedMode = MAX_MODES;
@@ -87,7 +87,7 @@ void UpdateModeSelect(void)
         PlaySound(SOUND_LABEL_SE_switch01);
 
     }
-    else if (GetKeyboardTrigger(DIK_RIGHT))
+    else if (GetKeyboardTrigger(DIK_RIGHT) || IsButtonTriggered(0, BUTTON_RIGHT))
     {
         g_SelectedMode++;
         if (g_SelectedMode > MAX_MODES) g_SelectedMode = 1;
@@ -97,21 +97,12 @@ void UpdateModeSelect(void)
     }
 
     // 決定（Enter）
-    if (GetKeyboardTrigger(DIK_RETURN))
+    if (GetKeyboardTrigger(DIK_RETURN) || IsButtonTriggered(0, BUTTON_A))
     {
-        if (g_SelectedMode == 1)
-        {
-            PrintDebugProc("スコアアタックモード 選択\n");
-        }
-        else if (g_SelectedMode == 2)
-        {
-            PrintDebugProc("サバイバルモード 選択\n");
-        }
-
         SetFade(FADE_OUT, MODE_GAME);  // 遷移先は必要に応じて変更
     }
     // キャンセル（スペース）
-    else if (GetKeyboardTrigger(DIK_SPACE))
+    else if (GetKeyboardTrigger(DIK_SPACE) || IsButtonTriggered(0, BUTTON_B))
     {
         SetFade(FADE_OUT, MODE_STAGE_SELECT);  // タイトル画面に戻る
     }

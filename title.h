@@ -23,3 +23,6 @@ void UpdateTitle(void);
 void DrawTitle(void);
 
 
+
+// âπó ÉoÅ[ï`âÊ
+void DrawVolumeBar(float x, float y, float w, float h, float volume, bool selected, const char* label);

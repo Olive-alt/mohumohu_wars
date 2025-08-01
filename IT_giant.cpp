@@ -86,7 +86,7 @@ void GIANT::DrawITgiant(void)
 {
 	if (!use || giantUse)return;
 
-	XMMATRIX mtxScl, mtxRot, mtxTranslate, mtxWorld, quatMatrix;
+	XMMATRIX mtxScl, mtxRot, mtxTranslate, mtxWorld;
 
 	// ƒJƒŠƒ“ƒO–³Œø
 	SetCullingMode(CULL_MODE_NONE);

@@ -7,7 +7,6 @@
 #include "sprite.h"
 #include "player.h"
 #include "debugproc.h"
-#include "sound.h"
 
 
 #define MAX_STAGES 2
@@ -83,7 +82,7 @@ void UninitStageSelect(void)
 
 void UpdateStageSelect(void)
 {
-    if (GetKeyboardTrigger(DIK_LEFT))
+    if (GetKeyboardTrigger(DIK_LEFT) || IsButtonTriggered(0, BUTTON_LEFT))
     {
         g_SelectedStage--;
         if (g_SelectedStage < 1) g_SelectedStage = MAX_STAGES;
@@ -91,7 +90,7 @@ void UpdateStageSelect(void)
         PlaySound(SOUND_LABEL_SE_switch01);
 
     }
-    else if (GetKeyboardTrigger(DIK_RIGHT))
+    else if (GetKeyboardTrigger(DIK_RIGHT) || IsButtonTriggered(0, BUTTON_RIGHT))
     {
         g_SelectedStage++;
         if (g_SelectedStage > MAX_STAGES) g_SelectedStage = 1;
@@ -101,7 +100,7 @@ void UpdateStageSelect(void)
     }
 
     // 決定キー（Enter）
-    if (GetKeyboardTrigger(DIK_RETURN))
+    if (GetKeyboardTrigger(DIK_RETURN) || IsButtonTriggered(0, BUTTON_A))
     {
         // 選択したステージ番号に応じたファイル名をセット
         sprintf(g_SelectedStageFile, "stage%d.txt", g_SelectedStage);
@@ -110,7 +109,7 @@ void UpdateStageSelect(void)
 
         SetFade(FADE_OUT, MODE_GAME);
     }
-    else if (GetKeyboardTrigger(DIK_SPACE))
+    else if (GetKeyboardTrigger(DIK_SPACE) || IsButtonTriggered(0, BUTTON_B))
     {
         SetFade(FADE_OUT, MODE_PLAYER_SELECT);
     }

@@ -118,7 +118,7 @@ void UninitPlayerSelect(void)
 void UpdatePlayerSelect(void)
 {
     // ← →
-    if (GetKeyboardTrigger(DIK_LEFT))
+    if (GetKeyboardTrigger(DIK_LEFT) || IsButtonTriggered(0, BUTTON_LEFT))
     {
         do {
             g_SelectedPlayer = (g_SelectedPlayer - 1 + MAX_CHARACTERS) % MAX_CHARACTERS;
@@ -126,7 +126,7 @@ void UpdatePlayerSelect(void)
 
         PlaySound(SOUND_LABEL_SE_switch01);
     }
-    else if (GetKeyboardTrigger(DIK_RIGHT))
+    else if (GetKeyboardTrigger(DIK_RIGHT) || IsButtonTriggered(0, BUTTON_RIGHT))
     {
         do {
             g_SelectedPlayer = (g_SelectedPlayer + 1) % MAX_CHARACTERS;
@@ -135,8 +135,44 @@ void UpdatePlayerSelect(void)
         PlaySound(SOUND_LABEL_SE_switch01);
     }
 
+    // TABキーでCPUにする
+    if (GetKeyboardTrigger(DIK_TAB) || IsButtonTriggered(0, BUTTON_X))
+    {
+        // 余っているキャラを探す
+        int used[MAX_CHARACTERS] = { 0 };
+        for (int j = 0; j < MAX_PLAYERS; j++) {
+            int idx = g_SelectedCharIndex[j];
+            if (idx >= 0 && idx < MAX_CHARACTERS) used[idx] = 1;
+        }
+        int cpuChar = 0;
+        for (int c = 0; c < MAX_CHARACTERS; c++) {
+            if (!used[c]) {
+                cpuChar = c;
+                break;
+            }
+        }
+
+        g_IsCPU[g_SelectingPlayerIndex] = true;
+        g_SelectedCharIndex[g_SelectingPlayerIndex] = cpuChar; // 余っているキャラをセット
+
+        if (g_SelectingPlayerIndex == 0)
+        {
+            g_SelectingPlayerIndex = 1;
+            g_SelectedPlayer = 0;
+            while (g_SelectedPlayer == g_SelectedCharIndex[0])
+            {
+                g_SelectedPlayer = (g_SelectedPlayer + 1) % MAX_CHARACTERS;
+            }
+        }
+        else
+        {
+            SetFade(FADE_OUT, MODE_STAGE_SELECT);
+        }
+        return;
+    }
+
     // Enter 決定
-    if (GetKeyboardTrigger(DIK_RETURN))
+    if (GetKeyboardTrigger(DIK_RETURN) || IsButtonTriggered(0, BUTTON_A))
     {
         g_SelectedCharIndex[g_SelectingPlayerIndex] = g_SelectedPlayer;
 
@@ -152,10 +188,9 @@ void UpdatePlayerSelect(void)
         else
         {
             SetFade(FADE_OUT, MODE_STAGE_SELECT);
-
         }
     }
-    else if (GetKeyboardTrigger(DIK_SPACE))
+    else if (GetKeyboardTrigger(DIK_SPACE) || IsButtonTriggered(0, BUTTON_B))
     {
         SetFade(FADE_OUT, MODE_TITLE);
     }
@@ -228,7 +263,7 @@ void DrawPlayerSelect(void)
             if (g_SelectedCharIndex[p] == i && g_SelectFrameTex[p])
             {
                 GetDeviceContext()->PSSetShaderResources(0, 1, &g_SelectFrameTex[p]);
-                SetSpriteColor(g_VertexBuffer, x, yPos-15.0f, TEXTURE_WIDTH_PLAYER_ICON*1.2, TEXTURE_HEIGHT_PLAYER_ICON*1.5,
+                SetSpriteColor(g_VertexBuffer, x, yPos-15.0f, TEXTURE_WIDTH_PLAYER_ICON*1.2f, TEXTURE_HEIGHT_PLAYER_ICON*1.5f,
                     0, 0, 1, 1, XMFLOAT4(1, 1, 1, 0.6f));
                 GetDeviceContext()->Draw(4, 0);
             }

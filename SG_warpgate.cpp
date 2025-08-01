@@ -77,7 +77,7 @@ void WARPGATE::UpdateSGwarpgate(void)
 
 void WARPGATE::DrawSGwarpgate(void) const
 {
-	g_bAlpaTest == FALSE;
+	g_bAlpaTest = FALSE;
 	// ÉøÉeÉXÉgê›íË
 	if (g_bAlpaTest == TRUE)
 	{

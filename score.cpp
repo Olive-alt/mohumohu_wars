@@ -18,8 +18,6 @@
 #define TEXTURE_HEIGHT       (32)    // 
 #define TEXTURE_MAX          (1)     // テクスチャの数
 #define SCORE_PLAYER_MAX     (2)     // プレイヤーの数（2人用に変更）
-#define SCORE_DIGIT          (6)     // 表示桁数
-#define SCORE_MAX            (999999)
 
 //*****************************************************************************
 // プロトタイプ宣言

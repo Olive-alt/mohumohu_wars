@@ -48,6 +48,7 @@ private:
 	float swingAngle = 0.0f;   // 回転角度（初期値0）
 	const float swingMax = XM_PIDIV2; // 90度 (π/2)
 
+	bool wantToSwing = false;
 public:
 	HRESULT InitITHamr(void);
 	void UninitITHamr(void);
@@ -64,6 +65,9 @@ public:
 	bool IsPickedITHamr() const { return pick; }
 
 	XMFLOAT3 GetPositionITHamr() const { return pos; }
+
+	void SetSwingFlag(bool flag) { wantToSwing = flag; }
+	bool GetSwingFlag() const { return wantToSwing; }
 };
 
 //*****************************************************************************

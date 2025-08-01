@@ -153,15 +153,15 @@ void UpdateNewResult(void)
 		g_bPause = g_bPause ? FALSE : TRUE;
 	}
 
-	if (GetKeyboardTrigger(DIK_RETURN))
-	{// Enter押したら、ステージを切り替える
-		SetFade(FADE_OUT, MODE_TITLE);
-	}
+	if (g_bPause == FALSE)
+		return;
 
 #endif
 
-	if(g_bPause == FALSE)
-		return;
+	if (GetKeyboardTrigger(DIK_RETURN) || IsButtonTriggered(0, BUTTON_A))
+	{// Enter押したら、ステージを切り替える
+		SetFade(FADE_OUT, MODE_TITLE);
+	}
 
 	// 地面処理の更新
 	UpdateMeshField();

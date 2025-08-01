@@ -147,12 +147,13 @@ void HAMR::UpdateITHamr(void)
 
 
 			// Swing trigger
-			if (GetKeyboardTrigger(DIK_NUMPAD1)) // replace with your attack key
+			if (wantToSwing) // replace with your attack key
 			{
 				to_swing = true;
 				// Start swing timer, animation, etc.
 				PlaySound(SOUND_LABEL_SE_shot002);
 
+				wantToSwing = false; // 使い終わったらリセット
 			}
 		}
 
@@ -207,7 +208,7 @@ void HAMR::DrawITHamr(void)
 
 	if (!pick)
 	{
-		XMMATRIX mtxScl, mtxRot, mtxTranslate, mtxWorld, quatMatrix;
+		XMMATRIX mtxScl, mtxRot, mtxTranslate, mtxWorld;
 
 		// カリング無効
 		SetCullingMode(CULL_MODE_NONE);
@@ -240,7 +241,7 @@ void HAMR::DrawITHamr(void)
 	}
 	else if (pick)
 	{
-		XMMATRIX mtxScl, mtxRot, mtxTranslate, mtxWorld, quatMatrix;
+		XMMATRIX mtxScl, mtxWorld;
 
 		// カリング無効
 		SetCullingMode(CULL_MODE_NONE);

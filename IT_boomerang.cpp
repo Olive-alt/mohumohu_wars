@@ -265,7 +265,7 @@ void BOOM::UpdateITboom(void)
 			pos.y = player->pos.y;
 			pos.z = player->pos.z - cos(XM_PI) * 1.0f;
 
-			if (GetKeyboardTrigger(DIK_NUMPAD0))
+			if (wantToThrow)
 			{
 				rot = player->rot;
 				pick = FALSE;
@@ -286,6 +286,8 @@ void BOOM::UpdateITboom(void)
 				endPos.z = player->pos.z + -cosf(rot.y) * throwDistance;
 
 				pos = startPos;
+
+				wantToThrow = false; // 使い終わったらリセット
 			}
 
 		}
@@ -313,7 +315,7 @@ void BOOM::DrawITboom(void)
 
 	if (!pick)
 	{
-		XMMATRIX mtxScl, mtxRot, mtxTranslate, mtxWorld, quatMatrix;
+		XMMATRIX mtxScl, mtxRot, mtxTranslate, mtxWorld;
 
 		// カリング無効
 		SetCullingMode(CULL_MODE_NONE);

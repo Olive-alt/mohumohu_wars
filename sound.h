@@ -44,3 +44,11 @@ void PlaySound(int label);
 void StopSound(int label);
 void StopSound(void);
 
+void SetBGMVolume(float volume); // 0.0fÅ`1.0f
+void SetSEVolume(float volume);  // 0.0fÅ`1.0f
+float GetBGMVolume();
+float GetSEVolume();
+void IncreaseBGMVolume();
+void DecreaseBGMVolume();
+void IncreaseSEVolume();
+void DecreaseSEVolume();

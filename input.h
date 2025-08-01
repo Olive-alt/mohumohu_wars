@@ -35,9 +35,9 @@
 //#define BUTTON_START	0x00001000l	// ＳＴＡＲＴボタン(.rgbButtons[8]&0x80)
 //#define BUTTON_M		0x00002000l	// Ｍボタン(.rgbButtons[9]&0x80)
 
-#define BUTTON_X		0x00000010l	// Ｘボタン(.rgbButtons[0]&0x80)
-#define BUTTON_A		0x00000020l	// Ａボタン(.rgbButtons[1]&0x80)
-#define BUTTON_B		0x00000040l	// Ｂボタン(.rgbButtons[2]&0x80)
+#define BUTTON_A		0x00000010l	// Ｘボタン(.rgbButtons[0]&0x80)
+#define BUTTON_B		0x00000020l	// Ａボタン(.rgbButtons[1]&0x80)
+#define BUTTON_X		0x00000040l	// Ｂボタン(.rgbButtons[2]&0x80)
 #define BUTTON_Y		0x00000080l	// Ｙボタン(.rgbButtons[3]&0x80)
 #define BUTTON_L		0x00000100l	// Ｌボタン(.rgbButtons[4]&0x80)
 #define BUTTON_R		0x00000200l	// Ｒボタン(.rgbButtons[5]&0x80)
@@ -49,9 +49,9 @@
 #define GAMEPADMAX		4			// 同時に接続するジョイパッドの最大数をセット
 
 enum {	// ボタンに対するrgbButtons[?]配列の配列番号(DirectInput上でのXYABボタン位置に合わせた)
-	rgbButtons_X,
 	rgbButtons_A,
 	rgbButtons_B,
+	rgbButtons_X,
 	rgbButtons_Y,
 	rgbButtons_L,
 	rgbButtons_R,
@@ -88,7 +88,7 @@ long GetMouseY(void);               // マウスがY方向に動いた相対値
 long GetMouseZ(void);               // マウスホイールが動いた相対値
 
 //---------------------------- game pad
-BOOL IsButtonPressed(int padNo,DWORD button);
-BOOL IsButtonTriggered(int padNo,DWORD button);
+BOOL IsButtonPressed(int padNo, DWORD button);
+BOOL IsButtonTriggered(int padNo, DWORD button);
 
 

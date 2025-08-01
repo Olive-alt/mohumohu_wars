@@ -387,3 +387,31 @@ HRESULT ReadChunkData(HANDLE hFile, void *pBuffer, DWORD dwBuffersize, DWORD dwB
 	return S_OK;
 }
 
+float g_BGMVolume = 1.0f;
+float g_SEVolume = 1.0f;
+
+// BGM音量セット
+void SetBGMVolume(float volume) {
+	if (volume < 0.0f) volume = 0.0f;
+	if (volume > 1.0f) volume = 1.0f;
+	g_BGMVolume = volume;
+	for (int i = SOUND_LABEL_BGM_sample000; i <= SOUND_LABEL_BGM_bgm_a; i++) {
+		if (g_apSourceVoice[i]) g_apSourceVoice[i]->SetVolume(g_BGMVolume);
+	}
+}
+void IncreaseBGMVolume() { SetBGMVolume(g_BGMVolume + 0.05f); }
+void DecreaseBGMVolume() { SetBGMVolume(g_BGMVolume - 0.05f); }
+float GetBGMVolume() { return g_BGMVolume; }
+
+// SE音量セット
+void SetSEVolume(float volume) {
+	if (volume < 0.0f) volume = 0.0f;
+	if (volume > 1.0f) volume = 1.0f;
+	g_SEVolume = volume;
+	for (int i = SOUND_LABEL_SE_bomb000; i < SOUND_LABEL_MAX; i++) {
+		if (g_apSourceVoice[i]) g_apSourceVoice[i]->SetVolume(g_SEVolume);
+	}
+}
+void IncreaseSEVolume() { SetSEVolume(g_SEVolume + 0.05f); }
+void DecreaseSEVolume() { SetSEVolume(g_SEVolume - 0.05f); }
+float GetSEVolume() { return g_SEVolume; }

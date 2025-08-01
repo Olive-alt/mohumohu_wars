@@ -512,7 +512,7 @@ void ItemSpown(void)
 {
 	//int itemNo = GetRand(0, ITEM_TOTAL_MAX - 1);//–{—ˆ
 	int itemNo = GetRand(0, 3);//‰¼’u‚«
-	XMFLOAT3 SpownPos = XMFLOAT3(0 + GetRand(-500, 500), 0.0f, 0 + GetRand(-500, 500));
+	XMFLOAT3 SpawnPos = XMFLOAT3(GetRandf(-500.0f, 500.0f), 0.0f, GetRandf(-500.0f, 500.0f));
 
 	switch (itemNo)
 	{
@@ -524,7 +524,7 @@ void ItemSpown(void)
 		{
 			if (!giant[i].IsUsedITgiant())
 			{
-				giant[i].SetITgiant(SpownPos);
+				giant[i].SetITgiant(SpawnPos);
 				break;
 			}
 		}
@@ -535,7 +535,7 @@ void ItemSpown(void)
 		{
 			if (!invisible[i].IsUsedITinvisible())
 			{
-				invisible[i].SetITinvisible(SpownPos);
+				invisible[i].SetITinvisible(SpawnPos);
 				break;
 			}
 		}
@@ -546,7 +546,7 @@ void ItemSpown(void)
 		{
 			if (!ball[i].IsUsedITball())
 			{
-				ball[i].SetITballObject(SpownPos);
+				ball[i].SetITballObject(SpawnPos);
 				break;
 			}
 		}
@@ -557,7 +557,7 @@ void ItemSpown(void)
 		{
 			if (!bomb[i].IsUsedITbomb())
 			{
-				bomb[i].SetITbombObject(SpownPos);
+				bomb[i].SetITbombObject(SpawnPos);
 				break;
 			}
 		}

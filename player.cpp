@@ -77,6 +77,8 @@ static float		roty = 0.0f;
 static LIGHT		g_Light;
 static float noiseTable[MAX_PLAYER][PLAYER_PARTS_MAX] = { 0 };
 
+bool g_IsCPU[MAX_PLAYER] = { false, false }; // 初期状態は両方人間
+
 extern unsigned int dwFrameCount;
 
 //HP初期化
@@ -363,34 +365,7 @@ void UpdatePlayer(void)
 				g_Player[i].hp = min(g_Player[i].hp + 1.0f, 3.0f);
 			}
 
-			// 弾発射
-			if (GetKeyboardTrigger(DIK_SPACE))
-			{
-				BALL* ball = GetBall();
-				for (int ballCnt = 0; ballCnt < 10; ballCnt++)
-				{
-					if (ball[ballCnt].IsUsedITball() && ball[ballCnt].IsPickedITball())  // すでに使われてるボールは撃たないようにする
-					{
-						ball[ballCnt].SetITball(g_Player[i].pos, g_Player[i].rot);  // プレイヤーの位置と向きでボールを発射
-						break;
-					}
-				}
-			}
-
-			// ボム発射
-			if (GetKeyboardTrigger(DIK_SPACE))
-			{
-				BOMB* bomb = GetBomb();
-				for (int bombCnt = 0; bombCnt < 10; bombCnt++)
-				{
-					if (bomb[bombCnt].IsUsedITbomb() && bomb[bombCnt].IsPickedITbomb())  // すでに使われてるボールは撃たないようにする
-					{
-						bomb[bombCnt].SetITbomb(g_Player[i].pos, g_Player[i].rot);  // プレイヤーの位置と向きでボールを発射
-						break;
-					}
-				}
-			}
-
+			PlayerAttack(i);
 
 			// ▼ ワープゲート用クールタイム
 			if (g_Player[i].gateUse)
@@ -831,82 +806,97 @@ void DrawPlayerHpBar() {
 //=============================================================================
 void MovePlayers(void)
 {
-	PLAYER* p0 = GetPlayer(0);
-	PLAYER* p1 = GetPlayer(1);
-
-	g_PlayerIsMoving[0] = false;
-	g_PlayerIsMoving[1] = false;
-
-	// プレイヤー1
-	if (p0 && p0->use)
+	for (int i = 0; i < MAX_PLAYER; i++)
 	{
-		float dx = 0.0f;
-		float dz = 0.0f;
+		PLAYER* p = GetPlayer(i);
 
-		// キーボード1（WASD）
-		if (GetKeyboardPress(DIK_W)) dz += 1.0f;
-		if (GetKeyboardPress(DIK_S)) dz -= 1.0f;
-		if (GetKeyboardPress(DIK_A)) dx -= 1.0f;
-		if (GetKeyboardPress(DIK_D)) dx += 1.0f;
+		if (!g_Player[i].use) continue;
 
-		// パッド1
-		if (IsButtonPressed(0, BUTTON_UP))    dz += 1.0f;
-		if (IsButtonPressed(0, BUTTON_DOWN))  dz -= 1.0f;
-		if (IsButtonPressed(0, BUTTON_LEFT))  dx -= 1.0f;
-		if (IsButtonPressed(0, BUTTON_RIGHT)) dx += 1.0f;
+		// ★ここで前回位置を保存
+		p->prevPos = p->pos;
 
-		if (dx != 0.0f || dz != 0.0f)
+
+		// ----- CPU -----
+		if (g_IsCPU[i])
 		{
-			// 正規化して速度一定に
-			float len = sqrtf(dx * dx + dz * dz);
-			dx /= len;
-			dz /= len;
+			// ターゲット（人間プレイヤー）を探す
+			int target = -1;
+			for (int j = 0; j < MAX_PLAYER; j++) {
+				if (j != i && !g_IsCPU[j] && g_Player[j].use) {
+					target = j;
+					break;
+				}
+			}
+			if (target == -1) {
+				g_PlayerIsMoving[i] = false;
+				continue;
+			}
+			PLAYER* tgt = &g_Player[target];
 
-			p0->pos.x += dx * VALUE_MOVE;
-			p0->pos.z += dz * VALUE_MOVE;
+			// 差分ベクトル（人間プレイヤー→CPU）を計算
+			float dx = p->pos.x - tgt->pos.x;
+			float dz = p->pos.z - tgt->pos.z;
+			float dist = sqrtf(dx * dx + dz * dz);
 
-			// 目標角度
-			float targetAngle = atan2f(-dx, -dz);
-			// 滑らかに補間
-			p0->rot.y = SmoothAngle(p0->rot.y, targetAngle, 0.15f); // ← 0.1～0.2で調整
+			if (dist < 60.0f && dist > 0.01f) // 0.01fでゼロ除算防止
+			{
+				dx /= dist;
+				dz /= dist;
+				p->pos.x += dx * VALUE_MOVE;
+				p->pos.z += dz * VALUE_MOVE;
 
-			g_PlayerIsMoving[0] = true;
+				float targetAngle = atan2f(-dx, -dz);
+				p->rot.y = SmoothAngle(p->rot.y, targetAngle, 0.15f);
+
+				g_PlayerIsMoving[i] = true;
+			}
+			else
+			{
+				g_PlayerIsMoving[i] = false;
+			}
 		}
-	}
-
-	// プレイヤー2（必要なら同様に斜め対応可能）
-	if (p1 && p1->use)
-	{
-		float dx = 0.0f;
-		float dz = 0.0f;
-
-		// キーボード2（矢印キー）
-		if (GetKeyboardPress(DIK_UP))    dz += 1.0f;
-		if (GetKeyboardPress(DIK_DOWN))  dz -= 1.0f;
-		if (GetKeyboardPress(DIK_LEFT))  dx -= 1.0f;
-		if (GetKeyboardPress(DIK_RIGHT)) dx += 1.0f;
-
-		// パッド2
-		if (IsButtonPressed(1, BUTTON_UP))    dz += 1.0f;
-		if (IsButtonPressed(1, BUTTON_DOWN))  dz -= 1.0f;
-		if (IsButtonPressed(1, BUTTON_LEFT))  dx -= 1.0f;
-		if (IsButtonPressed(1, BUTTON_RIGHT)) dx += 1.0f;
-
-		if (dx != 0.0f || dz != 0.0f)
+		// ----- 人の操作 -----
+		else
 		{
-			// 正規化して速度一定に
-			float len = sqrtf(dx * dx + dz * dz);
-			dx /= len;
-			dz /= len;
+			float dx = 0.0f, dz = 0.0f;
+			if (i == 0) {
+				if (GetKeyboardPress(DIK_A)) dx -= 1.0f;
+				if (GetKeyboardPress(DIK_D)) dx += 1.0f;
+				if (GetKeyboardPress(DIK_W)) dz += 1.0f;
+				if (GetKeyboardPress(DIK_S)) dz -= 1.0f;
+				if (IsButtonPressed(0, BUTTON_UP))    dz += 1.0f;
+				if (IsButtonPressed(0, BUTTON_DOWN))  dz -= 1.0f;
+				if (IsButtonPressed(0, BUTTON_LEFT))  dx -= 1.0f;
+				if (IsButtonPressed(0, BUTTON_RIGHT)) dx += 1.0f;
+			}
+			else if (i == 1) {
+				if (GetKeyboardPress(DIK_LEFT)) dx -= 1.0f;
+				if (GetKeyboardPress(DIK_RIGHT)) dx += 1.0f;
+				if (GetKeyboardPress(DIK_UP)) dz += 1.0f;
+				if (GetKeyboardPress(DIK_DOWN)) dz -= 1.0f;
+				if (IsButtonPressed(1, BUTTON_UP))    dz += 1.0f;
+				if (IsButtonPressed(1, BUTTON_DOWN))  dz -= 1.0f;
+				if (IsButtonPressed(1, BUTTON_LEFT))  dx -= 1.0f;
+				if (IsButtonPressed(1, BUTTON_RIGHT)) dx += 1.0f;
+			}
 
-			p1->pos.x += dx * VALUE_MOVE;
-			p1->pos.z += dz * VALUE_MOVE;
+			if (dx != 0.0f || dz != 0.0f)
+			{
+				float len = sqrtf(dx * dx + dz * dz);
+				dx /= len;
+				dz /= len;
+				g_Player[i].pos.x += dx * VALUE_MOVE;
+				g_Player[i].pos.z += dz * VALUE_MOVE;
+				// プレイヤーの向きを更新
+				float targetAngle = atan2f(-dx, -dz);
+				p->rot.y = SmoothAngle(p->rot.y, targetAngle, 0.15f);
 
-			// 回転角設定（atan2で斜め含む）
-			float targetAngle = atan2f(-dx, -dz);
-			p1->rot.y = SmoothAngle(p1->rot.y, targetAngle, 0.15f);
-
-			g_PlayerIsMoving[1] = true;
+				g_PlayerIsMoving[i] = true;
+			}
+			else
+			{
+				g_PlayerIsMoving[i] = false;
+			}
 		}
 	}
 }
@@ -1129,4 +1119,51 @@ float turning(float target, float current)
 
 	// 補間
 	return current + diff * rotateSpeed;
+}
+
+void PlayerAttack(int playerIndex)
+{
+	// プレイヤー1: DIK_SPACE or パッドAボタン
+	// プレイヤー2: 例としてDIK_RETURN or パッドAボタン（padNo=1）
+	bool attackTrigger = false;
+
+	if (playerIndex == 0) {
+		attackTrigger = GetKeyboardTrigger(DIK_SPACE) || IsButtonTriggered(0, BUTTON_A);
+	}
+	else if (playerIndex == 1) {
+		attackTrigger = GetKeyboardTrigger(DIK_RETURN) || IsButtonTriggered(1, BUTTON_A);
+	}
+
+	// 弾発射
+	if (attackTrigger)
+	{
+		// ボール発射
+		BALL* ball = GetBall();
+		for (int ballCnt = 0; ballCnt < 10; ballCnt++)
+		{
+			if (ball[ballCnt].IsUsedITball() && ball[ballCnt].IsPickedITball())  // すでに使われてるボールは撃たないようにする
+			{
+				ball[ballCnt].SetITball(g_Player[playerIndex].pos, g_Player[playerIndex].rot);  // プレイヤーの位置と向きでボールを発射
+				break;
+			}
+		}
+
+		// ボム発射
+		BOMB* bomb = GetBomb();
+		for (int bombCnt = 0; bombCnt < 10; bombCnt++)
+		{
+			if (bomb[bombCnt].IsUsedITbomb() && bomb[bombCnt].IsPickedITbomb())  // すでに使われてるボールは撃たないようにする
+			{
+				bomb[bombCnt].SetITbomb(g_Player[playerIndex].pos, g_Player[playerIndex].rot);  // プレイヤーの位置と向きでボールを発射
+				break;
+			}
+		}
+		// ブーメラン
+		BOOM* boom = GetBoomerang();
+		boom->SetThrowFlag(true);
+
+		// ハンマー
+		HAMR* hamr = GetHammer();
+		hamr->SetSwingFlag(true);
+	}
 }

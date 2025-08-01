@@ -217,7 +217,7 @@ void BOMB::DrawITbomb(void)
 	{
 		PrintDebugProc("\nO\n");
 
-		XMMATRIX mtxScl, mtxRot, mtxTranslate, mtxWorld, quatMatrix;
+		XMMATRIX mtxScl, mtxRot, mtxTranslate, mtxWorld;
 
 		// ƒJƒŠƒ“ƒO–³Œø
 		SetCullingMode(CULL_MODE_NONE);
