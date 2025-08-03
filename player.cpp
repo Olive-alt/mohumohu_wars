@@ -1049,7 +1049,7 @@ void OnPlayerHit(int i, const XMFLOAT3& hitDirection)
 
 float GetNoise(float strength)
 {
-	return GetRand(-1000, 1000) / 10000.0f * strength;
+	return GetRand(-1000, 1000) / 500.0f * strength;
 }
 
 float GetPeriodicNoise(int seed, float time, float strength)
@@ -1059,7 +1059,7 @@ float GetPeriodicNoise(int seed, float time, float strength)
 
 float GetSmoothNoise(float& last, float strength)
 {
-	float target = GetRand(-1000, 1000) / 10000.0f * strength;
+	float target = GetRand(-1000, 1000) / 500.0f * strength;
 	float smooth = 0.07f;
 	last += (target - last) * smooth;
 	return last;
