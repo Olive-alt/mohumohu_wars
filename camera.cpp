@@ -297,60 +297,199 @@ void SetCameraAT(XMFLOAT3 pos)
 //==============================================================================
 // ターゲットが画面外に出る前にカメラを上昇させる関数
 //==============================================================================
+// ==== Camera tuning (変更可能) ====
+struct CameraTuning {
+	float pitchDeg = 35.0f;     // ピッチ角(度)
+	float panLerp = 0.15f;     // 平行移動の追従
+	float zoomLerpOut = 0.20f;     // ズームアウト応答
+	float zoomLerpIn = 0.12f;     // ズームイン応答
+	float minRadius = 1.0f;      // 半径の下限
+	float minDist = 8.0f;      // 距離の下限
+	float maxY = 400.0f;    // 高さ上限
+	float minHeightY = ORIGINAL_CAMERA_Y - 2.0f; // 高さ下限
+
+	// 画面内判定(NDC)
+	float softInNDC = 0.72f;
+	float softOutNDC = 0.88f;
+	int   dwellFrames = 8;
+
+	// 近距離バイアス
+	float nudgeInNDC = 0.65f;
+	float nudgeHyst = 0.05f;
+	float nudgeFactor = 0.85f;
+	float holdZoomInLerp = 0.15f;
+
+	// 1フレームでのズームアウト量上限(ワールド単位)
+	float maxZoomOutStep = 0.75f;
+};
+
+static CameraTuning g_CamTune{};
+inline void SetCameraTuning(const CameraTuning& t) { g_CamTune = t; }
+inline const CameraTuning& GetCameraTuning() { return g_CamTune; }
+
 
 void EnsureCameraFramesTargets(XMFLOAT3 target1, XMFLOAT3 target2, float viewEdgeBuffer = 0.15f)
 {
-	const float step = 5.0f;
-	const float maxY = 400.0f;
-	const float startY = ORIGINAL_CAMERA_Y; // カメラの初期Y座標
-	int tries = 0;
+	// ==== チューニング値 ====
+	const CameraTuning& K = GetCameraTuning();
+
+	// ==== ヘルパ ====
+	auto MinF = [](float a, float b) { return a < b ? a : b; };
+	auto MaxF = [](float a, float b) { return a > b ? a : b; };
+	auto ClampF = [&](float v, float lo, float hi) { return v < lo ? lo : (v > hi ? hi : v); };
+	auto LerpF = [&](float a, float b, float t) { t = ClampF(t, 0.0f, 1.0f); return a + (b - a) * t; };
+	auto Lerp3 = [&](const XMFLOAT3& a, const XMFLOAT3& b, float t) {
+		XMFLOAT3 r{ LerpF(a.x,b.x,t), LerpF(a.y,b.y,t), LerpF(a.z,b.z,t) }; return r;
+		};
 
 	SetCamera();
 
-	// 対象（プレイヤー・敵）座標をXMVECTOR型に変換
+	// ==== ターゲット中心 ====
 	XMVECTOR v1 = XMLoadFloat3(&target1);
 	XMVECTOR v2 = XMLoadFloat3(&target2);
+	XMVECTOR centerV = XMVectorScale(XMVectorAdd(v1, v2), 0.5f);
+	XMFLOAT3 center; XMStoreFloat3(&center, centerV);
 
-	// ワールド座標をNDC座標に変換するラムダ関数
-	auto WorldToNDC = [&](XMVECTOR pos) {
+	// 分離半径
+	float distTargets = XMVectorGetX(XMVector3Length(XMVectorSubtract(v1, v2)));
+	float radius = MaxF(0.5f * distTargets, K.minRadius);
+
+	// ==== 射影パラメータ ====
+	XMFLOAT4X4 P = g_Camera.mtxProjection;
+	const float tanHalfFovX = 1.0f / P._11;
+	const float tanHalfFovY = 1.0f / P._22;
+	const float safety = 1.0f + viewEdgeBuffer;
+
+	// 収まるための距離
+	const float dVert = (radius * safety) / tanHalfFovY;
+	const float dHoriz = (radius * safety) / tanHalfFovX;
+	float baseFitDist = MaxF(MaxF(dVert, dHoriz), K.minDist);
+
+	// ==== カメラ基底 ====
+	XMVECTOR camPosV = XMLoadFloat3(&g_Camera.pos);
+	XMVECTOR camAtV = XMLoadFloat3(&g_Camera.at);
+	XMVECTOR forward = XMVector3Normalize(XMVectorSubtract(camAtV, camPosV));
+	XMVECTOR forwardXZ = XMVectorSet(XMVectorGetX(forward), 0.0f, XMVectorGetZ(forward), 0.0f);
+	float lenXZ = XMVectorGetX(XMVector3Length(forwardXZ));
+	forwardXZ = (lenXZ < 1e-4f) ? XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f) : XMVectorScale(forwardXZ, 1.0f / lenXZ);
+
+	const float currentDistance = XMVectorGetX(XMVector3Length(XMVectorSubtract(camAtV, camPosV)));
+
+	// ==== 画面上の広がり(NDC) ====
+	auto WorldToNDC = [&]() {
 		XMMATRIX view = XMLoadFloat4x4(&g_Camera.mtxView);
 		XMMATRIX proj = XMLoadFloat4x4(&g_Camera.mtxProjection);
-		return XMVector3TransformCoord(pos, view * proj);
+		XMMATRIX vp = XMMatrixMultiply(view, proj);
+		XMVECTOR ndc1 = XMVector3TransformCoord(v1, vp);
+		XMVECTOR ndc2 = XMVector3TransformCoord(v2, vp);
+		float ex = MaxF(fabsf(XMVectorGetX(ndc1)), fabsf(XMVectorGetX(ndc2)));
+		float ey = MaxF(fabsf(XMVectorGetY(ndc1)), fabsf(XMVectorGetY(ndc2)));
+		return MaxF(ex, ey);
 		};
+	float ndcExtent = WorldToNDC();
 
-	// 画面端のバッファを考慮したNDC判定ラムダ
-	auto IsNearEdgeNDC = [viewEdgeBuffer](XMVECTOR v) {
-		float x = XMVectorGetX(v);
-		float y = XMVectorGetY(v);
-		float z = XMVectorGetZ(v);
-		// バッファ分だけ判定を内側に
-		return (x < -1.0f + viewEdgeBuffer || x > 1.0f - viewEdgeBuffer ||
-			y < -1.0f + viewEdgeBuffer || y > 1.0f - viewEdgeBuffer ||
-			z < 0.0f || z > 1.0f);
+	// ==== 状態機械 ====
+	enum ZoomState { Hold = 0, ZoomOut = 1, ZoomIn = 2 };
+	static ZoomState sState = Hold;
+	static int       sDwell = 0;
+	auto AdvanceState = [&]() {
+		switch (sState) {
+		case Hold:
+			if (ndcExtent > K.softOutNDC) { sState = ZoomOut; sDwell = 0; }
+			else if (ndcExtent < K.softInNDC) { sState = ZoomIn; sDwell = 0; }
+			break;
+		case ZoomOut:
+			if (ndcExtent < K.softInNDC) { if (++sDwell >= K.dwellFrames) { sState = Hold; sDwell = 0; } }
+			else { sDwell = 0; }
+			break;
+		case ZoomIn:
+			if (ndcExtent > K.softOutNDC) { if (++sDwell >= K.dwellFrames) { sState = Hold; sDwell = 0; } }
+			else { sDwell = 0; }
+			break;
+		}
 		};
+	AdvanceState();
 
-	// 両方のターゲットが画面の「バッファ内」にいるか判定
-	bool bothInSafeZone = !IsNearEdgeNDC(WorldToNDC(v1)) && !IsNearEdgeNDC(WorldToNDC(v2));
+	// ==== 距離の制約 ====
+	const float pitchRad = XMConvertToRadians(K.pitchDeg);
+	const float sinP = sinf(pitchRad), cosP = cosf(pitchRad);
 
-	if (!bothInSafeZone) {
-		// --- バッファ外（端に近い、または出た）ならカメラを上昇 ---
-		if (g_Camera.pos.y < maxY) {
-			float raise = min(step * 0.35f, maxY - g_Camera.pos.y);
-			g_Camera.pos.y += raise;
-			// g_Camera.at.y += raise; // 必要なら注視点も
+	float allowedMinD = K.minDist;
+	if (K.minHeightY > center.y && sinP > 1e-4f)
+		allowedMinD = MaxF(allowedMinD, (K.minHeightY - center.y) / sinP);
+	baseFitDist = MaxF(baseFitDist, allowedMinD);
+
+	float allowedMaxD = (K.maxY > center.y && sinP > 1e-4f) ? ((K.maxY - center.y) / sinP) : baseFitDist;
+
+	// ==== 近距離バイアス ====
+	static bool sCloseBias = false;
+	if (!sCloseBias && ndcExtent < (K.nudgeInNDC - K.nudgeHyst)) sCloseBias = true;
+	if (sCloseBias && ndcExtent > (K.nudgeInNDC + K.nudgeHyst)) sCloseBias = false;
+
+	float desiredFitDist = baseFitDist;
+	if (sCloseBias) desiredFitDist = ClampF(baseFitDist * K.nudgeFactor, allowedMinD, allowedMaxD);
+
+	// ==== 目標距離決定 ====
+	float targetDistance = currentDistance;
+	if (sState == ZoomOut) {
+		targetDistance = MaxF(currentDistance, MinF(baseFitDist, allowedMaxD));
+	}
+	else if (sState == ZoomIn) {
+		targetDistance = MinF(currentDistance, MaxF(allowedMinD, desiredFitDist));
+	}
+	else { // Hold
+		if (sCloseBias) targetDistance = MinF(targetDistance, desiredFitDist);
+	}
+
+	// ==== 平滑化状態 ====
+	static bool     sInit = false;
+	static XMFLOAT3 sCenter = {};
+	static float    sDistance = 0.0f;
+	if (!sInit) {
+		sCenter = center;
+		sDistance = ClampF(currentDistance, allowedMinD, MaxF(allowedMinD, baseFitDist));
+		sInit = true;
+	}
+
+	// ==== 平行移動(パン) ====
+	sCenter = Lerp3(sCenter, center, K.panLerp);
+
+	// ==== ズーム(片側制限あり) ====
+	float zoomT = (sState == ZoomOut) ? K.zoomLerpOut : (sState == ZoomIn ? K.zoomLerpIn : 0.0f);
+	if ((sState == Hold || sState == ZoomIn) && targetDistance < sDistance)
+		zoomT = MaxF(zoomT, K.holdZoomInLerp);
+
+	// ズームアウト時のみ1フレーム上限を適用
+	{
+		float lerped = LerpF(sDistance, targetDistance, zoomT);
+		if (sState == ZoomOut) {
+			float step = lerped - sDistance;
+			step = ClampF(step, 0.0f, K.maxZoomOutStep);
+			sDistance += step;
+		}
+		else {
+			sDistance = lerped;
 		}
 	}
-	else {
-		// --- 両方とも十分に中央にいる場合はカメラを下げる ---
-		if (g_Camera.pos.y > startY) {
-			float lower = min(step * 0.35f, g_Camera.pos.y - startY);
-			g_Camera.pos.y -= lower;
-			// g_Camera.at.y -= lower; // 必要なら注視点も
-		}
-	}
+	sDistance = MaxF(sDistance, allowedMinD);
 
-	// デバッグ出力
-	PrintDebugProc("CameraHeight: %f\n", g_Camera.pos.y);
+	// ==== 位置構築 ====
+	XMVECTOR centerSV = XMLoadFloat3(&sCenter);
+	XMVECTOR offset = XMVectorAdd(
+		XMVectorScale(forwardXZ, -cosP * sDistance),
+		XMVectorSet(0.0f, sinP * sDistance, 0.0f, 0.0f)
+	);
+	XMVECTOR desiredPosV = XMVectorAdd(centerSV, offset);
+
+	// 高さクランプ
+	XMFLOAT3 desiredPos; XMStoreFloat3(&desiredPos, desiredPosV);
+	desiredPos.y = ClampF(desiredPos.y, K.minHeightY, K.maxY);
+
+	// ==== 適用 ====
+	g_Camera.at = sCenter;
+	g_Camera.pos = desiredPos;
+
+	SetCamera();
 }
 
 
