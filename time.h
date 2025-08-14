@@ -13,7 +13,7 @@
 #define TIME_TEXTURE_HEIGHT   (32)
 #define TIME_TEXTURE_MAX      (1)       // 使用テクスチャ数
 #define TIME_DIGITS          (4)        // 表示桁数（MMSS形式: 99分59秒まで対応）
-#define TIME_LIMIT_DEFAULT   (10.0f)    // デフォルト制限時間（秒）
+#define TIME_LIMIT_DEFAULT   (30.0f)    // デフォルト制限時間（秒）
 
 //*****************************************************************************
 // タイマー管理の関数プロトタイプ

@@ -1,6 +1,6 @@
 //=============================================================================
 //
-// ゲーム画面処理 [game.h]
+// ゲーム画面処理 [result.h]
 // Author : 
 //
 //=============================================================================
@@ -10,9 +10,7 @@
 //*****************************************************************************
 // プロトタイプ宣言
 //*****************************************************************************
-HRESULT InitNewResult(void);
-void UninitNewResult(void);
-void UpdateNewResult(void);
-void DrawNewResult(void);
-
-void CheckHit(void);
+HRESULT InitResult(void);
+void UninitResult(void);
+void UpdateResult(void);
+void DrawResult(void);

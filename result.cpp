@@ -1,6 +1,6 @@
 //=============================================================================
 //
-// ゲーム画面処理 [game.cpp]
+// ゲーム画面処理 [result.cpp]
 // Author : 
 //
 //=============================================================================
@@ -24,7 +24,7 @@
 #include "collision.h"
 #include "debugproc.h"
 
-#include "newresult.h"
+#include "result.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -49,31 +49,54 @@ static BOOL	g_bPause = TRUE;	// ポーズON/OFF
 //=============================================================================
 // 初期化処理
 //=============================================================================
-HRESULT InitNewResult(void)
+HRESULT InitResult(void)
 {
 	g_ViewPortType_Game = TYPE_FULL_SCREEN;
+
+	// 順位に応じた座標
+	XMFLOAT3 posFirst = XMFLOAT3(20.0f, 60.0f, 0.0f);  // 1位の位置
+	XMFLOAT3 posSecond = XMFLOAT3(-15.0f, 45.0f, 0.0f);  // 2位の位置
+
+	// プレイヤー取得
+	PLAYER* p1 = GetPlayer(0);
+	PLAYER* p2 = GetPlayer(1);
+
+	// デバッグ用
+#ifdef DEBUG
+	AddScore(1, 10);
+#endif
+
+	// スコア取得
+	int score1 = GetScore(0);
+	int score2 = GetScore(1);
+
+
 
 	// フィールドの初期化
 	InitMeshField(XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), 100, 100, 13.0f, 13.0f);
 
 	// ライトを有効化	// 影の初期化処理
-	InitShadow();
+	//InitShadow();
+
 
 	// プレイヤーの初期化
 	InitPlayer();
-	// 1P（プレイヤー0番）の位置変更
-	PLAYER* p1 = GetPlayer(0);
-	if (p1) {
-		p1->pos = XMFLOAT3(20.0f, 60.0f, 0.0f);  // 好きな位置に設定
+
+	if (p1 && p2)
+	{
+		if (score1 >= score2)
+		{
+			// 1Pが1位
+			p1->pos = posFirst;
+			p2->pos = posSecond;
+		}
+		else
+		{
+			// 2Pが1位
+			p1->pos = posSecond;
+			p2->pos = posFirst;
+		}
 	}
-
-	// 2P（プレイヤー1番）の位置変更
-	PLAYER* p2 = GetPlayer(1);
-	if (p2) {
-		p2->pos = XMFLOAT3(-15.0f, 45.0f, 0.0f);  // 好きな位置に設定
-	}
-
-
 
 
 	// 壁の初期化
@@ -114,7 +137,7 @@ HRESULT InitNewResult(void)
 //=============================================================================
 // 終了処理
 //=============================================================================
-void UninitNewResult(void)
+void UninitResult(void)
 {
 	// パーティクルの終了処理
 	//UninitParticle();
@@ -139,7 +162,7 @@ void UninitNewResult(void)
 //=============================================================================
 // 更新処理
 //=============================================================================
-void UpdateNewResult(void)
+void UpdateResult(void)
 {
 #ifdef _DEBUG
 	if (GetKeyboardTrigger(DIK_V))
@@ -192,7 +215,7 @@ void UpdateNewResult(void)
 //=============================================================================
 // 描画処理
 //=============================================================================
-void DrawNewResult0(void)
+void DrawResult0(void)
 {
 	// 3Dの物を描画する処理
 	// 地面の描画処理
@@ -233,7 +256,7 @@ void DrawNewResult0(void)
 }
 
 
-void DrawNewResult(void)
+void DrawResult(void)
 {
 	XMFLOAT3 pos;
 
@@ -254,33 +277,33 @@ void DrawNewResult(void)
 	{
 	case TYPE_FULL_SCREEN:
 		SetViewPort(TYPE_FULL_SCREEN);
-		DrawNewResult0();
+		DrawResult0();
 		break;
 
 	case TYPE_LEFT_HALF_SCREEN:
 	case TYPE_RIGHT_HALF_SCREEN:
 		SetViewPort(TYPE_LEFT_HALF_SCREEN);
-		DrawNewResult0();
+		DrawResult0();
 
 		// エネミー視点
 		pos.y = 0.0f;
 		SetCameraAT(pos);
 		SetCamera();
 		SetViewPort(TYPE_RIGHT_HALF_SCREEN);
-		DrawNewResult();
+		DrawResult();
 		break;
 
 	case TYPE_UP_HALF_SCREEN:
 	case TYPE_DOWN_HALF_SCREEN:
 		SetViewPort(TYPE_UP_HALF_SCREEN);
-		DrawNewResult();
+		DrawResult();
 
 		// エネミー視点
 		pos.y = 0.0f;
 		SetCameraAT(pos);
 		SetCamera();
 		SetViewPort(TYPE_DOWN_HALF_SCREEN);
-		DrawNewResult();
+		DrawResult();
 		break;
 
 	}

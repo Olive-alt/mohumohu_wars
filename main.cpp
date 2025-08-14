@@ -15,7 +15,7 @@
 #include "game.h"
 #include "fade.h"
 #include "title.h"
-#include "newresult.h"
+#include "result.h"
 #include "debugproc.h"
 #include "player_select.h"
 #include "stage_select.h"
@@ -330,7 +330,7 @@ void Update(void)
 		break;
 
 	case MODE_RESULT:		// リザルト画面の更新
-		UpdateNewResult();
+		UpdateResult();
 		// 表彰台の更新
 		UpdatePodium();
 		break;
@@ -402,7 +402,7 @@ void Draw(void)
 		SetLightEnable(FALSE);
 
 		// 3Dのリザルトシーンを描画
-		DrawNewResult();
+		DrawResult();
 		//表彰台を描画
 		DrawPodium();
 
@@ -481,7 +481,7 @@ void SetMode(int mode)
 	UninitGame();
 
 	// 3Dのリザルト画面の終了処理
-	UninitNewResult();
+	UninitResult();
 	// 表彰台の終了処理
 	UninitPodium();
 
@@ -517,7 +517,7 @@ void SetMode(int mode)
 
 	case MODE_RESULT:
 		// 3Dのリザルト画面の初期化
-		InitNewResult();
+		InitResult();
 		// 表彰台の初期化
 		InitPodium();
 		break;
