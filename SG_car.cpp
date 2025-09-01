@@ -9,7 +9,7 @@
 CarSystem g_CarSystem;
 PLAYER* car_player = GetPlayer();
 // モデルファイル
-#define SG_CAR_MODEL_PATH "data/MODEL/car.obj"
+#define SG_CAR_MODEL_PATH "data/MODEL/car/car.obj"
 
 // -------------------------
 // Carメンバ関数
