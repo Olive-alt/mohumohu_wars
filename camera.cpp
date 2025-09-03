@@ -43,8 +43,8 @@ static int				g_ViewPortType = TYPE_FULL_SCREEN;
 void InitCamera(void)
 {
 	g_Camera.pos = { POS_X_CAM, POS_Y_CAM, POS_Z_CAM };
-	g_Camera.at  = { 0.0f, 0.0f, 0.0f };
-	g_Camera.up  = { 0.0f, 1.0f, 0.0f };
+	g_Camera.at = { 0.0f, 0.0f, 0.0f };
+	g_Camera.up = { 0.0f, 1.0f, 0.0f };
 	g_Camera.rot = { 0.0f, 0.0f, 0.0f };
 
 	// 視点と注視点の距離を計算
@@ -52,7 +52,7 @@ void InitCamera(void)
 	vx = g_Camera.pos.x - g_Camera.at.x;
 	vz = g_Camera.pos.z - g_Camera.at.z;
 	g_Camera.len = sqrtf(vx * vx + vz * vz);
-	
+
 	// ビューポートタイプの初期化
 	SetViewPort(g_ViewPortType);
 }
@@ -177,7 +177,7 @@ void UpdateCamera(void)
 //=============================================================================
 // カメラの更新
 //=============================================================================
-void SetCamera(void) 
+void SetCamera(void)
 {
 	// ビューマトリックス設定
 	XMMATRIX mtxView;
@@ -204,7 +204,7 @@ void SetCamera(void)
 //=============================================================================
 // カメラの取得
 //=============================================================================
-CAMERA *GetCamera(void) 
+CAMERA* GetCamera(void)
 {
 	return &g_Camera;
 }
@@ -214,7 +214,7 @@ CAMERA *GetCamera(void)
 //=============================================================================
 void SetViewPort(int type)
 {
-	ID3D11DeviceContext *g_ImmediateContext = GetDeviceContext();
+	ID3D11DeviceContext* g_ImmediateContext = GetDeviceContext();
 	D3D11_VIEWPORT vp;
 
 	g_ViewPortType = type;
@@ -500,4 +500,170 @@ XMMATRIX GetCameraViewProjMatrix(void)
 	XMMATRIX view = XMLoadFloat4x4(&g_Camera.mtxView);
 	XMMATRIX proj = XMLoadFloat4x4(&g_Camera.mtxProjection);
 	return view * proj;
+}
+
+void EnsureCameraFramesTargetsN(const XMFLOAT3* targets, int count, float viewEdgeBuffer)
+{
+	if (!targets || count <= 0) return;
+
+	// ==== 共有チューニング値 ====
+	const CameraTuning& K = GetCameraTuning();
+
+	// ==== 小ユーティリティ ====
+	auto MinF = [](float a, float b) { return a < b ? a : b; };
+	auto MaxF = [](float a, float b) { return a > b ? a : b; };
+	auto ClampF = [&](float v, float lo, float hi) { return v < lo ? lo : (v > hi ? hi : v); };
+	auto LerpF = [&](float a, float b, float t) { t = ClampF(t, 0.0f, 1.0f); return a + (b - a) * t; };
+	auto Lerp3 = [&](const XMFLOAT3& a, const XMFLOAT3& b, float t) {
+		return XMFLOAT3{ LerpF(a.x,b.x,t), LerpF(a.y,b.y,t), LerpF(a.z,b.z,t) };
+		};
+
+	// まずカメラ行列を最新化（NDC 変換で使用）
+	SetCamera();
+
+	// ==== 中心（全員の重心） ====
+	XMFLOAT3 center{ 0,0,0 };
+	for (int i = 0; i < count; ++i) {
+		center.x += targets[i].x;
+		center.y += targets[i].y;
+		center.z += targets[i].z;
+	}
+	center.x /= count; center.y /= count; center.z /= count;
+
+	// ==== 半径（中心からの最大距離：XZ基準、少しYも見る） ====
+	// 画面フィットの計算は FOVx/FOVy で縦横の安全距離をとるので、XZの最大距離を基本にしつつ
+	// 垂直方向に離れたケースも弱めに加味
+	float radius = 0.0f;
+	for (int i = 0; i < count; ++i) {
+		float dx = targets[i].x - center.x;
+		float dz = targets[i].z - center.z;
+		float dy = fabsf(targets[i].y - center.y) * 0.35f; // Y差は弱めに
+		float r = sqrtf(dx * dx + dz * dz);
+		radius = MaxF(radius, r + dy);
+	}
+	radius = MaxF(radius, K.minRadius);
+
+	// ==== 投影パラメータ ====
+	XMFLOAT4X4 P = GetCamera()->mtxProjection;
+	const float tanHalfFovX = 1.0f / P._11;
+	const float tanHalfFovY = 1.0f / P._22;
+	const float safety = 1.0f + viewEdgeBuffer;
+
+	// 全員が入るために必要なカメラ距離
+	const float dVert = (radius * safety) / tanHalfFovY;
+	const float dHoriz = (radius * safety) / tanHalfFovX;
+	float baseFitDist = MaxF(MaxF(dVert, dHoriz), K.minDist);
+
+	// ==== カメラ基底 ====
+	XMVECTOR camPosV = XMLoadFloat3(&GetCamera()->pos);
+	XMVECTOR camAtV = XMLoadFloat3(&GetCamera()->at);
+	XMVECTOR forward = XMVector3Normalize(XMVectorSubtract(camAtV, camPosV));
+	XMVECTOR forwardXZ = XMVectorSet(XMVectorGetX(forward), 0.0f, XMVectorGetZ(forward), 0.0f);
+	float lenXZ = XMVectorGetX(XMVector3Length(forwardXZ));
+	forwardXZ = (lenXZ < 1e-4f) ? XMVectorSet(0, 0, 1, 0) : XMVectorScale(forwardXZ, 1.0f / lenXZ);
+	const float currentDistance = XMVectorGetX(XMVector3Length(XMVectorSubtract(camAtV, camPosV)));
+
+	// ==== 画面上の広がり(NDC) ====
+	auto WorldToNDCMaxExtent = [&]() {
+		XMMATRIX view = XMLoadFloat4x4(&GetCamera()->mtxView);
+		XMMATRIX proj = XMLoadFloat4x4(&GetCamera()->mtxProjection);
+		XMMATRIX vp = XMMatrixMultiply(view, proj);
+		float ex = 0.0f, ey = 0.0f;
+		for (int i = 0; i < count; ++i) {
+			XMVECTOR p = XMVector3TransformCoord(XMLoadFloat3(&targets[i]), vp);
+			ex = MaxF(ex, fabsf(XMVectorGetX(p)));
+			ey = MaxF(ey, fabsf(XMVectorGetY(p)));
+		}
+		return MaxF(ex, ey);
+		};
+	float ndcExtent = WorldToNDCMaxExtent();
+
+	// ==== 状態機械（2人版と同じ） ====
+	enum ZoomState { Hold = 0, ZoomOut = 1, ZoomIn = 2 };
+	static ZoomState sState = Hold;
+	static int       sDwell = 0;
+	auto AdvanceState = [&]() {
+		switch (sState) {
+		case Hold:
+			if (ndcExtent > K.softOutNDC) { sState = ZoomOut; sDwell = 0; }
+			else if (ndcExtent < K.softInNDC) { sState = ZoomIn;  sDwell = 0; }
+			break;
+		case ZoomOut:
+			if (ndcExtent < K.softInNDC) { if (++sDwell >= K.dwellFrames) { sState = Hold; sDwell = 0; } }
+			else sDwell = 0;
+			break;
+		case ZoomIn:
+			if (ndcExtent > K.softOutNDC) { if (++sDwell >= K.dwellFrames) { sState = Hold; sDwell = 0; } }
+			else sDwell = 0;
+			break;
+		}
+		};
+	AdvanceState();
+
+	// ==== 距離の制約（ピッチ角と高さ制限に基づく） ====
+	const float pitchRad = XMConvertToRadians(K.pitchDeg);
+	const float sinP = sinf(pitchRad), cosP = cosf(pitchRad);
+
+	float allowedMinD = K.minDist;
+	if (K.minHeightY > center.y && sinP > 1e-4f)
+		allowedMinD = MaxF(allowedMinD, (K.minHeightY - center.y) / sinP);
+	baseFitDist = MaxF(baseFitDist, allowedMinD);
+
+	float allowedMaxD = (K.maxY > center.y && sinP > 1e-4f) ? ((K.maxY - center.y) / sinP) : baseFitDist;
+
+	// ==== 近距離バイアス ====
+	static bool sCloseBias = false;
+	if (!sCloseBias && ndcExtent < (K.nudgeInNDC - K.nudgeHyst)) sCloseBias = true;
+	if (sCloseBias && ndcExtent > (K.nudgeInNDC + K.nudgeHyst)) sCloseBias = false;
+
+	float desiredFitDist = baseFitDist;
+	if (sCloseBias) desiredFitDist = ClampF(baseFitDist * K.nudgeFactor, allowedMinD, allowedMaxD);
+
+	// ==== 目標距離 ====
+	float targetDistance = currentDistance;
+	if (sState == ZoomOut) targetDistance = MaxF(currentDistance, MinF(baseFitDist, allowedMaxD));
+	else if (sState == ZoomIn)  targetDistance = MinF(currentDistance, MaxF(allowedMinD, desiredFitDist));
+	else if (sCloseBias)        targetDistance = MinF(currentDistance, desiredFitDist);
+
+	// ==== 平滑化用の保持 ====
+	static bool     sInit = false;
+	static XMFLOAT3 sCenter = {};
+	static float    sDistance = 0.0f;
+	if (!sInit) { sCenter = center; sDistance = ClampF(currentDistance, allowedMinD, MaxF(allowedMinD, baseFitDist)); sInit = true; }
+
+	// ==== パン（中心補間） ====
+	sCenter = Lerp3(sCenter, center, K.panLerp);
+
+	// ==== ズーム（ズームアウト時だけフレーム上限） ====
+	float zoomT = (sState == ZoomOut) ? K.zoomLerpOut : (sState == ZoomIn ? K.zoomLerpIn : 0.0f);
+	if ((sState == Hold || sState == ZoomIn) && targetDistance < sDistance)
+		zoomT = MaxF(zoomT, K.holdZoomInLerp);
+
+	float lerped = LerpF(sDistance, targetDistance, zoomT);
+	if (sState == ZoomOut) {
+		float step = lerped - sDistance;
+		step = ClampF(step, 0.0f, K.maxZoomOutStep);
+		sDistance += step;
+	}
+	else {
+		sDistance = lerped;
+	}
+	sDistance = MaxF(sDistance, allowedMinD);
+
+	// ==== 位置を構築（ピッチ固定の円錐軌道） ====
+	XMVECTOR centerSV = XMLoadFloat3(&sCenter);
+	XMVECTOR offset = XMVectorAdd(
+		XMVectorScale(forwardXZ, -cosP * sDistance),
+		XMVectorSet(0.0f, sinP * sDistance, 0.0f, 0.0f)
+	);
+	XMVECTOR desiredPosV = XMVectorAdd(centerSV, offset);
+
+	XMFLOAT3 desiredPos; XMStoreFloat3(&desiredPos, desiredPosV);
+	desiredPos.y = ClampF(desiredPos.y, K.minHeightY, K.maxY);
+
+	// ==== 適用 ====
+	GetCamera()->at = sCenter;
+	GetCamera()->pos = desiredPos;
+
+	SetCamera();
 }
