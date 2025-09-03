@@ -11,6 +11,8 @@
 // マクロ定義
 //*****************************************************************************
 #define	MODEL_BOMB  	"data/MODEL/item/item_bomb.obj"			// 読み込むモデル名
+#define	MODEL_BAKUHA  	"data/MODEL/item/item_bakuha.obj"			// 読み込むモデル名
+
 
 #define	VALUE_MOVE		(5.0f)					// 移動量
 #define	VALUE_ROTATE	(XM_PI * 0.02f)			// 回転量
@@ -42,6 +44,10 @@ static BOOL					g_bAlpaTest;		// アルファテストON/OFF
 BOOL			bomb_load;
 DX11_MODEL		bomb_model;				// モデル情報
 
+BOOL			bakuha_load;
+DX11_MODEL		bakuha_model;				// モデル情報
+
+
 static char* g_TextureName[] =
 {
 	"data/TEXTURE/tree001.png",
@@ -56,6 +62,12 @@ HRESULT BOMB::InitITbomb(void)
 	{
 		bomb_load = TRUE;
 		LoadModel(MODEL_BOMB, &bomb_model);
+	}
+
+	if (!bakuha_load)
+	{
+		bakuha_load = TRUE;
+		LoadModel(MODEL_BAKUHA, &bakuha_model);
 	}
 
 
@@ -110,6 +122,13 @@ void BOMB::UninitITbomb(void)
 		UnloadModel(&bomb_model);
 		bomb_load = FALSE;
 	}
+
+	if (bakuha_load == TRUE)
+	{
+		UnloadModel(&bakuha_model);
+		bakuha_load = FALSE;
+	}
+
 
 	for (int nCntTex = 0; nCntTex < TEXTURE_MAX; nCntTex++)
 	{
@@ -213,11 +232,46 @@ void BOMB::DrawITbomb(void)
 
 	if (!use)return;
 
-	if (!pick || to_throw)
+	if (expUse)
 	{
 		PrintDebugProc("\nO\n");
 
-		XMMATRIX mtxScl, mtxRot, mtxTranslate, mtxWorld;
+		XMMATRIX mtxScl, mtxRot, mtxTranslate, mtxWorld, quatMatrix;
+
+		// カリング無効
+		SetCullingMode(CULL_MODE_NONE);
+
+		// ワールドマトリックスの初期化
+		mtxWorld = XMMatrixIdentity();
+
+		// スケールを反映
+		mtxScl = XMMatrixScaling(scl.x, scl.y, scl.z);
+		mtxWorld = XMMatrixMultiply(mtxWorld, mtxScl);
+
+		// 回転を反映
+		mtxRot = XMMatrixRotationRollPitchYaw(rot.x, rot.y, rot.z);
+		mtxWorld = XMMatrixMultiply(mtxWorld, mtxRot);
+
+		// 移動を反映
+		mtxTranslate = XMMatrixTranslation(pos.x, pos.y, pos.z);
+		mtxWorld = XMMatrixMultiply(mtxWorld, mtxTranslate);
+
+		// ワールドマトリックスの設定
+		SetWorldMatrix(&mtxWorld);
+
+		XMStoreFloat4x4(&m_mtxWorld, mtxWorld);
+
+		// モデル描画
+		DrawModel(&bakuha_model);
+
+		// カリング設定を戻す
+		SetCullingMode(CULL_MODE_BACK);
+	}
+	else if (!pick || to_throw)
+	{
+		PrintDebugProc("\nO\n");
+
+		XMMATRIX mtxScl, mtxRot, mtxTranslate, mtxWorld, quatMatrix;
 
 		// カリング無効
 		SetCullingMode(CULL_MODE_NONE);
