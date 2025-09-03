@@ -19,1151 +19,1213 @@
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
+#define VALUE_MOVE         (1.0f)
+#define VALUE_ROTATE       (D3DX_PI * 0.02f)
+#define PLAYER_SHADOW_SIZE (0.4f)
+#define PLAYER_OFFSET_Y    (14.0f)
 
-#define	VALUE_MOVE			(1.0f)							// 移動量
-#define	VALUE_ROTATE		(D3DX_PI * 0.02f)				// 回転量
-
-#define PLAYER_SHADOW_SIZE	(0.4f)							// 影の大きさ
-#define PLAYER_OFFSET_Y		(14.0f)							// プレイヤーの足元をあわせる
-
-
+// 共有モデルパス（一部抜粋・必要に応じて拡張）
 static const char* CHARACTER_MODEL_PATHS[][6] = {
-	// 0: 鳥
-	{
-		"data/MODEL/character/model_bird/cha_bird_head.obj",
-		"data/MODEL/character/model_bird/cha_bird_body.obj",
-		"data/MODEL/character/model_bird/cha_bird_leftarm.obj",
-		"data/MODEL/character/model_bird/cha_bird_rightarm.obj",
-		"data/MODEL/character/model_bird/cha_bird_leftleg.obj",
-		"data/MODEL/character/model_bird/cha_bird_rightleg.obj"
+    // 0: 鳥
+    {
+        "data/MODEL/character/model_bird/cha_bird_head.obj",
+        "data/MODEL/character/model_bird/cha_bird_body.obj",
+        "data/MODEL/character/model_bird/cha_bird_leftarm.obj",
+        "data/MODEL/character/model_bird/cha_bird_rightarm.obj",
+        "data/MODEL/character/model_bird/cha_bird_leftleg.obj",
+        "data/MODEL/character/model_bird/cha_bird_rightleg.obj"
+    },
+    // 1: 犬
+    {
+        "data/MODEL/character/model_fox/cha_fox_head.obj",
+        "data/MODEL/character/model_fox/cha_fox_body.obj",
+        "data/MODEL/character/model_fox/cha_fox_leftarm.obj",
+        "data/MODEL/character/model_fox/cha_fox_rightarm.obj",
+        "data/MODEL/character/model_fox/cha_fox_leftleg.obj",
+        "data/MODEL/character/model_fox/cha_fox_rightleg.obj"
+    },
+    // 2: 猫
+    {
+        "data/MODEL/character/model_cat/cha_cat_head.obj",
+        "data/MODEL/character/model_cat/cha_cat_body.obj",
+        "data/MODEL/character/model_cat/cha_cat_leftarm.obj",
+        "data/MODEL/character/model_cat/cha_cat_rightarm.obj",
+        "data/MODEL/character/model_cat/cha_cat_leftleg.obj",
+        "data/MODEL/character/model_cat/cha_cat_rightleg.obj"
 	},
-	// 1: 犬
-	{
-		"data/MODEL/character/model_fox/cha_fox_head.obj",
-		"data/MODEL/character/model_fox/cha_fox_body.obj",
-		"data/MODEL/character/model_fox/cha_fox_leftarm.obj",
-		"data/MODEL/character/model_fox/cha_fox_rightarm.obj",
-		"data/MODEL/character/model_fox/cha_fox_leftleg.obj",
-		"data/MODEL/character/model_fox/cha_fox_rightleg.obj"
+    // 3:犬
+    {
+        "data/MODEL/character/model_dog/cha_dog_head.obj",
+        "data/MODEL/character/model_dog/cha_dog_body.obj",
+        "data/MODEL/character/model_dog/cha_dog_leftarm.obj",
+        "data/MODEL/character/model_dog/cha_dog_rightarm.obj",
+        "data/MODEL/character/model_dog/cha_dog_leftleg.obj",
+        "data/MODEL/character/model_dog/cha_dog_rightleg.obj"
 	},
-	// ...他キャラ分も同様に追加
+
 };
 
-#define B_WALK_L_ARM_ANIMATION_INDEX		1  // 左腕用歩きモーション
-#define B_WALK_R_ARM_ANIMATION_INDEX		2  // 右腕用歩きモーション
-
-#define B_RESULT_WIN_L_ARM_ANIMATION_INDEX	   5  // 左腕用攻撃モーション
-#define B_RESULT_WIN_R_ARM_ANIMATION_INDEX	   6  // 右腕用攻撃モーション
-#define B_RESULT_LOSE_L_ARM_ANIMATION_INDEX	   7  // 左腕用攻撃モーション
-#define B_RESULT_LOSE_R_ARM_ANIMATION_INDEX	   8  // 右腕用攻撃モーション
-
-
-// 
-//*****************************************************************************
-// プロトタイプ宣言
-//***********************************************************************
-// ******
-
+// Walk/Result 用のテーブル index
+#define B_WALK_L_ARM_ANIMATION_INDEX         1
+#define B_WALK_R_ARM_ANIMATION_INDEX         2
+#define B_RESULT_WIN_L_ARM_ANIMATION_INDEX   5
+#define B_RESULT_WIN_R_ARM_ANIMATION_INDEX   6
+#define B_RESULT_LOSE_L_ARM_ANIMATION_INDEX  7
+#define B_RESULT_LOSE_R_ARM_ANIMATION_INDEX  8
 
 //*****************************************************************************
 // グローバル変数
 //*****************************************************************************
-static PLAYER		g_Player[MAX_PLAYER];						// プレイヤー
+static PLAYER g_Player[MAX_PLAYER];                      // 本体
+static PLAYER g_Parts[MAX_PLAYER][PLAYER_PARTS_MAX];     // 子パーツ
 
-static PLAYER		g_Parts[MAX_PLAYER][PLAYER_PARTS_MAX];		// プレイヤーのパーツ用
+static float  roty = 0.0f;
+static LIGHT  g_Light;
+static float  noiseTable[MAX_PLAYER][PLAYER_PARTS_MAX] = { 0 };
 
-static float		roty = 0.0f;
+bool    g_IsCPU[MAX_PLAYER] = { false, false }; // 初期は人間操作
 
-static LIGHT		g_Light;
-static float noiseTable[MAX_PLAYER][PLAYER_PARTS_MAX] = { 0 };
-
-bool g_IsCPU[MAX_PLAYER] = { false, false }; // 初期状態は両方人間
-
-extern unsigned int dwFrameCount;
-
-//HP初期化
-static ID3D11Buffer* g_PlayerHpBarVertexBuffer = NULL; // Bar vertex buffer
-
-// 状態管理の実体（初期化もしておく）
+// 状態管理の実体
 PLAYER_STATE g_PlayerState[MAX_PLAYER] = { PLAYER_NORMAL };
-int g_PlayerAnimTimer[MAX_PLAYER] = { 0 };
-XMFLOAT3 g_PlayerKnockback[MAX_PLAYER] = { XMFLOAT3(0,0,0) };
+int          g_PlayerAnimTimer[MAX_PLAYER] = { 0 };
+XMFLOAT3     g_PlayerKnockback[MAX_PLAYER] = { XMFLOAT3(0,0,0) };
 
-//HP初期化
-void InitPlayerHpBarVertexBuffer() {
-	struct VERTEX_3D {
-		XMFLOAT3 Position;
-		XMFLOAT3 Normal;
-		XMFLOAT4 Diffuse;
-		XMFLOAT2 TexCoord;
-	};
-	VERTEX_3D vtx[4];
-	// Positions (x, y, z), centered at origin
-	vtx[0].Position = XMFLOAT3(-0.5f, +0.5f, 0.0f); vtx[0].TexCoord = XMFLOAT2(0, 0);
-	vtx[1].Position = XMFLOAT3(+0.5f, +0.5f, 0.0f); vtx[1].TexCoord = XMFLOAT2(1, 0);
-	vtx[2].Position = XMFLOAT3(-0.5f, -0.5f, 0.0f); vtx[2].TexCoord = XMFLOAT2(0, 1);
-	vtx[3].Position = XMFLOAT3(+0.5f, -0.5f, 0.0f); vtx[3].TexCoord = XMFLOAT2(1, 1);
-	// Normal and diffuse not used for 2D bar, but fill with dummy values
-	for (int i = 0; i < 4; i++) {
-		vtx[i].Normal = XMFLOAT3(0, 0, -1);
-		vtx[i].Diffuse = XMFLOAT4(1, 1, 1, 1);
-	}
-	D3D11_BUFFER_DESC bd = {};
-	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(vtx);
-	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	D3D11_SUBRESOURCE_DATA init = { vtx, 0, 0 };
-	GetDevice()->CreateBuffer(&bd, &init, &g_PlayerHpBarVertexBuffer);
+// 歩行ブレンド用の実体（ヘッダは extern）
+bool   g_PlayerIsMoving[MAX_PLAYER] = { false, false };
+bool   g_PlayerPrevMoving[MAX_PLAYER] = { false, false };
+int    g_PlayerAnimBlendTimer[MAX_PLAYER] = { 0 };
+int    g_PlayerAnimBlendMode[MAX_PLAYER] = { 0 };
+float  g_PlayerAnimBlendFrom[MAX_PLAYER][PLAYER_PARTS_MAX] = { 0 };
+
+// HPバーVB（簡易）
+static ID3D11Buffer* g_PlayerHpBarVertexBuffer = nullptr;
+static float g_NoiseClock = 0.0f;
+
+
+// CPU用の簡易ステアリング状態
+struct SimpleAI {
+    int   target;        // 追う相手
+    float orbitPhase;    // 角位相（ストレーフ用）
+    int   orbitDir;      // -1 or +1（左右どちら回りで絡むか）
+    float orbitRadius;   // からみ半径（8〜14）
+    int   thinkCooldown; // 次の意思決定まで
+    float speedScale;    // 速度微調整（0.9〜1.2）
+};
+static SimpleAI g_SAI[MAX_PLAYER] = {};
+
+PartyAIState g_PartyAI[MAX_PLAYER] = {};
+
+// ==== チューニング定数（好みに合わせて調整OK） ====
+static const float AI_SEEK_SPEED = 1.00f;    // アイテム/敵へ向かう速度倍率
+static const float AI_WANDER_SPEED = 0.75f;    // 徘徊時の速度倍率
+static const float AI_WANDER_RADIUS = 48.0f;    // 徘徊目的地のランダム半径
+static const int   AI_THINK_MIN = 36;       // 思考再設定 最小フレーム
+static const int   AI_THINK_MAX = 60;       // 思考再設定 最大フレーム
+static const int   AI_FIRE_CD_MIN = 28;       // 発射クールダウン最小
+static const int   AI_FIRE_CD_MAX = 40;       // 発射クールダウン最大
+static const float AI_ALIGN_DEG = 20.0f;    // “向けた”とみなす角度(度)
+static const float AI_NOISE_PROB = 0.5f;     // ノイズ発射する確率
+static const float AI_NOISE_DEG_MAX = 8.0f;    // 付与する角度ノイズ(±度)
+static const float STAGE_HALF = 85.0f;    // 端回避のための境界
+static const float EDGE_MARGIN = 5.0f;
+static const float AI_AIM_LOCK_DEG = 10.0f;  // この角度以内を"狙えてる"とみなす
+static const int   AI_AIM_LOCK_FRAMES = 8;      // 連続で何フレーム収まればOKか
+static const int   AI_POST_PICK_DELAY = 12;     // 拾ってから撃つまで最低待機F
+
+//*****************************************************************************
+// プロトタイプ（このcpp内部のみで使うユーティリティ）
+//*****************************************************************************
+static float GetRand01() { return (float)(rand() % 1000) / 1000.0f; }
+
+//*****************************************************************************
+// アニメテーブル（省略せず現状のまま）
+//*****************************************************************************
+static INTERPOLATION_DATA walk_move_tbl_head[] = {
+    { XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT3(0,0,0), XMFLOAT3(1,1,1), 30 },
+    { XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT3(0,0,0), XMFLOAT3(1,1,1), 30 },
+};
+static INTERPOLATION_DATA walk_move_tbl_l_arm[] = {
+    { XMFLOAT3(-4.0f, 1.0f, 0.0f), XMFLOAT3(XM_PI / 3, 0,-XM_PI / 2), XMFLOAT3(1,1,1), 20 },
+    { XMFLOAT3(-4.0f, 1.0f, 0.0f), XMFLOAT3(-XM_PI / 3,0,-XM_PI / 2), XMFLOAT3(1,1,1), 20 },
+};
+static INTERPOLATION_DATA walk_move_tbl_r_arm[] = {
+    { XMFLOAT3(4.0f, 1.0f, 0.0f), XMFLOAT3(-XM_PI / 3,0,XM_PI / 2), XMFLOAT3(1,1,1), 20 },
+    { XMFLOAT3(4.0f, 1.0f, 0.0f), XMFLOAT3(XM_PI / 3, 0,XM_PI / 2), XMFLOAT3(1,1,1), 20 },
+};
+static INTERPOLATION_DATA walk_move_tbl_l_leg[] = {
+    { XMFLOAT3(2.0f,-5.0f,0.0f), XMFLOAT3(-XM_PI / 3,0,0), XMFLOAT3(1,1,1), 20 },
+    { XMFLOAT3(2.0f,-5.0f,0.0f), XMFLOAT3(XM_PI / 3, 0,0), XMFLOAT3(1,1,1), 20 },
+};
+static INTERPOLATION_DATA walk_move_tbl_r_leg[] = {
+    { XMFLOAT3(-2.0f,-5.0f,0.0f), XMFLOAT3(XM_PI / 3,0,0), XMFLOAT3(1,1,1), 20 },
+    { XMFLOAT3(-2.0f,-5.0f,0.0f), XMFLOAT3(-XM_PI / 3,0,0), XMFLOAT3(1,1,1), 20 },
+};
+// result (win/lose)
+static INTERPOLATION_DATA move_tbl_wave_l_arm[] = {
+    { XMFLOAT3(-4,1,0), XMFLOAT3(XM_PI / 1.25f,0,-XM_PI / 2), XMFLOAT3(1,1,1), 20 },
+    { XMFLOAT3(-4,1,0), XMFLOAT3(XM_PI / 1.6f,0,-2.8f),     XMFLOAT3(1,1,1), 20 },
+};
+static INTERPOLATION_DATA move_tbl_wave_r_arm[] = {
+    { XMFLOAT3(4,1,0), XMFLOAT3(0,0,XM_PI / 2), XMFLOAT3(1,1,1), 20 },
+    { XMFLOAT3(4,1,0), XMFLOAT3(0,0,XM_PI / 2), XMFLOAT3(1,1,1), 20 },
+};
+static INTERPOLATION_DATA move_tbl_clap_l_arm[] = {
+    { XMFLOAT3(-4,1,0), XMFLOAT3(XM_PI / 2,0,XM_PI / 8), XMFLOAT3(1,1,1), 10 },
+    { XMFLOAT3(-4,1,0), XMFLOAT3(XM_PI / 2,0,XM_PI / 2), XMFLOAT3(1,1,1), 10 },
+};
+static INTERPOLATION_DATA move_tbl_clap_r_arm[] = {
+    { XMFLOAT3(4,1,0), XMFLOAT3(-XM_PI / 3,0,XM_PI / 2 - 1.0f), XMFLOAT3(1,1,1),10 },
+    { XMFLOAT3(4,1,0), XMFLOAT3(-XM_PI / 3,0,XM_PI / 2),      XMFLOAT3(1,1,1),10 },
+};
+static INTERPOLATION_DATA* g_MoveTblAdr[] = {
+    walk_move_tbl_head,
+    walk_move_tbl_l_arm,
+    walk_move_tbl_r_arm,
+    walk_move_tbl_l_leg,
+    walk_move_tbl_r_leg,
+    move_tbl_wave_l_arm,
+    move_tbl_wave_r_arm,
+    move_tbl_clap_l_arm,
+    move_tbl_clap_r_arm,
+};
+
+//*****************************************************************************
+// HPバーVB初期化
+//*****************************************************************************
+static void InitPlayerHpBarVertexBuffer()
+{
+    struct VERTEX_3D {
+        XMFLOAT3 Position; XMFLOAT3 Normal; XMFLOAT4 Diffuse; XMFLOAT2 TexCoord;
+    } vtx[4];
+
+    vtx[0].Position = XMFLOAT3(-0.5f, +0.5f, 0.0f); vtx[0].TexCoord = XMFLOAT2(0, 0);
+    vtx[1].Position = XMFLOAT3(+0.5f, +0.5f, 0.0f); vtx[1].TexCoord = XMFLOAT2(1, 0);
+    vtx[2].Position = XMFLOAT3(-0.5f, -0.5f, 0.0f); vtx[2].TexCoord = XMFLOAT2(0, 1);
+    vtx[3].Position = XMFLOAT3(+0.5f, -0.5f, 0.0f); vtx[3].TexCoord = XMFLOAT2(1, 1);
+
+    for (int i = 0; i < 4; i++) { vtx[i].Normal = XMFLOAT3(0, 0, -1); vtx[i].Diffuse = XMFLOAT4(1, 1, 1, 1); }
+
+    D3D11_BUFFER_DESC bd = {}; bd.Usage = D3D11_USAGE_DEFAULT; bd.ByteWidth = sizeof(vtx); bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    D3D11_SUBRESOURCE_DATA init = { vtx,0,0 };
+    GetDevice()->CreateBuffer(&bd, &init, &g_PlayerHpBarVertexBuffer);
 }
 
-
-// プレイヤーの階層アニメーションデータ
-
-static DX11_MODEL g_SharedModels[PLAYER_PARTS_MAX];
-
-static INTERPOLATION_DATA walk_move_tbl_head[] =
-{	// pos,							rot,							 scl,						 frame
-	{ XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f),      XMFLOAT3(1.0f, 1.0f, 1.0f), 30 },
-	{ XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f),      XMFLOAT3(1.0f, 1.0f, 1.0f), 30 },
-
-};
-
-
-static INTERPOLATION_DATA walk_move_tbl_l_arm[] =
-{	// pos,							rot,										 scl,						 frame
-	{ XMFLOAT3(-4.0f, 1.0f, 0.0f), XMFLOAT3(XM_PI / 3, 0.0f,-XM_PI / 2),	XMFLOAT3(1.0f, 1.0f, 1.0f), 20 },
-	{ XMFLOAT3(-4.0f, 1.0f, 0.0f), XMFLOAT3(-XM_PI / 3, 0.0f, -XM_PI / 2),	XMFLOAT3(1.0f, 1.0f, 1.0f), 20 },
-
-};
-
-
-static INTERPOLATION_DATA walk_move_tbl_r_arm[] =
-{	// pos,							rot,							 scl,						 frame
-	{ XMFLOAT3(4.0f, 1.0f, 0.0f), XMFLOAT3(-XM_PI / 3, 0.0f, XM_PI / 2),	XMFLOAT3(1.0f, 1.0f, 1.0f), 20 },
-	{ XMFLOAT3(4.0f, 1.0f, 0.0f), XMFLOAT3(XM_PI / 3, 0.0f, XM_PI / 2),	XMFLOAT3(1.0f, 1.0f, 1.0f), 20 },
-
-};
-
-
-static INTERPOLATION_DATA walk_move_tbl_l_leg[] =
-{	// pos,							rot,							 scl,						 frame
-	{ XMFLOAT3(2.0f, -5.0f, 0.0f), XMFLOAT3(-XM_PI / 3, 0.0f, 0.0f),      XMFLOAT3(1.0f, 1.0f, 1.0f), 20 },
-	{ XMFLOAT3(2.0f, -5.0f, 0.0f), XMFLOAT3(XM_PI / 3, 0.0f, 0.0f),      XMFLOAT3(1.0f, 1.0f, 1.0f), 20 },
-
-};
-
-
-static INTERPOLATION_DATA walk_move_tbl_r_leg[] =
-{	// pos,							rot,							 scl,						 frame
-	{ XMFLOAT3(-2.0f, -5.0f, 0.0f), XMFLOAT3(XM_PI / 3, 0.0f, 0.0f),      XMFLOAT3(1.0f, 1.0f, 1.0f), 20 },
-	{ XMFLOAT3(-2.0f, -5.0f, 0.0f), XMFLOAT3(-XM_PI / 3, 0.0f, 0.0f),      XMFLOAT3(1.0f, 1.0f, 1.0f), 20 },
-
-};
-
-
-// リザルト用
-
-//勝ち
-static INTERPOLATION_DATA move_tbl_wave_l_arm[] =
-{
-	{ XMFLOAT3(-4.0f, 1.0f, 0.0f), XMFLOAT3(XM_PI / 1.25f , 0.0f, -XM_PI / 2), XMFLOAT3(1.0f, 1.0f, 1.0f), 20 },
-	{ XMFLOAT3(-4.0f, 1.0f, 0.0f), XMFLOAT3(XM_PI / 1.6f, 0.0f, -2.8f), XMFLOAT3(1.0f, 1.0f, 1.0f), 20 },
-};
-static INTERPOLATION_DATA move_tbl_wave_r_arm[] =
-{
-	{ XMFLOAT3(4.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f,XM_PI / 2),	XMFLOAT3(1.0f, 1.0f, 1.0f), 20 },
-	{ XMFLOAT3(4.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f,XM_PI / 2),	XMFLOAT3(1.0f, 1.0f, 1.0f), 20 },
-};
-
-
-//負け
-static INTERPOLATION_DATA move_tbl_clap_l_arm[] =
-{
-	{ XMFLOAT3(-4.0f, 1.0f, 0.0f), XMFLOAT3(XM_PI / 2, 0.0f, XM_PI / 8), XMFLOAT3(1.0f, 1.0f, 1.0f), 10 },
-	{ XMFLOAT3(-4.0f, 1.0f, 0.0f), XMFLOAT3(XM_PI / 2, 0.0f, XM_PI / 2), XMFLOAT3(1.0f, 1.0f, 1.0f), 10 },
-};
-
-static INTERPOLATION_DATA move_tbl_clap_r_arm[] =
-{
-	{ XMFLOAT3(4.0f, 1.0f, 0.0f), XMFLOAT3(-XM_PI / 3, 0.0f, XM_PI / 2 - 1.0f), XMFLOAT3(1.0f, 1.0f, 1.0f),10 },
-	{ XMFLOAT3(4.0f, 1.0f, 0.0f), XMFLOAT3(-XM_PI / 3, 0.0f, XM_PI / 2),         XMFLOAT3(1.0f, 1.0f, 1.0f), 10 },
-};
-
-
-
-static INTERPOLATION_DATA* g_MoveTblAdr[] =
-{
-	walk_move_tbl_head,
-	walk_move_tbl_l_arm,
-	walk_move_tbl_r_arm,
-	walk_move_tbl_l_leg,
-	walk_move_tbl_r_leg,
-
-	move_tbl_wave_l_arm,
-	move_tbl_wave_r_arm,
-	move_tbl_clap_l_arm,
-	move_tbl_clap_r_arm,
-
-};
-
-
-
-
-
-
-//=============================================================================
-// 初期化処理
-//=============================================================================
+//*****************************************************************************
+// 初期化
+//*****************************************************************************
 HRESULT InitPlayer(void)
 {
-	for (int i = 0; i < MAX_PLAYER; i++)
-	{
-		int selectedChar = GetSelectedCharIndex(i);
+    for (int i = 0; i < MAX_PLAYER; i++)
+    {
+        int selectedChar = GetSelectedCharIndex(i);
 
-		// 本体モデル
-		g_Player[i].load = TRUE;
-		LoadModel(CHARACTER_MODEL_PATHS[selectedChar][1], &g_Player[i].model);
+        // 本体
+        g_Player[i].load = TRUE;
+        LoadModel(CHARACTER_MODEL_PATHS[selectedChar][1], &g_Player[i].model);
 
-		// パーツごと
-		for (int j = 0; j < PLAYER_PARTS_MAX; j++)
-		{
-			g_Parts[i][j].use = TRUE;
-			g_Parts[i][j].parent = &g_Player[i];   // 全部親は本体でOK
-			g_Parts[i][j].time = 0.0f;
-			g_Parts[i][j].tblNo = j;              // アニメテーブルの番号はjと一致（0:頭, 1:左腕, 2:右腕, ...）
-			// パーツ数とテーブル数が一致している前提
-			switch (j)
-			{
-			case 0:
-				LoadModel(CHARACTER_MODEL_PATHS[selectedChar][0], &g_Parts[i][j].model); // 頭
-				g_Parts[i][j].tblMax = sizeof(walk_move_tbl_head) / sizeof(INTERPOLATION_DATA);
-				break;
-			case 1:
-				LoadModel(CHARACTER_MODEL_PATHS[selectedChar][2], &g_Parts[i][j].model); // 左腕
-				g_Parts[i][j].tblMax = sizeof(walk_move_tbl_l_arm) / sizeof(INTERPOLATION_DATA);
-				break;
-			case 2:
-				LoadModel(CHARACTER_MODEL_PATHS[selectedChar][3], &g_Parts[i][j].model); // 右腕
-				g_Parts[i][j].tblMax = sizeof(walk_move_tbl_r_arm) / sizeof(INTERPOLATION_DATA);
-				break;
-			case 3:
-				LoadModel(CHARACTER_MODEL_PATHS[selectedChar][4], &g_Parts[i][j].model); // 左足
-				g_Parts[i][j].tblMax = sizeof(walk_move_tbl_l_leg) / sizeof(INTERPOLATION_DATA);
-				break;
-			case 4:
-				LoadModel(CHARACTER_MODEL_PATHS[selectedChar][5], &g_Parts[i][j].model); // 右足
-				g_Parts[i][j].tblMax = sizeof(walk_move_tbl_r_leg) / sizeof(INTERPOLATION_DATA);
-				break;
-			}
-			g_Parts[i][j].scl = XMFLOAT3(2.0f, 2.0f, 2.0f);
-			g_Parts[i][j].rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
-			g_Parts[i][j].pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
-			g_Parts[i][j].load = TRUE;
-		}
+        // 子パーツ
+        for (int j = 0; j < PLAYER_PARTS_MAX; j++)
+        {
+            g_Parts[i][j].use = TRUE;
+            g_Parts[i][j].parent = &g_Player[i];
+            g_Parts[i][j].time = 0.0f;
+            g_Parts[i][j].tblNo = j;
 
-		g_Player[i].pos = XMFLOAT3(-10.0f, PLAYER_OFFSET_Y + 100.0f, -50.0f);
-		g_Player[i].rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
-		g_Player[i].scl = XMFLOAT3(2.0f, 2.0f, 2.0f);
+            switch (j)
+            {
+            case 0: LoadModel(CHARACTER_MODEL_PATHS[selectedChar][0], &g_Parts[i][j].model); g_Parts[i][j].tblMax = sizeof(walk_move_tbl_head) / sizeof(INTERPOLATION_DATA); break;
+            case 1: LoadModel(CHARACTER_MODEL_PATHS[selectedChar][2], &g_Parts[i][j].model); g_Parts[i][j].tblMax = sizeof(walk_move_tbl_l_arm) / sizeof(INTERPOLATION_DATA); break;
+            case 2: LoadModel(CHARACTER_MODEL_PATHS[selectedChar][3], &g_Parts[i][j].model); g_Parts[i][j].tblMax = sizeof(walk_move_tbl_r_arm) / sizeof(INTERPOLATION_DATA); break;
+            case 3: LoadModel(CHARACTER_MODEL_PATHS[selectedChar][4], &g_Parts[i][j].model); g_Parts[i][j].tblMax = sizeof(walk_move_tbl_l_leg) / sizeof(INTERPOLATION_DATA); break;
+            case 4: LoadModel(CHARACTER_MODEL_PATHS[selectedChar][5], &g_Parts[i][j].model); g_Parts[i][j].tblMax = sizeof(walk_move_tbl_r_leg) / sizeof(INTERPOLATION_DATA); break;
+            }
+            g_Parts[i][j].scl = XMFLOAT3(2, 2, 2);
+            g_Parts[i][j].rot = XMFLOAT3(0, 0, 0);
+            g_Parts[i][j].pos = XMFLOAT3(0, 0, 0);
+            g_Parts[i][j].load = TRUE;
+        }
 
-		g_Player[i].spd = 0.0f;			// 移動スピードクリア
-		g_Player[i].hp = 3.0f;
-		g_Player[i].use = TRUE;			// TRUE:生きてる
-		g_Player[i].size = PLAYER_SIZE;	// 当たり判定の大きさ
+        // 位置/姿勢初期化
+        g_Player[i].pos = XMFLOAT3(-10.0f, PLAYER_OFFSET_Y + 100.0f, -50.0f);
+        g_Player[i].rot = XMFLOAT3(0, 0, 0);
+        g_Player[i].scl = XMFLOAT3(2, 2, 2);
+        g_Player[i].Quaternion = XMFLOAT4(0, 0, 0, 1);
+        g_Player[i].UpVector = XMFLOAT3(0, 1, 0);
 
+        g_Player[i].spd = 0.0f;
+        g_Player[i].hp = 3.0f;
+        g_Player[i].use = TRUE;
 
-		// カプセルの端点を初期化
-		g_Player[i].capsuleA.x = g_Player[i].pos.x;
-		g_Player[i].capsuleA.y = g_Player[i].pos.y - PLAYER_HEIGHT / 2.0f;
-		g_Player[i].capsuleA.z = g_Player[i].pos.z;
+        g_Player[i].size = PLAYER_SIZE;
+        g_Player[i].radius = PLAYER_SIZE;         // ★ 半径を有効値に
+        g_Player[i].prevPos = g_Player[i].pos;
 
-		g_Player[i].capsuleB.x = g_Player[i].pos.x;
-		g_Player[i].capsuleB.y = g_Player[i].pos.y + PLAYER_HEIGHT / 2.0f;
-		g_Player[i].capsuleB.z = g_Player[i].pos.z;
+        // カプセル初期化（仮。毎フレーム更新で上書き）
+        g_Player[i].capsuleA = XMFLOAT3(g_Player[i].pos.x, g_Player[i].pos.y - PLAYER_HEIGHT / 2.0f, g_Player[i].pos.z);
+        g_Player[i].capsuleB = XMFLOAT3(g_Player[i].pos.x, g_Player[i].pos.y + PLAYER_HEIGHT / 2.0f, g_Player[i].pos.z);
 
+        // Diffuse退避
+        GetModelDiffuse(&g_Player[i].model, &g_Player[i].diffuse[0]);
 
-		// モデルのディフューズを保存しておく。色変え対応の為。
-		GetModelDiffuse(&g_Player[i].model, &g_Player[i].diffuse[0]);
+        // ワープ初期化
+        g_Player[i].gateUse = FALSE;
+        g_Player[i].gateCoolTime = 0;
 
-		g_Player[i].gateUse = FALSE;
-		g_Player[i].gateCoolTime = 0;
+        // 影生成
+        XMFLOAT3 pos = g_Player[i].pos; pos.y -= (PLAYER_OFFSET_Y - 0.1f);
+        g_Player[i].shadowIdx = CreateShadow(pos, PLAYER_SHADOW_SIZE, PLAYER_SHADOW_SIZE);
 
-		// ここでプレイヤー用の影を作成している
-		XMFLOAT3 pos = g_Player[i].pos;
-		pos.y -= (PLAYER_OFFSET_Y - 0.1f);
-		g_Player[i].shadowIdx = CreateShadow(pos, PLAYER_SHADOW_SIZE, PLAYER_SHADOW_SIZE);
-		//          ↑
-		//        このメンバー変数が生成した影のIndex番号
+        roty = 0.0f;
+        g_Player[i].parent = NULL;
+    }
+    g_Player[0].pos = XMFLOAT3(-150.0f, PLAYER_OFFSET_Y + 100.0f, 150.0f);
+    g_Player[1].pos = XMFLOAT3(150.0f, PLAYER_OFFSET_Y + 100.0f, 150.0f);
+    g_Player[2].pos = XMFLOAT3(-150.0f, PLAYER_OFFSET_Y + 100.0f, -150.0f);
+    g_Player[3].pos = XMFLOAT3(10.0f, PLAYER_OFFSET_Y + 100.0f, -150.0f);
 
-		// キーを押した時のプレイヤーの向き
-		roty = 0.0f;
-
-		g_Player[i].parent = NULL;			// 本体（親）なのでNULLを入れる
-	}
-
-
-	// HPバー初期化
-	InitPlayerHpBarVertexBuffer();
-
-	return S_OK;
+    InitPlayerHpBarVertexBuffer();
+    return S_OK;
 }
 
-//=============================================================================
-// 終了処理
-//=============================================================================
+//*****************************************************************************
+// 終了
+//*****************************************************************************
 void UninitPlayer(void)
 {
-	for (int i = 0; i < MAX_PLAYER; i++)
-	{
-		// モデルの解放処理
-		if (g_Player[i].load == TRUE)
-		{
-			UnloadModel(&g_Player[i].model);
-			g_Player[i].load = FALSE;
-		}
-
-	}
+    for (int i = 0; i < MAX_PLAYER; i++)
+    {
+        if (g_Player[i].load == TRUE)
+        {
+            UnloadModel(&g_Player[i].model);
+            g_Player[i].load = FALSE;
+        }
+    }
+    if (g_PlayerHpBarVertexBuffer) { g_PlayerHpBarVertexBuffer->Release(); g_PlayerHpBarVertexBuffer = nullptr; }
 }
 
-//=============================================================================
-// 更新処理
-//=============================================================================
+//*****************************************************************************
+// 更新
+//*****************************************************************************
 void UpdatePlayer(void)
 {
-	if (GetMode() == MODE_GAME)
-	{
-		// 1) キー入力による移動＆向き設定
-		MovePlayers();
+    if (GetMode() == MODE_GAME)
+    {
+        g_NoiseClock += 0.08f;
+        if (g_NoiseClock > 10000.0f) g_NoiseClock -= 10000.0f;
 
-		// 2) 各プレイヤーの状態更新
-		for (int i = 0; i < MAX_PLAYER; i++)
-		{
-			PLAYER& pl = g_Player[i];
-			if (!pl.use) continue;
+        // 1) 入力/AI
+        MovePlayers();
 
-			if (pl.stunTimer > 0.0f)
-			{
-				// スタン中はノックバックさせる
-				pl.pos.x += pl.knockbackVel.x;
-				pl.pos.z += pl.knockbackVel.z;
-				pl.stunTimer -= 1.0f / 60.0f;
-				if (pl.stunTimer <= 0.0f) {
-					pl.stunTimer = 0.0f;
-					pl.knockbackVel = { 0,0,0 };
-				}
-				continue; // スタン中は通常移動処理スキップ
-			}
+        // 2) 各プレイヤー更新
+        for (int i = 0; i < MAX_PLAYER; i++)
+        {
+            PLAYER& pl = g_Player[i];
+            if (!pl.use) continue;
 
+            // --- スタン/ノックバック処理（動いたら続く） ---
+            if (HandleStunAndKnockback(i))
+            {
+                UpdateCollisionCapsule(i);
+                continue; // スタン中は移動のみして次へ
+            }
 
-			// ▼ 速度減衰 ＋ HP テスト
-			g_Player[i].spd *= 0.7f;
-			if (GetKeyboardTrigger(DIK_L))
-			{
-				g_Player[i].hp = max(g_Player[i].hp - 1.0f, 0.0f);
-			}
-			if (GetKeyboardTrigger(DIK_O))
-			{
-				g_Player[i].hp = min(g_Player[i].hp + 1.0f, 3.0f);
-			}
+            // --- 攻撃入力（またはAIからの発射） ---
+            PlayerAttack(i);
 
-			PlayerAttack(i);
+            // --- ワープゲートCD ---
+            UpdateWarpGateCooldown(i);
 
-			// ▼ ワープゲート用クールタイム
-			if (g_Player[i].gateUse)
-			{
-				if (++g_Player[i].gateCoolTime >= 300)
-				{
-					g_Player[i].gateCoolTime = 0;
-					g_Player[i].gateUse = FALSE;
-				}
-			}
+            // --- 地形吸着 & 影更新 ---
+            XMFLOAT3 groundN;
+            AdjustYByTerrainAndUpdateShadow(i, groundN);
 
-			// ▼ 地形との当たり判定で Y 座標調整
-			XMFLOAT3 HitPos, Normal;
-			if (RayHitField(g_Player[i].pos, &HitPos, &Normal))
-			{
-				g_Player[i].pos.y = HitPos.y + PLAYER_OFFSET_Y;
-			}
-			else
-			{
-				g_Player[i].pos.y = PLAYER_OFFSET_Y;
-				Normal = XMFLOAT3(0.0f, 1.0f, 0.0f);
-			}
+            // --- 法線に沿った姿勢補正（Slerp） ---
+            UpdatePoseByGroundNormal(i, groundN);
 
-			// ▼ 影の位置も更新
-			{
-				XMFLOAT3 sh = g_Player[i].pos;
-				sh.y -= (PLAYER_OFFSET_Y - 0.1f);
-				SetPositionShadow(g_Player[i].shadowIdx, sh);
-			}
+            // --- 階層アニメ更新 ---
+            UpdatePlayerPartsAnimation(i);
 
-			float blendDuration = 12.0f; // ブレンド時間
-
-			for (int j = 0; j < PLAYER_PARTS_MAX; j++)
-			{
-				if (g_Parts[i][j].use && g_Parts[i][j].tblMax > 0)
-				{
-					if (!g_PlayerIsMoving[i])
-						continue; // 歩き中のみ進行
-
-					int nowNo = (int)g_Parts[i][j].time;
-					int maxNo = g_Parts[i][j].tblMax;
-					int nextNo = (nowNo + 1) % maxNo;
-					INTERPOLATION_DATA* tbl = g_MoveTblAdr[g_Parts[i][j].tblNo];
-
-					// キーフレーム補間
-					XMVECTOR nowPos = XMLoadFloat3(&tbl[nowNo].pos);
-					XMVECTOR nowRot = XMLoadFloat3(&tbl[nowNo].rot);
-					XMVECTOR nowScl = XMLoadFloat3(&tbl[nowNo].scl);
-					XMVECTOR nextPos = XMLoadFloat3(&tbl[nextNo].pos);
-					XMVECTOR nextRot = XMLoadFloat3(&tbl[nextNo].rot);
-					XMVECTOR nextScl = XMLoadFloat3(&tbl[nextNo].scl);
-
-					// 差分と補間
-					XMVECTOR deltaPos = nextPos - nowPos;
-					XMVECTOR deltaRot = nextRot - nowRot;
-					XMVECTOR deltaScl = nextScl - nowScl;
-					float alpha = g_Parts[i][j].time - nowNo;
-
-					// 補間した値を一時変数に格納
-					XMFLOAT3 pos, rot, scl;
-					XMStoreFloat3(&pos, nowPos + deltaPos * alpha);
-					XMStoreFloat3(&rot, nowRot + deltaRot * alpha);
-					XMStoreFloat3(&scl, nowScl + deltaScl * alpha);
-
-					// --- モーションブレンド ---
-					if (g_PlayerAnimBlendMode[i] == 1 && g_PlayerAnimBlendTimer[i] < blendDuration) {
-						float t = g_PlayerAnimBlendTimer[i] / blendDuration;
-						rot.x *= t;
-					}
-					else if (g_PlayerAnimBlendMode[i] == 2 && g_PlayerAnimBlendTimer[i] < blendDuration) {
-						float t = g_PlayerAnimBlendTimer[i] / blendDuration;
-						rot.x = g_PlayerAnimBlendFrom[i][j] * (1.0f - t);
-					}
-
-
-					// 結果を格納
-					g_Parts[i][j].pos = pos;
-					g_Parts[i][j].rot = rot;
-					g_Parts[i][j].scl = scl;
-
-					// 時間進行
-					g_Parts[i][j].time += 1.0f / tbl[nowNo].frame;
-					if ((int)g_Parts[i][j].time >= maxNo)
-					{
-						g_Parts[i][j].time -= maxNo;
-					}
-				}
-			}
-
-			if (g_PlayerState[i] == PLAYER_HIT) {
-				UpdatePlayerKnockback(i);
-				return; // やられ中は他の入力やアニメ処理を飛ばす（好みで）
-			}
-			UpdatePlayerPartsAnimation(i);
-
-			// ▼ 地面法線による姿勢制御（クォータニオン補間）
-			{
-				XMVECTOR up = XMVectorSet(0, 1, 0, 0);
-				XMVECTOR normV = XMLoadFloat3(&Normal);
-				XMVECTOR axis = XMVector3Normalize(XMVector3Cross(up, normV));
-				float   length = XMVectorGetX(XMVector3Length(XMVector3Cross(up, normV)));
-				float   angle = asinf(length);
-				XMVECTOR targetQuat = XMQuaternionRotationNormal(axis, angle);
-				XMVECTOR currentQuat = XMLoadFloat4(&g_Player[i].Quaternion);
-				XMVECTOR newQuat = XMQuaternionSlerp(currentQuat, targetQuat, 0.05f);
-				XMStoreFloat4(&g_Player[i].Quaternion, newQuat);
-			}
-
-			g_Player[i].capsuleA.x = g_Player[i].pos.x;
-			g_Player[i].capsuleA.y = g_Player[i].pos.y - PLAYER_HEIGHT / 2.0f;
-			g_Player[i].capsuleA.z = g_Player[i].pos.z;
-
-			g_Player[i].capsuleB.x = g_Player[i].pos.x;
-			g_Player[i].capsuleB.y = g_Player[i].pos.y + PLAYER_HEIGHT / 2.0f;
-			g_Player[i].capsuleB.z = g_Player[i].pos.z;
-
+            // --- カプセル更新（最後に必ず） ---
+            UpdateCollisionCapsule(i);
 
 #ifdef _DEBUG
-			PrintDebugProc(
-				"Player[%d] Pos:(%f,%f,%f) HP:%f\n",
-				i,
-				g_Player[i].pos.x,
-				g_Player[i].pos.y,
-				g_Player[i].pos.z,
-				g_Player[i].hp
-			);
+            DebugPrintPlayer(i);
 #endif
-		}
-	}
-	else if (GetMode() == MODE_RESULT)
-	{
-		for (int i = 0; i < MAX_PLAYER; i++)
-		{
-			if (i == 0)
-			{
-				PSetAnimation(i, PLAYER_RESULT_WIN);
-			}
-			else if (i == 1)
-			{
-				PSetAnimation(i, PLAYER_RESULT_LOSE);
-			}
+        }
+    }
+    else if (GetMode() == MODE_RESULT)
+    {
+        // 結果演出（必要最小限・歩行アニメ停止）
+        for (int i = 0; i < MAX_PLAYER; i++)
+        {
+            if (i == 0) PSetAnimation(i, PLAYER_RESULT_WIN);
+            else        PSetAnimation(i, PLAYER_RESULT_LOSE);
 
-			for (int j = 0; j < PLAYER_PARTS_MAX; j++)
-			{
-				if (g_Parts[i][j].use && g_Parts[i][j].tblMax > 0)
-				{
+            // パーツの時間だけ進める（簡易）
+            for (int j = 0; j < PLAYER_PARTS_MAX; j++)
+            {
+                if (g_Parts[i][j].use && g_Parts[i][j].tblMax > 0)
+                {
+                    int nowNo = (int)g_Parts[i][j].time;
+                    int maxNo = g_Parts[i][j].tblMax;
+                    int nextNo = (nowNo + 1) % maxNo;
+                    INTERPOLATION_DATA* tbl = g_MoveTblAdr[g_Parts[i][j].tblNo];
 
-					int nowNo = (int)g_Parts[i][j].time;
-					int maxNo = g_Parts[i][j].tblMax;
-					int nextNo = (nowNo + 1) % maxNo;
-					INTERPOLATION_DATA* tbl = g_MoveTblAdr[g_Parts[i][j].tblNo];
+                    XMVECTOR nowPos = XMLoadFloat3(&tbl[nowNo].pos);
+                    XMVECTOR nowRot = XMLoadFloat3(&tbl[nowNo].rot);
+                    XMVECTOR nowScl = XMLoadFloat3(&tbl[nowNo].scl);
+                    XMVECTOR nextPos = XMLoadFloat3(&tbl[nextNo].pos);
+                    XMVECTOR nextRot = XMLoadFloat3(&tbl[nextNo].rot);
+                    XMVECTOR nextScl = XMLoadFloat3(&tbl[nextNo].scl);
 
-					// キーフレーム補間
-					XMVECTOR nowPos = XMLoadFloat3(&tbl[nowNo].pos);
-					XMVECTOR nowRot = XMLoadFloat3(&tbl[nowNo].rot);
-					XMVECTOR nowScl = XMLoadFloat3(&tbl[nowNo].scl);
-					XMVECTOR nextPos = XMLoadFloat3(&tbl[nextNo].pos);
-					XMVECTOR nextRot = XMLoadFloat3(&tbl[nextNo].rot);
-					XMVECTOR nextScl = XMLoadFloat3(&tbl[nextNo].scl);
+                    float alpha = g_Parts[i][j].time - nowNo;
 
-					// 差分と補間
-					XMVECTOR deltaPos = nextPos - nowPos;
-					XMVECTOR deltaRot = nextRot - nowRot;
-					XMVECTOR deltaScl = nextScl - nowScl;
-					float alpha = g_Parts[i][j].time - nowNo;
+                    XMFLOAT3 pos, rot, scl;
+                    XMStoreFloat3(&pos, nowPos + (nextPos - nowPos) * alpha);
+                    XMStoreFloat3(&rot, nowRot + (nextRot - nowRot) * alpha);
+                    XMStoreFloat3(&scl, nowScl + (nextScl - nowScl) * alpha);
 
-					// 補間した値を一時変数に格納
-					XMFLOAT3 pos, rot, scl;
-					XMStoreFloat3(&pos, nowPos + deltaPos * alpha);
-					XMStoreFloat3(&rot, nowRot + deltaRot * alpha);
-					XMStoreFloat3(&scl, nowScl + deltaScl * alpha);
+                    g_Parts[i][j].pos = pos;
+                    g_Parts[i][j].rot = rot;
+                    g_Parts[i][j].scl = scl;
 
-
-					// 結果を格納
-					g_Parts[i][j].pos = pos;
-					g_Parts[i][j].rot = rot;
-					g_Parts[i][j].scl = scl;
-
-					// 時間進行
-					g_Parts[i][j].time += 1.0f / tbl[nowNo].frame;
-					if ((int)g_Parts[i][j].time >= maxNo)
-					{
-						g_Parts[i][j].time -= maxNo;
-					}
-				}
-			}
-
-		}
-	}
+                    g_Parts[i][j].time += 1.0f / tbl[nowNo].frame;
+                    if ((int)g_Parts[i][j].time >= maxNo) g_Parts[i][j].time -= maxNo;
+                }
+            }
+        }
+    }
 }
 
-//=============================================================================
-// 描画処理
-//=============================================================================
+//*****************************************************************************
+// 描画
+//*****************************************************************************
 void DrawPlayer(void)
 {
-	for (int i = 0; i < MAX_PLAYER; i++)
-	{
-		if (g_Player[i].use == FALSE) {
-			continue;
-		}
+    for (int i = 0; i < MAX_PLAYER; i++)
+    {
+        if (g_Player[i].use == FALSE) continue;
 
-		// カリング無効
-		SetCullingMode(CULL_MODE_NONE);
+        SetCullingMode(CULL_MODE_NONE);
 
-		// 各種行列を定義
-		XMMATRIX mtxScl, mtxQuat, mtxRotYaw, mtxTranslate, mtxWorld;
+        XMMATRIX mtxScl = XMMatrixScaling(g_Player[i].scl.x, g_Player[i].scl.y, g_Player[i].scl.z);
+        XMMATRIX mtxQuat = XMMatrixRotationQuaternion(XMLoadFloat4(&g_Player[i].Quaternion));
+        XMMATRIX mtxYaw = XMMatrixRotationRollPitchYaw(g_Player[i].rot.x, g_Player[i].rot.y + XM_PI, g_Player[i].rot.z);
+        XMMATRIX mtxTrs = XMMatrixTranslation(g_Player[i].pos.x, g_Player[i].pos.y, g_Player[i].pos.z);
+        XMMATRIX mtxWorld = mtxScl * mtxQuat * mtxYaw * mtxTrs;
 
-		// 1) スケーリング
-		mtxScl = XMMatrixScaling(
-			g_Player[i].scl.x,
-			g_Player[i].scl.y,
-			g_Player[i].scl.z
-		);
+        SetWorldMatrix(&mtxWorld);
+        XMStoreFloat4x4(&g_Player[i].mtxWorld, mtxWorld);
 
-		// 2) 地形法線による傾き姿勢（クォータニオン）
-		mtxQuat = XMMatrixRotationQuaternion(
-			XMLoadFloat4(&g_Player[i].Quaternion)
-		);
+        SetEdge(1);
+        DrawModel(&g_Player[i].model);
 
-		// 3) キー入力で設定したヨー回転
-		//    rot.y に設定した角度をそのまま反映
-		mtxRotYaw = XMMatrixRotationRollPitchYaw(
-			g_Player[i].rot.x,      // ピッチ（必要な場合）
-			g_Player[i].rot.y + XM_PI,  // ヨー（+PI はモデル初期向き補正）
-			g_Player[i].rot.z       // ロール（必要な場合）
-		);
+        // パーツ
+        for (int j = 0; j < PLAYER_PARTS_MAX; j++)
+        {
+            if (!g_Parts[i][j].use) continue;
 
-		// 4) 平行移動
-		mtxTranslate = XMMatrixTranslation(
-			g_Player[i].pos.x,
-			g_Player[i].pos.y,
-			g_Player[i].pos.z
-		);
+            XMMATRIX m = XMMatrixScaling(g_Parts[i][j].scl.x, g_Parts[i][j].scl.y, g_Parts[i][j].scl.z);
+            m = m * XMMatrixRotationRollPitchYaw(g_Parts[i][j].rot.x, g_Parts[i][j].rot.y, g_Parts[i][j].rot.z);
+            m = m * XMMatrixTranslation(g_Parts[i][j].pos.x, g_Parts[i][j].pos.y, g_Parts[i][j].pos.z);
+            if (g_Parts[i][j].parent)
+                m = m * XMLoadFloat4x4(&g_Parts[i][j].parent->mtxWorld);
 
-		// 合成順：Scale → Quaternion姿勢 → Yaw回転 → Translate
-		mtxWorld = mtxScl;
-		mtxWorld = XMMatrixMultiply(mtxWorld, mtxQuat);
-		mtxWorld = XMMatrixMultiply(mtxWorld, mtxRotYaw);
-		mtxWorld = XMMatrixMultiply(mtxWorld, mtxTranslate);
+            SetWorldMatrix(&m);
+            DrawModel(&g_Parts[i][j].model);
+        }
+    }
 
-		// ワールドマトリックスの設定
-		SetWorldMatrix(&mtxWorld);
-
-		// 保存（デバッグや子パーツ用）
-		XMStoreFloat4x4(&g_Player[i].mtxWorld, mtxWorld);
-
-		// 縁取り
-		SetEdge(1);
-
-		// 本体モデルを描画
-		DrawModel(&g_Player[i].model);
-
-		// ───────────────────────────────
-		// 階層アニメーション（子パーツ）描画
-		// ───────────────────────────────
-		for (int j = 0; j < PLAYER_PARTS_MAX; j++)
-		{
-			if (!g_Parts[i][j].use) continue;
-
-			// 子パーツ用行列
-			XMMATRIX mtxPart = XMMatrixIdentity();
-			mtxPart = XMMatrixMultiply(mtxPart,
-				XMMatrixScaling(
-					g_Parts[i][j].scl.x,
-					g_Parts[i][j].scl.y,
-					g_Parts[i][j].scl.z
-				));
-			mtxPart = XMMatrixMultiply(mtxPart,
-				XMMatrixRotationRollPitchYaw(
-					g_Parts[i][j].rot.x,
-					g_Parts[i][j].rot.y,
-					g_Parts[i][j].rot.z
-				));
-			mtxPart = XMMatrixMultiply(mtxPart,
-				XMMatrixTranslation(
-					g_Parts[i][j].pos.x,
-					g_Parts[i][j].pos.y,
-					g_Parts[i][j].pos.z
-				));
-
-			// 親パーツ（または本体）のワールド行列と結合
-			if (g_Parts[i][j].parent)
-			{
-				mtxPart = XMMatrixMultiply(
-					mtxPart,
-					XMLoadFloat4x4(&g_Parts[i][j].parent->mtxWorld)
-				);
-			}
-
-			// 描画
-			SetWorldMatrix(&mtxPart);
-			DrawModel(&g_Parts[i][j].model);
-		}
-	}
-	SetDepthEnable(FALSE);
-	//HP BAR 参加
-	SetLightEnable(FALSE);
-
-	DrawPlayerHpBar(); // This stays the same
-
-	SetLightEnable(TRUE);
-	SetDepthEnable(TRUE);
-
-
-	SetEdge(0);
-
-	// カリング設定を戻す
-	SetCullingMode(CULL_MODE_BACK);
+    SetDepthEnable(FALSE);
+    SetLightEnable(FALSE);
+    DrawPlayerHpBar();
+    SetLightEnable(TRUE);
+    SetDepthEnable(TRUE);
+    SetEdge(0);
+    SetCullingMode(CULL_MODE_BACK);
 }
 
+//*****************************************************************************
+// 取得
+//*****************************************************************************
+PLAYER* GetPlayer(int index) { if (index < 0 || index >= MAX_PLAYER) return nullptr; return &g_Player[index]; }
+PLAYER* GetPlayer(void) { return GetPlayer(0); }
 
-//=============================================================================
-// プレイヤー情報を取得
-//=============================================================================
-PLAYER* GetPlayer(int index)
+//*****************************************************************************
+// HPバー（簡易）
+//*****************************************************************************
+void DrawPlayerHpBar(void)
 {
-	if (index < 0 || index >= MAX_PLAYER) {
-		return nullptr;
-	}
-	return &g_Player[index];
+    if (GetMode() == MODE_RESULT) return;
+
+    // 共有VBが無ければ初期化（保険）
+    if (!g_PlayerHpBarVertexBuffer) {
+        InitPlayerHpBarVertexBuffer();
+    }
+
+    struct VERTEX_3D { XMFLOAT3 Position; XMFLOAT3 Normal; XMFLOAT4 Diffuse; XMFLOAT2 TexCoord; };
+
+    CAMERA* cam = GetCamera();
+    XMMATRIX mtxView = XMLoadFloat4x4(&cam->mtxView);
+
+    const float HP_WIDTH = 20.0f;
+    const float HP_HEIGHT = 6.0f;
+    const float maxHp = 3.0f;
+
+    // マテリアルとテクスチャ無効化は最初に1回
+    MATERIAL mat = {}; mat.Ambient = mat.Diffuse = XMFLOAT4(1, 1, 1, 1); mat.noTexSampling = 1;
+    SetMaterial(mat);
+    ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
+    GetDeviceContext()->PSSetShaderResources(0, 1, nullSRV);
+
+    // ビルボードの基底（View の回転だけを取り出す）
+    XMMATRIX mtxBB = XMMatrixIdentity();
+    mtxBB.r[0] = XMVectorSet(mtxView.r[0].m128_f32[0], mtxView.r[1].m128_f32[0], mtxView.r[2].m128_f32[0], 0);
+    mtxBB.r[1] = XMVectorSet(mtxView.r[0].m128_f32[1], mtxView.r[1].m128_f32[1], mtxView.r[2].m128_f32[1], 0);
+    mtxBB.r[2] = XMVectorSet(mtxView.r[0].m128_f32[2], mtxView.r[1].m128_f32[2], mtxView.r[2].m128_f32[2], 0);
+
+    // 共有VBを一度だけバインド
+    UINT stride = sizeof(VERTEX_3D), offset = 0;
+    ID3D11Buffer* vb = g_PlayerHpBarVertexBuffer;
+    GetDeviceContext()->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
+    GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+    for (int i = 0; i < MAX_PLAYER; i++)
+    {
+        const PLAYER& pl = g_Player[i];
+        if (!pl.use) continue;
+
+        float percent = pl.hp / maxHp;
+        percent = fmaxf(0.0f, fminf(1.0f, percent));
+
+        // バーの表示位置
+        XMFLOAT3 hpBarPos = pl.pos;
+        hpBarPos.y += 20.0f;
+
+        // 背景（赤）— 幅 HP_WIDTH, 高さ HP_HEIGHT のスケール
+        XMMATRIX mRed =
+            XMMatrixScaling(HP_WIDTH, HP_HEIGHT, 1.0f) *
+            mtxBB *
+            XMMatrixTranslation(hpBarPos.x, hpBarPos.y, hpBarPos.z);
+        SetWorldMatrix(&mRed);
+        MATERIAL m = {};
+        m.Diffuse = XMFLOAT4(1, 0, 0, 1);  // 赤など
+        m.noTexSampling = 1;
+        SetMaterial(m);
+        GetDeviceContext()->Draw(4, 0);
+
+        // 緑（HP本体）— 左端を固定したまま X 方向だけ割合スケール
+        if (percent > 0.0f)
+        {
+            // 中心原点の板を左基準にしたいので、縮小後に +((percent - 1) * 0.5 * 幅) を足して位置補正
+            float anchorShift = (percent - 1.0f) * 0.5f * HP_WIDTH;
+
+            XMMATRIX mGreen =
+                XMMatrixScaling(HP_WIDTH * percent, HP_HEIGHT, 1.0f) *
+                XMMatrixTranslation(anchorShift, 0.0f, 0.0f) *
+                mtxBB *
+                XMMatrixTranslation(hpBarPos.x, hpBarPos.y, hpBarPos.z);
+            SetWorldMatrix(&mGreen);
+            MATERIAL m = {};
+            m.Diffuse = XMFLOAT4(0, 1, 0, 1);  // 赤など
+            m.noTexSampling = 1;
+            SetMaterial(m);
+            GetDeviceContext()->Draw(4, 0);
+        }
+    }
 }
 
-// 既存コード互換用：引数なしで呼ぶと自動的に index=0 を返す
-PLAYER* GetPlayer(void)
-{
-	return GetPlayer(0);
-}
-
-void DrawPlayerHpBar() {
-	if (GetMode() != MODE_RESULT)
-	{
-
-
-		// 頂点構造体の定義
-		struct VERTEX_3D {
-			XMFLOAT3 Position;
-			XMFLOAT3 Normal;
-			XMFLOAT4 Diffuse;
-			XMFLOAT2 TexCoord;
-		};
-
-		CAMERA* cam = GetCamera();
-		XMMATRIX mtxView = XMLoadFloat4x4(&cam->mtxView);
-
-
-		// HPバーの幅と高さ、最大HP
-		const float HP_WIDTH = 20.0f;
-		const float HP_HEIGHT = 6.0f;
-		const float maxHp = 3.0f;
-		for (int i = 0; i < MAX_PLAYER; i++)
-		{
-			float percent = g_Player[i].hp / maxHp;              // 現在HPの割合を計算
-
-			percent = fmaxf(0.0f, fminf(1.0f, percent));      // 0～1にクランプ
-
-			XMFLOAT3 hpBarPos = g_Player[i].pos;
-			hpBarPos.y += 20.0f;  // プレイヤーの上に表示
-
-			// ビルボード行列（カメラの方向を向くようにする）
-			XMMATRIX mtxBillboard = XMMatrixIdentity();
-			mtxBillboard.r[0] = XMVectorSet(mtxView.r[0].m128_f32[0], mtxView.r[1].m128_f32[0], mtxView.r[2].m128_f32[0], 0.0f);
-			mtxBillboard.r[1] = XMVectorSet(mtxView.r[0].m128_f32[1], mtxView.r[1].m128_f32[1], mtxView.r[2].m128_f32[1], 0.0f);
-			mtxBillboard.r[2] = XMVectorSet(mtxView.r[0].m128_f32[2], mtxView.r[1].m128_f32[2], mtxView.r[2].m128_f32[2], 0.0f);
-
-			// マテリアル設定（テクスチャなしで頂点カラーのみ使用）
-			MATERIAL mat = {};
-			mat.Ambient = mat.Diffuse = XMFLOAT4(1, 1, 1, 1);
-			mat.noTexSampling = 1;
-			SetMaterial(mat);
-			// テクスチャを解除（念のため）
-			ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
-			GetDeviceContext()->PSSetShaderResources(0, 1, nullSRV);
-
-			// ワールド行列作成（位置・回転の適用）
-			XMMATRIX mtxScale = XMMatrixIdentity();
-			XMMATRIX mtxTrans = XMMatrixTranslation(hpBarPos.x, hpBarPos.y, hpBarPos.z);
-			XMMATRIX mtxWorld = mtxScale * mtxBillboard * mtxTrans;
-			SetWorldMatrix(&mtxWorld);
-
-			UINT stride = sizeof(VERTEX_3D);
-			UINT offset = 0;
-
-			// 1. --- 赤色の背景バー（常に全幅） ---
-			VERTEX_3D redVtx[4];
-			float left = -HP_WIDTH / 2.0f;
-			float right = +HP_WIDTH / 2.0f;
-
-			redVtx[0].Position = XMFLOAT3(left, HP_HEIGHT / 2, 0);  redVtx[0].Diffuse = XMFLOAT4(1, 0, 0, 1); // 左上
-			redVtx[1].Position = XMFLOAT3(right, HP_HEIGHT / 2, 0);  redVtx[1].Diffuse = XMFLOAT4(1, 0, 0, 1); // 右上
-			redVtx[2].Position = XMFLOAT3(left, -HP_HEIGHT / 2, 0);  redVtx[2].Diffuse = XMFLOAT4(1, 0, 0, 1); // 左下
-			redVtx[3].Position = XMFLOAT3(right, -HP_HEIGHT / 2, 0); redVtx[3].Diffuse = XMFLOAT4(1, 0, 0, 1); // 右下
-			for (int i = 0; i < 4; i++) {
-				redVtx[i].Normal = XMFLOAT3(0, 0, -1);
-				redVtx[i].TexCoord = XMFLOAT2(0, 0);
-			}
-			D3D11_BUFFER_DESC bd = {};
-			bd.Usage = D3D11_USAGE_DEFAULT;
-			bd.ByteWidth = sizeof(redVtx);
-			bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-			D3D11_SUBRESOURCE_DATA init = { redVtx, 0, 0 };
-			ID3D11Buffer* barVB = NULL;
-			GetDevice()->CreateBuffer(&bd, &init, &barVB);
-
-			GetDeviceContext()->IASetVertexBuffers(0, 1, &barVB, &stride, &offset);
-			GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-			GetDeviceContext()->Draw(4, 0);
-			if (barVB) barVB->Release();
-
-			// 2. --- 緑色のHP本体バー（現在HPの割合で幅を決定） ---
-			if (percent > 0.0f) {
-				VERTEX_3D greenVtx[4];
-				float greenRight = left + HP_WIDTH * percent;  // 緑バーの右端位置
-				greenVtx[0].Position = XMFLOAT3(left, HP_HEIGHT / 2, 0);       greenVtx[0].Diffuse = XMFLOAT4(0, 1, 0, 1);
-				greenVtx[1].Position = XMFLOAT3(greenRight, HP_HEIGHT / 2, 0); greenVtx[1].Diffuse = XMFLOAT4(0, 1, 0, 1);
-				greenVtx[2].Position = XMFLOAT3(left, -HP_HEIGHT / 2, 0);      greenVtx[2].Diffuse = XMFLOAT4(0, 1, 0, 1);
-				greenVtx[3].Position = XMFLOAT3(greenRight, -HP_HEIGHT / 2, 0); greenVtx[3].Diffuse = XMFLOAT4(0, 1, 0, 1);
-				for (int i = 0; i < 4; i++) {
-					greenVtx[i].Normal = XMFLOAT3(0, 0, -1);
-					greenVtx[i].TexCoord = XMFLOAT2(0, 0);
-				}
-				D3D11_SUBRESOURCE_DATA greenInit = { greenVtx, 0, 0 };
-				ID3D11Buffer* fgVB = NULL;
-				GetDevice()->CreateBuffer(&bd, &greenInit, &fgVB);
-				GetDeviceContext()->IASetVertexBuffers(0, 1, &fgVB, &stride, &offset);
-				GetDeviceContext()->Draw(4, 0);
-				if (fgVB) fgVB->Release();
-			}
-		}
-
-	}
-}
-
-
-
-//=============================================================================
-// プレイヤー移動処理
-//=============================================================================
+//*****************************************************************************
+// 入力/移動
+//*****************************************************************************
 void MovePlayers(void)
 {
-	for (int i = 0; i < MAX_PLAYER; i++)
-	{
-		PLAYER* p = GetPlayer(i);
 
-		if (!g_Player[i].use) continue;
+    for (int i = 0; i < MAX_PLAYER; i++)
+    {
+        PLAYER* p = GetPlayer(i);
+        if (!p || !p->use) continue;
 
-		// ★ここで前回位置を保存
-		p->prevPos = p->pos;
+        p->prevPos = p->pos; // 先読みや被弾演出用
 
+        if (g_IsCPU[i])
+        {
+            // === 拾った直後の待ち（"持った瞬間に発射"を防止） ===
+            if (!g_PartyAI[i].hadWeapon && p->haveWeapon) {
+                g_PartyAI[i].postPickDelay = AI_POST_PICK_DELAY;      // 待機をセット
+                g_PartyAI[i].aimLockFrames = 0;                       // ロックやり直し
+                // 連射抑制：拾った直後はCDも少し入れておく
+                if (g_PartyAI[i].fireCooldown < AI_POST_PICK_DELAY / 2)
+                    g_PartyAI[i].fireCooldown = AI_POST_PICK_DELAY / 2;
+            }
+            // 現在の所持状態を記録（各分岐の continue に備えて先に更新）
+            g_PartyAI[i].hadWeapon = p->haveWeapon;
+            
+            // クールダウン更新
+            if (g_PartyAI[i].fireCooldown > 0) g_PartyAI[i].fireCooldown--;
 
-		// ----- CPU -----
-		if (g_IsCPU[i])
-		{
-			// ターゲット（人間プレイヤー）を探す
-			int target = -1;
-			for (int j = 0; j < MAX_PLAYER; j++) {
-				if (j != i && !g_IsCPU[j] && g_Player[j].use) {
-					target = j;
-					break;
-				}
-			}
-			if (target == -1) {
-				g_PlayerIsMoving[i] = false;
-				continue;
-			}
-			PLAYER* tgt = &g_Player[target];
+            // 1) “武器未所持”なら：アイテム優先
+            if (!p->haveWeapon)
+            {
+                XMFLOAT3 itemPos;
+                if (AI_FindNearestWeaponItem(p->pos, itemPos))
+                {
+                    // 目標アイテムへ接近
+                    float vx = itemPos.x - p->pos.x;
+                    float vz = itemPos.z - p->pos.z;
+                    float v2 = vx * vx + vz * vz;
+                    if (v2 > 1e-6f) {
+                        float inv = 1.0f / sqrtf(v2);
+                        vx *= inv; vz *= inv;
 
-			// 差分ベクトル（人間プレイヤー→CPU）を計算
-			float dx = p->pos.x - tgt->pos.x;
-			float dz = p->pos.z - tgt->pos.z;
-			float dist = sqrtf(dx * dx + dz * dz);
+                        // 端回避（軽く内側へ）
+                        if (fabsf(p->pos.x) > (STAGE_HALF - EDGE_MARGIN) || fabsf(p->pos.z) > (STAGE_HALF - EDGE_MARGIN)) {
+                            vx += (p->pos.x > 0 ? -0.3f : 0.3f);
+                            vz += (p->pos.z > 0 ? -0.3f : 0.3f);
+                        }
 
-			if (dist < 60.0f && dist > 0.01f) // 0.01fでゼロ除算防止
-			{
-				dx /= dist;
-				dz /= dist;
-				p->pos.x += dx * VALUE_MOVE;
-				p->pos.z += dz * VALUE_MOVE;
+                        // 正規化
+                        float s2 = vx * vx + vz * vz;
+                        if (s2 > 1e-6f) { float invs = 1.0f / sqrtf(s2); vx *= invs; vz *= invs; }
 
-				float targetAngle = atan2f(-dx, -dz);
-				p->rot.y = SmoothAngle(p->rot.y, targetAngle, 0.15f);
+                        p->pos.x += vx * VALUE_MOVE * AI_SEEK_SPEED;
+                        p->pos.z += vz * VALUE_MOVE * AI_SEEK_SPEED;
 
-				g_PlayerIsMoving[i] = true;
-			}
-			else
-			{
-				g_PlayerIsMoving[i] = false;
-			}
-		}
-		// ----- 人の操作 -----
-		else
-		{
-			float dx = 0.0f, dz = 0.0f;
-			if (i == 0) {
-				if (GetKeyboardPress(DIK_A)) dx -= 1.0f;
-				if (GetKeyboardPress(DIK_D)) dx += 1.0f;
-				if (GetKeyboardPress(DIK_W)) dz += 1.0f;
-				if (GetKeyboardPress(DIK_S)) dz -= 1.0f;
-				if (IsButtonPressed(0, BUTTON_UP))    dz += 1.0f;
-				if (IsButtonPressed(0, BUTTON_DOWN))  dz -= 1.0f;
-				if (IsButtonPressed(0, BUTTON_LEFT))  dx -= 1.0f;
-				if (IsButtonPressed(0, BUTTON_RIGHT)) dx += 1.0f;
-			}
-			else if (i == 1) {
-				if (GetKeyboardPress(DIK_LEFT)) dx -= 1.0f;
-				if (GetKeyboardPress(DIK_RIGHT)) dx += 1.0f;
-				if (GetKeyboardPress(DIK_UP)) dz += 1.0f;
-				if (GetKeyboardPress(DIK_DOWN)) dz -= 1.0f;
-				if (IsButtonPressed(1, BUTTON_UP))    dz += 1.0f;
-				if (IsButtonPressed(1, BUTTON_DOWN))  dz -= 1.0f;
-				if (IsButtonPressed(1, BUTTON_LEFT))  dx -= 1.0f;
-				if (IsButtonPressed(1, BUTTON_RIGHT)) dx += 1.0f;
-			}
+                        float yaw = YawFromDir(vx, vz);
+                        p->rot.y = SmoothAngle(p->rot.y, yaw, 0.20f);
+                        g_PlayerIsMoving[i] = true;
+                    }
+                    else {
+                        g_PlayerIsMoving[i] = false;
+                    }
+                    continue; // ← アイテム優先
+                }
+                else
+                {
+                    // 2) フィールドにアイテムが無い：ランダム徘徊
+                    if (g_PartyAI[i].thinkCooldown <= 0) {
+                        AI_PickNewWanderTarget(i, p->pos);
+                    }
+                    else {
+                        g_PartyAI[i].thinkCooldown--;
+                    }
 
-			if (dx != 0.0f || dz != 0.0f)
-			{
-				float len = sqrtf(dx * dx + dz * dz);
-				dx /= len;
-				dz /= len;
-				g_Player[i].pos.x += dx * VALUE_MOVE;
-				g_Player[i].pos.z += dz * VALUE_MOVE;
-				// プレイヤーの向きを更新
-				float targetAngle = atan2f(-dx, -dz);
-				p->rot.y = SmoothAngle(p->rot.y, targetAngle, 0.15f);
+                    float vx = g_PartyAI[i].wanderTarget.x - p->pos.x;
+                    float vz = g_PartyAI[i].wanderTarget.z - p->pos.z;
+                    float v2 = vx * vx + vz * vz;
 
-				g_PlayerIsMoving[i] = true;
-			}
-			else
-			{
-				g_PlayerIsMoving[i] = false;
-			}
-		}
-	}
+                    if (v2 < 4.0f) { // 近づいたら次の点
+                        AI_PickNewWanderTarget(i, p->pos);
+                    }
+                    else {
+                        float inv = 1.0f / sqrtf(v2);
+                        vx *= inv; vz *= inv;
+
+                        // ふらつき（左右にわずかに）
+                        float wob = sinf(g_NoiseClock + i * 0.6f) * 0.12f;
+                        float sx = -vz * wob, sz = vx * wob;
+                        vx = vx * 0.92f + sx * 0.08f;
+                        vz = vz * 0.92f + sz * 0.08f;
+
+                        // 端回避
+                        if (fabsf(p->pos.x) > (STAGE_HALF - EDGE_MARGIN) || fabsf(p->pos.z) > (STAGE_HALF - EDGE_MARGIN)) {
+                            vx += (p->pos.x > 0 ? -0.3f : 0.3f);
+                            vz += (p->pos.z > 0 ? -0.3f : 0.3f);
+                        }
+
+                        // 正規化
+                        float s2 = vx * vx + vz * vz;
+                        if (s2 > 1e-6f) { float invs = 1.0f / sqrtf(s2); vx *= invs; vz *= invs; }
+
+                        p->pos.x += vx * VALUE_MOVE * AI_WANDER_SPEED * g_PartyAI[i].wanderSpeedScale;
+                        p->pos.z += vz * VALUE_MOVE * AI_WANDER_SPEED * g_PartyAI[i].wanderSpeedScale;
+
+                        float yaw = YawFromDir(vx, vz);
+                        p->rot.y = SmoothAngle(p->rot.y, yaw, 0.16f);
+                        g_PlayerIsMoving[i] = true;
+                    }
+                    continue;
+                }
+            }
+
+            // 3) “武器を持っている”：最寄りの相手へ向けて発射（ロック制）
+            int target = AI_FindNearestOpponent(i);
+            if (target >= 0)
+            {
+                PLAYER* t = GetPlayer(target);
+
+                // 目標角（最も近い相手）
+                float tx = t->pos.x - p->pos.x;
+                float tz = t->pos.z - p->pos.z;
+                float yawTarget = YawFromDir(tx, tz);
+
+                // まずは滑らかに向く
+                p->rot.y = SmoothAngle(p->rot.y, yawTarget, 0.22f);
+
+                // --- ロック条件評価 ---
+                // 角度誤差（度）を測って、一定フレーム連続でしきい値以内なら"ロック完了"
+                float degErr = fabsf(AI_AngleDiff(p->rot.y, yawTarget)) * 180.0f / XM_PI;
+                if (degErr <= AI_AIM_LOCK_DEG) g_PartyAI[i].aimLockFrames++;
+                else                           g_PartyAI[i].aimLockFrames = 0;
+
+                // 拾った直後は一定フレーム待機（向き直しのラグを待つ）
+                if (g_PartyAI[i].postPickDelay > 0) {
+                    g_PartyAI[i].postPickDelay--;
+                }
+
+                // --- 発射判定 ---
+                if (g_PartyAI[i].fireCooldown == 0 &&
+                    g_PartyAI[i].postPickDelay == 0 &&
+                    g_PartyAI[i].aimLockFrames >= AI_AIM_LOCK_FRAMES)
+                {
+                    // 発射直前にランダムノイズを角度へ付与（±AI_NOISE_DEG_MAX）
+                    float yawShoot = yawTarget;
+                    if (AI_Frand01() < AI_NOISE_PROB) {
+                        float noiseDeg = (AI_Frand01() * 2.0f - 1.0f) * AI_NOISE_DEG_MAX;
+                        yawShoot += noiseDeg * (XM_PI / 180.0f);
+                    }
+                    // その瞬間だけ発射角に合わせる（見た目はほぼ揃った状態で撃つ）
+                    p->rot.y = yawShoot;
+
+                    AI_ForceAttack(i);  // 入力不要の発射
+
+                    // 連射防止＆ロックをリセット
+                    g_PartyAI[i].fireCooldown =
+                        AI_FIRE_CD_MIN + (rand() % (AI_FIRE_CD_MAX - AI_FIRE_CD_MIN + 1));
+                    g_PartyAI[i].aimLockFrames = 0;
+                }
+                // フィールドを回る動き（CPUごとに変化）
+                float nd = sqrtf(tx * tx + tz * tz);
+                if (nd > 1e-6f) { tx /= nd; tz /= nd; }
+
+                float rpick = fmodf(AI_Frand01() + i * 0.23f, 1.0f);
+
+                if (rpick < 0.60f) {
+                    // 徘徊：ターゲットがいても一定確率で wander を優先
+                    if (g_PartyAI[i].thinkCooldown <= 0) { AI_PickNewWanderTarget(i, p->pos); }
+                    float vx = g_PartyAI[i].wanderTarget.x - p->pos.x;
+                    float vz = g_PartyAI[i].wanderTarget.z - p->pos.z;
+                    float v2 = vx * vx + vz * vz;
+                    if (v2 < 9.0f) { AI_PickNewWanderTarget(i, p->pos); }
+                    else {
+                        float inv = 1.0f / sqrtf(v2); vx *= inv; vz *= inv;
+                        float wob = sinf(g_NoiseClock + i * 0.6f) * 0.12f;
+                        float sx = -vz * wob, sz = vx * wob;
+                        vx = vx * 0.90f + sx * 0.10f;
+                        vz = vz * 0.90f + sz * 0.10f;
+                        if (fabsf(p->pos.x) > (STAGE_HALF - EDGE_MARGIN) || fabsf(p->pos.z) > (STAGE_HALF - EDGE_MARGIN)) {
+                            vx += (p->pos.x > 0 ? -0.3f : 0.3f);
+                            vz += (p->pos.z > 0 ? -0.3f : 0.3f);
+                        }
+                        float s2 = vx * vx + vz * vz; if (s2 > 1e-6f) { float invs = 1.0f / sqrtf(s2); vx *= invs; vz *= invs; }
+                        p->pos.x += vx * VALUE_MOVE * AI_WANDER_SPEED * g_PartyAI[i].wanderSpeedScale;
+                        p->pos.z += vz * VALUE_MOVE * AI_WANDER_SPEED * g_PartyAI[i].wanderSpeedScale;
+                        float yaw = YawFromDir(vx, vz);
+                        p->rot.y = SmoothAngle(p->rot.y, yaw, 0.16f);
+                    }
+                }
+                else if (nd > 18.0f) {
+                    // 遠い：ゆっくり接近（端回避を混ぜる）
+                    float vx = tx, vz = tz;
+                    if (fabsf(p->pos.x) > (STAGE_HALF - EDGE_MARGIN) || fabsf(p->pos.z) > (STAGE_HALF - EDGE_MARGIN)) {
+                        vx += (p->pos.x > 0 ? -0.3f : 0.3f);
+                        vz += (p->pos.z > 0 ? -0.3f : 0.3f);
+                    }
+                    float s2 = vx * vx + vz * vz; if (s2 > 1e-6f) { float invs = 1.0f / sqrtf(s2); vx *= invs; vz *= invs; }
+                    p->pos.x += vx * VALUE_MOVE * 0.40f;
+                    p->pos.z += vz * VALUE_MOVE * 0.40f;
+                }
+                else {
+                    // 近い：接線方向へ流れて“張り付き”を避ける（少し離脱も）
+                    float vx = -tz, vz = tx;
+                    float s2 = vx * vx + vz * vz; if (s2 > 1e-6f) { float invs = 1.0f / sqrtf(s2); vx *= invs; vz *= invs; }
+                    float back = (nd < 12.0f) ? 0.35f : 0.15f;
+                    vx = vx * 0.85f + (-tx) * back * 0.15f;
+                    vz = vz * 0.85f + (-tz) * back * 0.15f;
+                    vx += (AI_Frand01() - 0.5f) * 0.15f;
+                    vz += (AI_Frand01() - 0.5f) * 0.15f;
+                    float s3 = vx * vx + vz * vz; if (s3 > 1e-6f) { float invs = 1.0f / sqrtf(s3); vx *= invs; vz *= invs; }
+                    p->pos.x += vx * VALUE_MOVE * 0.55f;
+                    p->pos.z += vz * VALUE_MOVE * 0.55f;
+                }
+
+                g_PlayerIsMoving[i] = true;
+}
+            else
+            {
+                // 相手が居ないレアケース：徘徊へ
+                if (g_PartyAI[i].thinkCooldown <= 0) AI_PickNewWanderTarget(i, p->pos);
+                g_PlayerIsMoving[i] = false;
+            }
+
+            continue; // CPUブロック終わり
+        }
+        else
+        {
+            float dx = 0.0f, dz = 0.0f;
+            if (i == 0) {
+                if (GetKeyboardPress(DIK_A)) dx -= 1.0f;
+                if (GetKeyboardPress(DIK_D)) dx += 1.0f;
+                if (GetKeyboardPress(DIK_W)) dz += 1.0f;
+                if (GetKeyboardPress(DIK_S)) dz -= 1.0f;
+                if (IsButtonPressed(0, BUTTON_UP)) dz += 1.0f;
+                if (IsButtonPressed(0, BUTTON_DOWN)) dz -= 1.0f;
+                if (IsButtonPressed(0, BUTTON_LEFT)) dx -= 1.0f;
+                if (IsButtonPressed(0, BUTTON_RIGHT)) dx += 1.0f;
+            }
+            else if (i == 1) {
+                if (GetKeyboardPress(DIK_LEFT))  dx -= 1.0f;
+                if (GetKeyboardPress(DIK_RIGHT)) dx += 1.0f;
+                if (GetKeyboardPress(DIK_UP))    dz += 1.0f;
+                if (GetKeyboardPress(DIK_DOWN))  dz -= 1.0f;
+                if (IsButtonPressed(1, BUTTON_UP)) dz += 1.0f;
+                if (IsButtonPressed(1, BUTTON_DOWN)) dz -= 1.0f;
+                if (IsButtonPressed(1, BUTTON_LEFT)) dx -= 1.0f;
+                if (IsButtonPressed(1, BUTTON_RIGHT)) dx += 1.0f;
+            }
+
+            if (dx != 0.0f || dz != 0.0f) {
+                float inv = 1.0f / sqrtf(dx * dx + dz * dz);
+                dx *= inv; dz *= inv;
+                p->pos.x += dx * VALUE_MOVE;
+                p->pos.z += dz * VALUE_MOVE;
+
+                float targetAngle = atan2f(-dx, -dz);
+                p->rot.y = SmoothAngle(p->rot.y, targetAngle, 0.15f);
+                g_PlayerIsMoving[i] = true;
+            }
+            else {
+                g_PlayerIsMoving[i] = false;
+            }
+        }
+    }
 }
 
-
+//*****************************************************************************
+// 階層アニメ
+//*****************************************************************************
 void UpdatePlayerPartsAnimation(int playerIndex)
 {
-	// 状態管理（ファイル先頭やplayer.hで宣言しておく）
-	static bool g_PlayerPrevMoving[MAX_PLAYER] = { false };
-	static int  g_PlayerAnimBlendTimer[MAX_PLAYER] = { 0 }; // blend進行度
-	static int  g_PlayerAnimBlendMode[MAX_PLAYER] = { 0 };  // 0:通常, 1:ブレンドIN, 2:ブレンドOUT
-	static float g_PlayerAnimBlendFrom[MAX_PLAYER][PLAYER_PARTS_MAX] = { 0 }; // ブレンドOUT用
+    float blendDuration = 12.0f;
+    bool isMoving = g_PlayerIsMoving[playerIndex];
 
-	float blendDuration = 12.0f;
-	bool isMoving = g_PlayerIsMoving[playerIndex];
+    // 状態遷移
+    if (isMoving && !g_PlayerPrevMoving[playerIndex]) {
+        g_PlayerAnimBlendTimer[playerIndex] = 0;
+        g_PlayerAnimBlendMode[playerIndex] = 1; // IN
+    }
+    else if (!isMoving && g_PlayerPrevMoving[playerIndex]) {
+        g_PlayerAnimBlendTimer[playerIndex] = 0;
+        g_PlayerAnimBlendMode[playerIndex] = 2; // OUT
+        for (int j = 0; j < PLAYER_PARTS_MAX; j++)
+            g_PlayerAnimBlendFrom[playerIndex][j] = g_Parts[playerIndex][j].rot.x;
+    }
+    g_PlayerPrevMoving[playerIndex] = isMoving;
 
-	// --- 状態遷移チェック ---
-	if (isMoving && !g_PlayerPrevMoving[playerIndex]) {
-		// ブレンドIN開始
-		g_PlayerAnimBlendTimer[playerIndex] = 0;
-		g_PlayerAnimBlendMode[playerIndex] = 1;
-	}
-	else if (!isMoving && g_PlayerPrevMoving[playerIndex]) {
-		// ブレンドOUT開始
-		g_PlayerAnimBlendTimer[playerIndex] = 0;
-		g_PlayerAnimBlendMode[playerIndex] = 2;
-		// 現在のrot.x値を保存
-		for (int j = 0; j < PLAYER_PARTS_MAX; j++) {
-			g_PlayerAnimBlendFrom[playerIndex][j] = g_Parts[playerIndex][j].rot.x;
-		}
-	}
-	g_PlayerPrevMoving[playerIndex] = isMoving;
+    for (int j = 0; j < PLAYER_PARTS_MAX; j++)
+    {
+        if (!g_Parts[playerIndex][j].use || g_Parts[playerIndex][j].tblMax <= 0) continue;
 
-	for (int j = 0; j < PLAYER_PARTS_MAX; j++)
-	{
-		if (g_Parts[playerIndex][j].use && g_Parts[playerIndex][j].tblMax > 0)
-		{
-			int nowNo = (int)g_Parts[playerIndex][j].time;
-			int maxNo = g_Parts[playerIndex][j].tblMax;
-			int nextNo = (nowNo + 1) % maxNo;
-			INTERPOLATION_DATA* tbl = g_MoveTblAdr[g_Parts[playerIndex][j].tblNo];
+        int nowNo = (int)g_Parts[playerIndex][j].time;
+        int maxNo = g_Parts[playerIndex][j].tblMax;
+        int nextNo = (nowNo + 1) % maxNo;
+        INTERPOLATION_DATA* tbl = g_MoveTblAdr[g_Parts[playerIndex][j].tblNo];
 
-			// キーフレーム読み込み
-			XMVECTOR nowPos = XMLoadFloat3(&tbl[nowNo].pos);
-			XMVECTOR nowRot = XMLoadFloat3(&tbl[nowNo].rot);
-			XMVECTOR nowScl = XMLoadFloat3(&tbl[nowNo].scl);
-			XMVECTOR nextPos = XMLoadFloat3(&tbl[nextNo].pos);
-			XMVECTOR nextRot = XMLoadFloat3(&tbl[nextNo].rot);
-			XMVECTOR nextScl = XMLoadFloat3(&tbl[nextNo].scl);
+        XMVECTOR nowPos = XMLoadFloat3(&tbl[nowNo].pos);
+        XMVECTOR nowRot = XMLoadFloat3(&tbl[nowNo].rot);
+        XMVECTOR nowScl = XMLoadFloat3(&tbl[nowNo].scl);
+        XMVECTOR nxtPos = XMLoadFloat3(&tbl[nextNo].pos);
+        XMVECTOR nxtRot = XMLoadFloat3(&tbl[nextNo].rot);
+        XMVECTOR nxtScl = XMLoadFloat3(&tbl[nextNo].scl);
 
-			// 差分と補間
-			float alpha = g_Parts[playerIndex][j].time - nowNo;
-			XMFLOAT3 pos, rot, scl;
-			XMStoreFloat3(&pos, nowPos + (nextPos - nowPos) * alpha);
-			XMStoreFloat3(&rot, nowRot + (nextRot - nowRot) * alpha);
-			XMStoreFloat3(&scl, nowScl + (nextScl - nowScl) * alpha);
+        float alpha = g_Parts[playerIndex][j].time - nowNo;
+        XMFLOAT3 pos, rot, scl;
+        XMStoreFloat3(&pos, nowPos + (nxtPos - nowPos) * alpha);
+        XMStoreFloat3(&rot, nowRot + (nxtRot - nowRot) * alpha);
+        XMStoreFloat3(&scl, nowScl + (nxtScl - nowScl) * alpha);
 
-			// --- ブレンド処理 ---
-			if (g_PlayerAnimBlendMode[playerIndex] == 1 && g_PlayerAnimBlendTimer[playerIndex] < blendDuration) {
-				// ブレンドIN
-				float t = g_PlayerAnimBlendTimer[playerIndex] / blendDuration;
-				rot.x *= t; // 0→目標値
-			}
-			else if (g_PlayerAnimBlendMode[playerIndex] == 2 && g_PlayerAnimBlendTimer[playerIndex] < blendDuration) {
-				// ブレンドOUT
-				float t = g_PlayerAnimBlendTimer[playerIndex] / blendDuration;
-				rot.x = g_PlayerAnimBlendFrom[playerIndex][j] * (1.0f - t); // 今の値→0へ補間
-			}
-			else if (!isMoving) {
-				rot.x = 0.0f; // 静止時は0
-			}
-			if (isMoving) {
-				float tNoise = (float)dwFrameCount * 0.08f + (playerIndex * 50 + j * 23);
-				rot.x += GetPeriodicNoise(playerIndex * 50 + j * 23, tNoise, 0.7f); // 強めでまずテスト
-				rot.y += GetSmoothNoise(noiseTable[playerIndex][j], 1.0f);
-			}
-			// elseは普通にキーフレーム値
+        // ブレンド
+        if (g_PlayerAnimBlendMode[playerIndex] == 1 && g_PlayerAnimBlendTimer[playerIndex] < blendDuration) {
+            float t = g_PlayerAnimBlendTimer[playerIndex] / blendDuration;
+            rot.x *= t;
+        }
+        else if (g_PlayerAnimBlendMode[playerIndex] == 2 && g_PlayerAnimBlendTimer[playerIndex] < blendDuration) {
+            float t = g_PlayerAnimBlendTimer[playerIndex] / blendDuration;
+            rot.x = g_PlayerAnimBlendFrom[playerIndex][j] * (1.0f - t);
+        }
+        else if (!isMoving) {
+            rot.x = 0.0f;
+        }
 
-			g_Parts[playerIndex][j].pos = pos;
-			g_Parts[playerIndex][j].rot = rot;
-			g_Parts[playerIndex][j].scl = scl;
+        if (isMoving) {
+            float tNoise = g_NoiseClock;
+            rot.x += GetPeriodicNoise(playerIndex * 50 + j * 23, tNoise, 0.7f);
+            rot.y += GetSmoothNoise(noiseTable[playerIndex][j], 1.0f);
+        }
 
-			// アニメ時間進行（歩き中だけ進める）
-			if (isMoving)
-			{
-				g_Parts[playerIndex][j].time += 1.0f / tbl[nowNo].frame;
-				if ((int)g_Parts[playerIndex][j].time >= maxNo)
-				{
-					g_Parts[playerIndex][j].time -= maxNo;
-				}
-			}
-		}
-	}
+        g_Parts[playerIndex][j].pos = pos;
+        g_Parts[playerIndex][j].rot = rot;
+        g_Parts[playerIndex][j].scl = scl;
 
-	// --- ループ後、タイマー進行と状態管理 ---
-	if ((g_PlayerAnimBlendMode[playerIndex] == 1 || g_PlayerAnimBlendMode[playerIndex] == 2) && g_PlayerAnimBlendTimer[playerIndex] < blendDuration)
-	{
-		g_PlayerAnimBlendTimer[playerIndex]++;
-	}
-	else if (g_PlayerAnimBlendMode[playerIndex] != 0 && g_PlayerAnimBlendTimer[playerIndex] >= blendDuration)
-	{
-		g_PlayerAnimBlendMode[playerIndex] = 0; // 通常状態に戻す
-	}
+        if (isMoving) {
+            g_Parts[playerIndex][j].time += 1.0f / tbl[nowNo].frame;
+            if ((int)g_Parts[playerIndex][j].time >= maxNo) g_Parts[playerIndex][j].time -= maxNo;
+        }
+    }
+
+    if ((g_PlayerAnimBlendMode[playerIndex] == 1 || g_PlayerAnimBlendMode[playerIndex] == 2) &&
+        g_PlayerAnimBlendTimer[playerIndex] < blendDuration)
+    {
+        g_PlayerAnimBlendTimer[playerIndex]++;
+    }
+    else if (g_PlayerAnimBlendMode[playerIndex] != 0 &&
+        g_PlayerAnimBlendTimer[playerIndex] >= blendDuration)
+    {
+        g_PlayerAnimBlendMode[playerIndex] = 0;
+    }
 }
 
+//*****************************************************************************
+// 被弾ノックバック
+//*****************************************************************************
 void UpdatePlayerKnockback(int playerIndex)
 {
-	if (g_PlayerState[playerIndex] == PLAYER_HIT) {
-		// 吹っ飛び
-		g_Player[playerIndex].pos.x += g_PlayerKnockback[playerIndex].x;
-		g_Player[playerIndex].pos.y += g_PlayerKnockback[playerIndex].y;
-		g_Player[playerIndex].pos.z += g_PlayerKnockback[playerIndex].z;
+    if (g_PlayerState[playerIndex] != PLAYER_HIT) return;
 
-		// 徐々に減速（摩擦/空気抵抗）
-		g_PlayerKnockback[playerIndex].x *= 0.92f;
-		g_PlayerKnockback[playerIndex].y *= 0.80f; // 重力も入れたいなら -0.03f ずつ引くなど
-		g_PlayerKnockback[playerIndex].z *= 0.92f;
+    g_Player[playerIndex].pos.x += g_PlayerKnockback[playerIndex].x;
+    g_Player[playerIndex].pos.y += g_PlayerKnockback[playerIndex].y;
+    g_Player[playerIndex].pos.z += g_PlayerKnockback[playerIndex].z;
 
-		// パーツ崩れ
-		for (int j = 0; j < PLAYER_PARTS_MAX; j++) {
-			// 派手にブルブル揺らすor完全にガクッと崩す（例）
-			g_Parts[playerIndex][j].rot.x = sinf(g_PlayerAnimTimer[playerIndex] * 0.6f + j) * 0.7f;
-			g_Parts[playerIndex][j].rot.y = sinf(g_PlayerAnimTimer[playerIndex] * 0.7f + j * 2) * 0.6f;
-			g_Parts[playerIndex][j].rot.z = sinf(g_PlayerAnimTimer[playerIndex] * 0.5f + j * 3) * 0.5f;
-		}
+    g_PlayerKnockback[playerIndex].x *= 0.92f;
+    g_PlayerKnockback[playerIndex].y *= 0.80f;
+    g_PlayerKnockback[playerIndex].z *= 0.92f;
 
-		g_PlayerAnimTimer[playerIndex]++;
-		// 一定時間で通常に戻す
-		if (g_PlayerAnimTimer[playerIndex] > 36) {
-			g_PlayerState[playerIndex] = PLAYER_NORMAL;
-			g_PlayerAnimTimer[playerIndex] = 0;
-			g_PlayerKnockback[playerIndex] = { 0,0,0 };
-		}
-	}
-	else {
-		// 通常処理（階層アニメーション＋モーションブレンドなど）
-	}
+    for (int j = 0; j < PLAYER_PARTS_MAX; j++) {
+        g_Parts[playerIndex][j].rot.x = sinf(g_PlayerAnimTimer[playerIndex] * 0.6f + j) * 0.7f;
+        g_Parts[playerIndex][j].rot.y = sinf(g_PlayerAnimTimer[playerIndex] * 0.7f + j * 2) * 0.6f;
+        g_Parts[playerIndex][j].rot.z = sinf(g_PlayerAnimTimer[playerIndex] * 0.5f + j * 3) * 0.5f;
+    }
+
+    g_PlayerAnimTimer[playerIndex]++;
+    if (g_PlayerAnimTimer[playerIndex] > 36) {
+        g_PlayerState[playerIndex] = PLAYER_NORMAL;
+        g_PlayerAnimTimer[playerIndex] = 0;
+        g_PlayerKnockback[playerIndex] = XMFLOAT3(0, 0, 0);
+    }
 }
 
 void OnPlayerHit(int i, const XMFLOAT3& hitDirection)
 {
-	g_PlayerState[i] = PLAYER_HIT;
-	g_PlayerAnimTimer[i] = 0;
-	// hitDirectionは正規化された方向ベクトル
-	float knockbackPower = 1.2f; // 吹っ飛びの強さ
-	g_PlayerKnockback[i].x = hitDirection.x * knockbackPower;
-	g_PlayerKnockback[i].y = 0.2f; // ちょっとジャンプ気味もOK
-	g_PlayerKnockback[i].z = hitDirection.z * knockbackPower;
+    g_PlayerState[i] = PLAYER_HIT;
+    g_PlayerAnimTimer[i] = 0;
+    float power = 1.2f;
+    g_PlayerKnockback[i].x = hitDirection.x * power;
+    g_PlayerKnockback[i].y = 0.2f;
+    g_PlayerKnockback[i].z = hitDirection.z * power;
 }
 
-float GetNoise(float strength)
-{
-	return GetRand(-1000, 1000) / 500.0f * strength;
-}
+//*****************************************************************************
+// ノイズ/演出
+//*****************************************************************************
+float GetNoise(float s) { return GetRand(-1000, 1000) / 500.0f * s; }
+float GetPeriodicNoise(int seed, float t, float s) { return sinf(t + seed) * s; }
+float GetSmoothNoise(float& last, float s) { float tgt = GetRand(-1000, 1000) / 500.0f * s; float sm = 0.07f; last += (tgt - last) * sm; return last; }
 
-float GetPeriodicNoise(int seed, float time, float strength)
-{
-	return sinf(time + seed) * strength;
-}
-
-float GetSmoothNoise(float& last, float strength)
-{
-	float target = GetRand(-1000, 1000) / 500.0f * strength;
-	float smooth = 0.07f;
-	last += (target - last) * smooth;
-	return last;
-}
-
+//*****************************************************************************
+// アニメ切替
+//*****************************************************************************
 void PSetAnimation(int playerIndex, PLAYER_STATE animation)
 {
-	// プレイヤーの現在のアニメーションを設定
-	g_Player[playerIndex].currentAnimation = animation;
-
-	// アニメーションタイプに基づいて処理
-	switch (animation)
-	{
-	case PLAYER_WALK:
-		// 歩行アニメーション
-		g_Parts[playerIndex][1].tblNo = B_WALK_L_ARM_ANIMATION_INDEX;  // 左腕
-		g_Parts[playerIndex][2].tblNo = B_WALK_R_ARM_ANIMATION_INDEX;  // 右腕
-		break;
-
-	case PLAYER_RESULT_WIN:
-		// 攻撃アニメーション
-		g_Parts[playerIndex][1].tblNo = B_RESULT_WIN_L_ARM_ANIMATION_INDEX;  // 左腕
-		g_Parts[playerIndex][2].tblNo = B_RESULT_WIN_R_ARM_ANIMATION_INDEX;  // 右腕
-		break;
-	case PLAYER_RESULT_LOSE:
-		// 攻撃アニメーション
-		g_Parts[playerIndex][1].tblNo = B_RESULT_LOSE_L_ARM_ANIMATION_INDEX;  // 左腕
-		g_Parts[playerIndex][2].tblNo = B_RESULT_LOSE_R_ARM_ANIMATION_INDEX;  // 右腕
-		break;
-	}
-
-}
-float NormalizeAngle(float angle)
-{
-	while (angle > XM_PI) angle -= XM_2PI;
-	while (angle < -XM_PI) angle += XM_2PI;
-	return angle;
+    g_Player[playerIndex].currentAnimation = animation;
+    switch (animation)
+    {
+    case PLAYER_WALK:
+        g_Parts[playerIndex][1].tblNo = B_WALK_L_ARM_ANIMATION_INDEX;
+        g_Parts[playerIndex][2].tblNo = B_WALK_R_ARM_ANIMATION_INDEX;
+        break;
+    case PLAYER_RESULT_WIN:
+        g_Parts[playerIndex][1].tblNo = B_RESULT_WIN_L_ARM_ANIMATION_INDEX;
+        g_Parts[playerIndex][2].tblNo = B_RESULT_WIN_R_ARM_ANIMATION_INDEX;
+        break;
+    case PLAYER_RESULT_LOSE:
+        g_Parts[playerIndex][1].tblNo = B_RESULT_LOSE_L_ARM_ANIMATION_INDEX;
+        g_Parts[playerIndex][2].tblNo = B_RESULT_LOSE_R_ARM_ANIMATION_INDEX;
+        break;
+    default: break;
+    }
 }
 
-float SmoothAngle(float current, float target, float smoothFactor)
-{
-	current = NormalizeAngle(current);
-	target = NormalizeAngle(target);
-	float diff = NormalizeAngle(target - current);
-	return current + diff * smoothFactor;
-}
-
+//*****************************************************************************
+// 角度ユーティリティ
+//*****************************************************************************
+float NormalizeAngle(float a) { while (a > XM_PI) a -= XM_2PI; while (a < -XM_PI) a += XM_2PI; return a; }
+float SmoothAngle(float cur, float tgt, float s) { cur = NormalizeAngle(cur); tgt = NormalizeAngle(tgt); float d = NormalizeAngle(tgt - cur); return cur + d * s; }
 float turning(float target, float current)
 {
-	// 角度の差分を求める（-π～πの範囲に収める）
-	float diff = target - current;
-	while (diff > XM_PI) diff -= XM_2PI;
-	while (diff < -XM_PI) diff += XM_2PI;
-
-	// 補間速度（0.1～0.3くらいが自然）
-	const float rotateSpeed = 0.15f;
-
-	// 補間
-	return current + diff * rotateSpeed;
+    float diff = target - current;
+    while (diff > XM_PI) diff -= XM_2PI;
+    while (diff < -XM_PI) diff += XM_2PI;
+    const float rotateSpeed = 0.15f;
+    return current + diff * rotateSpeed;
 }
 
+//*****************************************************************************
+// 攻撃（入力）
+//*****************************************************************************
 void PlayerAttack(int playerIndex)
 {
-	// プレイヤー1: DIK_SPACE or パッドAボタン
-	// プレイヤー2: 例としてDIK_RETURN or パッドAボタン（padNo=1）
-	bool attackTrigger = false;
+    bool attackTrigger = false;
+    if (playerIndex == 0) attackTrigger = GetKeyboardTrigger(DIK_SPACE) || IsButtonTriggered(0, BUTTON_A);
+    else if (playerIndex == 1) attackTrigger = GetKeyboardTrigger(DIK_RETURN) || IsButtonTriggered(1, BUTTON_A);
 
-	if (playerIndex == 0) {
-		attackTrigger = GetKeyboardTrigger(DIK_SPACE) || IsButtonTriggered(0, BUTTON_A);
-	}
-	else if (playerIndex == 1) {
-		attackTrigger = GetKeyboardTrigger(DIK_RETURN) || IsButtonTriggered(1, BUTTON_A);
-	}
+    if (!attackTrigger) return;
 
-	// 弾発射
-	if (attackTrigger)
-	{
-		// ボール発射
-		BALL* ball = GetBall();
-		for (int ballCnt = 0; ballCnt < 10; ballCnt++)
-		{
-			if (ball[ballCnt].IsUsedITball() && ball[ballCnt].IsPickedITball())  // すでに使われてるボールは撃たないようにする
-			{
-				ball[ballCnt].SetITball(g_Player[playerIndex].pos, g_Player[playerIndex].rot);  // プレイヤーの位置と向きでボールを発射
-				break;
-			}
-		}
+    // ボール
+    BALL* ball = GetBall();
+    for (int k = 0; k < 10; k++) {
+        if (ball[k].IsUsedITball() && ball[k].IsPickedITball()) {
+            ball[k].SetITball(g_Player[playerIndex].pos, g_Player[playerIndex].rot);
+            break;
+        }
+    }
+    // ボム
+    BOMB* bomb = GetBomb();
+    for (int k = 0; k < 10; k++) {
+        if (bomb[k].IsUsedITbomb() && bomb[k].IsPickedITbomb()) {
+            bomb[k].SetITbomb(g_Player[playerIndex].pos, g_Player[playerIndex].rot);
+            break;
+        }
+    }
+    // ブーメラン
+    BOOM* boom = GetBoomerang();
+    boom->SetThrowFlag(true);
+    // ハンマー
+    HAMR* hamr = GetHammer();
+    hamr->SetSwingFlag(true);
+}
 
-		// ボム発射
-		BOMB* bomb = GetBomb();
-		for (int bombCnt = 0; bombCnt < 10; bombCnt++)
-		{
-			if (bomb[bombCnt].IsUsedITbomb() && bomb[bombCnt].IsPickedITbomb())  // すでに使われてるボールは撃たないようにする
-			{
-				bomb[bombCnt].SetITbomb(g_Player[playerIndex].pos, g_Player[playerIndex].rot);  // プレイヤーの位置と向きでボールを発射
-				break;
-			}
-		}
-		// ブーメラン
-		BOOM* boom = GetBoomerang();
-		boom->SetThrowFlag(true);
+//*****************************************************************************
+// === ここから共通ヘルパ ===
+//*****************************************************************************
+void AdjustYByTerrainAndUpdateShadow(int i, DirectX::XMFLOAT3& outNormal)
+{
+    PLAYER* p = GetPlayer(i); if (!p) return;
 
-		// ハンマー
-		HAMR* hamr = GetHammer();
-		hamr->SetSwingFlag(true);
-	}
+    XMFLOAT3 hitPos, normal;
+    if (RayHitField(p->pos, &hitPos, &normal)) {
+        p->pos.y = hitPos.y + PLAYER_OFFSET_Y;
+        outNormal = normal;
+    }
+    else {
+        p->pos.y = PLAYER_OFFSET_Y;
+        outNormal = XMFLOAT3(0, 1, 0);
+    }
+
+    XMFLOAT3 sh = p->pos; sh.y -= (PLAYER_OFFSET_Y - 0.1f);
+    SetPositionShadow(p->shadowIdx, sh);
+}
+
+void UpdatePoseByGroundNormal(int i, const DirectX::XMFLOAT3& n)
+{
+    PLAYER* p = GetPlayer(i); if (!p) return;
+
+    XMVECTOR up = XMVectorSet(0, 1, 0, 0);
+    XMVECTOR nv = XMLoadFloat3(&n);
+    XMVECTOR axis = XMVector3Normalize(XMVector3Cross(up, nv));
+    float   len = XMVectorGetX(XMVector3Length(XMVector3Cross(up, nv)));
+    float   ang = asinf(len);
+    XMVECTOR tgtQ = XMQuaternionRotationNormal(axis, ang);
+    XMVECTOR curQ = XMLoadFloat4(&p->Quaternion);
+    XMVECTOR newQ = XMQuaternionSlerp(curQ, tgtQ, 0.05f);
+    XMStoreFloat4(&p->Quaternion, newQ);
+}
+
+void UpdateCollisionCapsule(int i)
+{
+    PLAYER* p = GetPlayer(i); if (!p) return;
+    p->capsuleA = XMFLOAT3(p->pos.x, p->pos.y - PLAYER_HEIGHT / 2.0f, p->pos.z);
+    p->capsuleB = XMFLOAT3(p->pos.x, p->pos.y + PLAYER_HEIGHT / 2.0f, p->pos.z);
+    p->radius = PLAYER_SIZE; // ★ 常に同期（半径参照系の当たりを保証）
+}
+
+void UpdateWarpGateCooldown(int i)
+{
+    if (g_Player[i].gateUse) {
+        if (++g_Player[i].gateCoolTime >= 300) {
+            g_Player[i].gateCoolTime = 0;
+            g_Player[i].gateUse = FALSE;
+        }
+    }
+}
+
+bool HandleStunAndKnockback(int i)
+{
+    PLAYER* p = GetPlayer(i); if (!p || !p->use) return false;
+
+    if (g_PlayerState[i] == PLAYER_HIT) {
+        UpdatePlayerKnockback(i);
+        return true; // 被弾中はここで止める
+    }
+    if (p->stunTimer > 0.0f) {
+        p->pos.x += p->knockbackVel.x;
+        p->pos.z += p->knockbackVel.z;
+        p->stunTimer -= 1.0f / 60.0f;
+        if (p->stunTimer <= 0) { p->stunTimer = 0; p->knockbackVel = XMFLOAT3(0, 0, 0); }
+        return true;
+    }
+    return false;
+}
+
+void UpdateHpDebugKeys(int i)
+{
+#ifdef _DEBUG
+    if (GetKeyboardTrigger(DIK_L)) g_Player[i].hp = max(g_Player[i].hp - 1.0f, 0.0f);
+    if (GetKeyboardTrigger(DIK_O)) g_Player[i].hp = min(g_Player[i].hp + 1.0f, 3.0f);
+#endif
+}
+
+void DebugPrintPlayer(int i)
+{
+#ifdef _DEBUG
+    PrintDebugProc("P%d pos:(%.2f,%.2f,%.2f) rotY:%.2f HP:%.1f state:%d gateCT:%d\n",
+        i, g_Player[i].pos.x, g_Player[i].pos.y, g_Player[i].pos.z,
+        g_Player[i].rot.y, g_Player[i].hp, (int)g_PlayerState[i], g_Player[i].gateCoolTime);
+#endif
+}
+
+// ==== AI ユーティリティ実装 ====
+float AI_Frand01(void) { return (float)(rand() & 1023) / 1023.0f; }
+
+float AI_AngleDiff(float a, float b) {
+    float d = a - b;
+    while (d > XM_PI) d -= XM_2PI;
+    while (d < -XM_PI) d += XM_2PI;
+    return d;
+}
+
+int AI_FindNearestOpponent(int selfIndex) {
+    PLAYER* me = GetPlayer(selfIndex);
+    if (!me || !me->use) return -1;
+    int best = -1; float bestD2 = FLT_MAX;
+    for (int j = 0; j < MAX_PLAYER; j++) {
+        if (j == selfIndex) continue;
+        PLAYER* pj = GetPlayer(j);
+        if (!pj || !pj->use) continue;
+        float dx = pj->pos.x - me->pos.x;
+        float dz = pj->pos.z - me->pos.z;
+        float d2 = dx * dx + dz * dz;
+        if (d2 < bestD2) { bestD2 = d2; best = j; }
+    }
+    return best;
+}
+
+// 拾える“武器系アイテム”の最近傍を探索（見つかれば true）
+bool AI_FindNearestWeaponItem(const DirectX::XMFLOAT3& selfPos, DirectX::XMFLOAT3& outPos)
+{
+    float bestD2 = FLT_MAX; bool found = false;
+
+    // Ball（配列10想定）
+    if (BALL* ball = GetBall()) {
+        for (int i = 0; i < 10; i++) {
+            if (!ball[i].IsUsedITball()) continue;
+            if (ball[i].IsPickedITball()) continue;
+            if (ball[i].IsThrewITball())  continue;
+            XMFLOAT3 p = ball[i].GetPositionITball();
+            float dx = p.x - selfPos.x, dz = p.z - selfPos.z, d2 = dx * dx + dz * dz;
+            if (d2 < bestD2) { bestD2 = d2; outPos = p; found = true; }
+        }
+    }
+    // Bomb（配列10想定）
+    if (BOMB* bomb = GetBomb()) {
+        for (int i = 0; i < 10; i++) {
+            if (!bomb[i].IsUsedITbomb()) continue;
+            if (bomb[i].IsPickedITbomb()) continue;
+            if (bomb[i].IsExpUseITbomb()) continue;
+            if (bomb[i].IsThrewITbomb())  continue;
+            XMFLOAT3 p = bomb[i].GetPositionITbomb();
+            float dx = p.x - selfPos.x, dz = p.z - selfPos.z, d2 = dx * dx + dz * dz;
+            if (d2 < bestD2) { bestD2 = d2; outPos = p; found = true; }
+        }
+    }
+    // Boomerang（単体想定）
+    if (BOOM* boom = GetBoomerang()) {
+        if (boom->IsUsedITboom() && !boom->IsPickedITboom() && !boom->IsThrewITboom()) {
+            XMFLOAT3 p = boom->GetPositionITboom();
+            float dx = p.x - selfPos.x, dz = p.z - selfPos.z, d2 = dx * dx + dz * dz;
+            if (d2 < bestD2) { bestD2 = d2; outPos = p; found = true; }
+        }
+    }
+    // Hammer（単体想定）
+    if (HAMR* hamr = GetHammer()) {
+        if (hamr->IsUsedITHamr() && !hamr->IsPickedITHamr()) {
+            XMFLOAT3 p = hamr->GetPositionITHamr();
+            float dx = p.x - selfPos.x, dz = p.z - selfPos.z, d2 = dx * dx + dz * dz;
+            if (d2 < bestD2) { bestD2 = d2; outPos = p; found = true; }
+        }
+    }
+    return found;
+}
+
+
+void AI_ForceAttack(int playerIndex)
+{
+    // ボール
+    if (BALL* ball = GetBall()) {
+        for (int k = 0; k < 10; k++) {
+            if (ball[k].IsUsedITball() && ball[k].IsPickedITball()) {
+                ball[k].SetITball(g_Player[playerIndex].pos, g_Player[playerIndex].rot);
+                return;
+            }
+        }
+    }
+    // ボム
+    if (BOMB* bomb = GetBomb()) {
+        for (int k = 0; k < 10; k++) {
+            if (bomb[k].IsUsedITbomb() && bomb[k].IsPickedITbomb()) {
+                bomb[k].SetITbomb(g_Player[playerIndex].pos, g_Player[playerIndex].rot);
+                return;
+            }
+        }
+    }
+    // ブーメラン（単体想定）
+    if (BOOM* boom = GetBoomerang()) { boom->SetThrowFlag(true); }
+    // ハンマー（単体想定）
+    if (HAMR* hamr = GetHammer()) { hamr->SetSwingFlag(true); }
+}
+
+// 人間操作と同じ角度系：世界方向ベクトル(vx,vz) → yaw
+static inline float YawFromDir(float vx, float vz)
+{
+    // 人間側は targetAngle = atan2f(-dx, -dz) を使っている
+    return atan2f(-vx, -vz);
+}
+
+void AI_PickNewWanderTarget(int selfIndex, const XMFLOAT3& origin)
+{
+    int nearIdx = AI_FindNearestOpponent(selfIndex);
+    XMFLOAT3 focus = (nearIdx >= 0) ? GetPlayer(nearIdx)->pos
+        : XMFLOAT3{ origin.x + 1.0f, origin.y, origin.z + 1.0f };
+
+    float vx = focus.x - origin.x;
+    float vz = focus.z - origin.z;
+    float len = sqrtf(vx * vx + vz * vz);
+    if (len > 1e-4f) { vx /= len; vz /= len; }
+    else { vx = 0.0f; vz = 1.0f; }
+
+    // 半径 AI_WANDER_RADIUS の範囲で「前方 ±θ」にランダム配置
+    float dist = AI_WANDER_RADIUS * (0.6f + AI_Frand01() * 0.6f);   // 0.6〜1.2倍
+    float ang = (AI_Frand01() - 0.5f) * XM_PI * 0.65f;             // ±約117°
+    float ca = cosf(ang), sa = sinf(ang);
+    float rx = vx * ca - vz * sa;
+    float rz = vx * sa + vz * ca;
+
+    XMFLOAT3 tgt{ origin.x + rx * dist, origin.y, origin.z + rz * dist };
+
+    const float STAGE_HALF = 85.0f, EDGE_MARGIN = 5.0f;
+    tgt.x = fmaxf(-STAGE_HALF + EDGE_MARGIN, fminf(STAGE_HALF - EDGE_MARGIN, tgt.x));
+    tgt.z = fmaxf(-STAGE_HALF + EDGE_MARGIN, fminf(STAGE_HALF - EDGE_MARGIN, tgt.z));
+
+    g_PartyAI[selfIndex].wanderTarget = tgt;
+    g_PartyAI[selfIndex].wanderSpeedScale = 0.85f + 0.3f * AI_Frand01();
+    g_PartyAI[selfIndex].thinkCooldown = 36 + (rand() % 25); // 36〜60F
 }

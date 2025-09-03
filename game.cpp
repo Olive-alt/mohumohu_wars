@@ -313,9 +313,18 @@ void DrawGame(void)
 #endif
 	DebugLine_BeginFrame();
 
-	XMFLOAT3 playerPos = GetPlayer(0)->pos;
-	XMFLOAT3 player2Pos = GetPlayer(1)->pos;
-	EnsureCameraFramesTargets(playerPos, player2Pos, 0.35f); // 20%手前からカメラ上昇
+	// --- プレイヤーの位置を集めてフレーミング ---
+	XMFLOAT3 pts[4];
+	int n = 0;
+	for (int i = 0; i < MAX_PLAYER; ++i) {
+		PLAYER* p = GetPlayer(i);
+		if (p && p->use) {
+			pts[n++] = p->pos;
+		}
+	}
+	if (n > 0) {
+		EnsureCameraFramesTargetsN(pts, n, 0.15f); // 0.15f は画面端の余裕
+	}
 
 	// プレイヤー視点
 	SetCamera();

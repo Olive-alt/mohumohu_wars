@@ -1,3 +1,4 @@
+// ===== player_select.cpp =====
 #include "main.h"
 #include "renderer.h"
 #include "input.h"
@@ -7,8 +8,8 @@
 #include "sound.h"
 #include "sprite.h"
 
-#define MAX_PLAYERS 2
-#define MAX_CHARACTERS 2
+#define MAX_PLAYERS 4
+#define MAX_CHARACTERS 4
 
 #define TEXTURE_WIDTH_LOGO (480)
 #define TEXTURE_HEIGHT_LOGO (80)
@@ -17,12 +18,12 @@
 
 static int g_SelectedPlayer = 0;
 static int g_SelectingPlayerIndex = 0;
-static int g_SelectedCharIndex[MAX_PLAYERS] = { -1, -1 };
+static int g_SelectedCharIndex[MAX_PLAYERS] = { -1, -1, -1 ,-1};
 
 static ID3D11Buffer* g_VertexBuffer = NULL;
 static ID3D11ShaderResourceView* g_Texture[3] = { NULL };
 static ID3D11ShaderResourceView* g_PlayerIcons[MAX_CHARACTERS] = { NULL };
-static ID3D11ShaderResourceView* g_SelectFrameTex[2] = { NULL }; // 1P/2P 
+static ID3D11ShaderResourceView* g_SelectFrameTex[MAX_PLAYERS] = { NULL }; // 1P/2P/3P
 
 static const char* g_TexturName[3] = {
     "data/TEXTURE/bg003.jpg",
@@ -33,23 +34,56 @@ static const char* g_TexturName[3] = {
 static const char* g_PlayerIconNames[MAX_CHARACTERS] = {
     "data/TEXTURE/Select_player/player1.png",
     "data/TEXTURE/Select_player/player2.png",
-    //"data/TEXTURE/Select_player/player3.png",
-    //"data/TEXTURE/Select_player/player4.png"
+    "data/TEXTURE/Select_player/player3.png",
+    "data/TEXTURE/Select_player/player4.png",
 };
 
-static const char* g_FrameTexNames[2] = {
+static const char* g_FrameTexNames[4] = {
     "data/TEXTURE/Select_player/1p.png",
-    "data/TEXTURE/Select_player/2p.png"
+    "data/TEXTURE/Select_player/2p.png",
+    "data/TEXTURE/Select_player/3p.png",
+    "data/TEXTURE/Select_player/4p.png",
 };
 
 static float alpha;
 static BOOL flag_alpha;
 static BOOL g_Load = FALSE;
 
+// 使用済みキャラか判定
+static BOOL IsTaken(int charIdx)
+{
+    for (int p = 0; p < MAX_PLAYERS; ++p) {
+        if (p == g_SelectingPlayerIndex) continue;
+        if (g_SelectedCharIndex[p] == charIdx) return TRUE;
+    }
+    return FALSE;
+}
+
+// 次のプレイヤーへ進める（全員決定でステージへ）
+static void AdvanceToNextPlayer(void)
+{
+    g_SelectingPlayerIndex++;
+    if (g_SelectingPlayerIndex >= MAX_PLAYERS) {
+        SetFade(FADE_OUT, MODE_STAGE_SELECT);
+        return;
+    }
+    // その時点で未使用のキャラから初期選択候補を探す
+    g_SelectedPlayer = 0;
+    while (IsTaken(g_SelectedPlayer)) {
+        g_SelectedPlayer = (g_SelectedPlayer + 1) % MAX_CHARACTERS;
+    }
+}
+
+
+// ===== 置き換え：InitPlayerSelect =====
 HRESULT InitPlayerSelect(void)
 {
     ID3D11Device* pDevice = GetDevice();
     PlaySound(SOUND_LABEL_BGM_bgm_a);
+
+    for (int i = 0; i < MAX_PLAYER; i++) {
+        g_IsCPU[i] = false;
+    }
 
     for (int i = 0; i < 3; i++)
     {
@@ -63,12 +97,19 @@ HRESULT InitPlayerSelect(void)
         D3DX11CreateShaderResourceViewFromFile(pDevice, g_PlayerIconNames[i], NULL, NULL, &g_PlayerIcons[i], NULL);
     }
 
-    for (int i = 0; i < 2; i++)
+    // 1p/2p/3p枠（3p画像が無い環境でも落ちないようフォールバック）
+    for (int i = 0; i < MAX_PLAYERS; i++)
     {
         g_SelectFrameTex[i] = NULL;
-        D3DX11CreateShaderResourceViewFromFile(pDevice, g_FrameTexNames[i], NULL, NULL, &g_SelectFrameTex[i], NULL);
+        HRESULT hr = D3DX11CreateShaderResourceViewFromFile(pDevice,
+            g_FrameTexNames[i], NULL, NULL, &g_SelectFrameTex[i], NULL);
+        if (FAILED(hr)) {
+            // 無ければ2p枠を代用
+            D3DX11CreateShaderResourceViewFromFile(pDevice, g_FrameTexNames[1], NULL, NULL, &g_SelectFrameTex[i], NULL);
+        }
     }
 
+    // 頂点バッファ
     D3D11_BUFFER_DESC bd = {};
     bd.Usage = D3D11_USAGE_DYNAMIC;
     bd.ByteWidth = sizeof(VERTEX_3D) * 4;
@@ -78,8 +119,8 @@ HRESULT InitPlayerSelect(void)
 
     g_SelectedPlayer = 0;
     g_SelectingPlayerIndex = 0;
-    g_SelectedCharIndex[0] = -1;
-    g_SelectedCharIndex[1] = -1;
+    for (int i = 0; i < MAX_PLAYERS; ++i) g_SelectedCharIndex[i] = -1;
+
     alpha = 1.0f;
     flag_alpha = TRUE;
     g_Load = TRUE;
@@ -87,6 +128,8 @@ HRESULT InitPlayerSelect(void)
     return S_OK;
 }
 
+
+// ===== 置き換え：UninitPlayerSelect =====
 void UninitPlayerSelect(void)
 {
     if (g_Load == FALSE) return;
@@ -107,7 +150,7 @@ void UninitPlayerSelect(void)
         if (g_PlayerIcons[i]) { g_PlayerIcons[i]->Release(); g_PlayerIcons[i] = NULL; }
     }
 
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < MAX_PLAYERS; i++)
     {
         if (g_SelectFrameTex[i]) { g_SelectFrameTex[i]->Release(); g_SelectFrameTex[i] = NULL; }
     }
@@ -115,6 +158,8 @@ void UninitPlayerSelect(void)
     g_Load = FALSE;
 }
 
+
+// ===== 置き換え：UpdatePlayerSelect =====
 void UpdatePlayerSelect(void)
 {
     // ← →
@@ -122,73 +167,33 @@ void UpdatePlayerSelect(void)
     {
         do {
             g_SelectedPlayer = (g_SelectedPlayer - 1 + MAX_CHARACTERS) % MAX_CHARACTERS;
-        } while (g_SelectedPlayer == g_SelectedCharIndex[1 - g_SelectingPlayerIndex]);
-
+        } while (IsTaken(g_SelectedPlayer));
         PlaySound(SOUND_LABEL_SE_switch01);
     }
     else if (GetKeyboardTrigger(DIK_RIGHT) || IsButtonTriggered(0, BUTTON_RIGHT))
     {
         do {
             g_SelectedPlayer = (g_SelectedPlayer + 1) % MAX_CHARACTERS;
-        } while (g_SelectedPlayer == g_SelectedCharIndex[1 - g_SelectingPlayerIndex]);
-
+        } while (IsTaken(g_SelectedPlayer));
         PlaySound(SOUND_LABEL_SE_switch01);
     }
 
-    // TABキーでCPUにする
+    // TABキー：CPUにする（余りキャラを自動割当）
     if (GetKeyboardTrigger(DIK_TAB) || IsButtonTriggered(0, BUTTON_X))
     {
-        // 余っているキャラを探す
-        int used[MAX_CHARACTERS] = { 0 };
-        for (int j = 0; j < MAX_PLAYERS; j++) {
-            int idx = g_SelectedCharIndex[j];
-            if (idx >= 0 && idx < MAX_CHARACTERS) used[idx] = 1;
+        for (int c = 0; c < MAX_CHARACTERS; ++c) {
+            if (!IsTaken(c)) { g_SelectedCharIndex[g_SelectingPlayerIndex] = c; break; }
         }
-        int cpuChar = 0;
-        for (int c = 0; c < MAX_CHARACTERS; c++) {
-            if (!used[c]) {
-                cpuChar = c;
-                break;
-            }
-        }
-
         g_IsCPU[g_SelectingPlayerIndex] = true;
-        g_SelectedCharIndex[g_SelectingPlayerIndex] = cpuChar; // 余っているキャラをセット
-
-        if (g_SelectingPlayerIndex == 0)
-        {
-            g_SelectingPlayerIndex = 1;
-            g_SelectedPlayer = 0;
-            while (g_SelectedPlayer == g_SelectedCharIndex[0])
-            {
-                g_SelectedPlayer = (g_SelectedPlayer + 1) % MAX_CHARACTERS;
-            }
-        }
-        else
-        {
-            SetFade(FADE_OUT, MODE_STAGE_SELECT);
-        }
+        AdvanceToNextPlayer();
         return;
     }
 
-    // Enter 決定
+    // Enter：キャラ決定
     if (GetKeyboardTrigger(DIK_RETURN) || IsButtonTriggered(0, BUTTON_A))
     {
         g_SelectedCharIndex[g_SelectingPlayerIndex] = g_SelectedPlayer;
-
-        if (g_SelectingPlayerIndex == 0)
-        {
-            g_SelectingPlayerIndex = 1;
-            g_SelectedPlayer = 0;
-            while (g_SelectedPlayer == g_SelectedCharIndex[0])
-            {
-                g_SelectedPlayer = (g_SelectedPlayer + 1) % MAX_CHARACTERS;
-            }
-        }
-        else
-        {
-            SetFade(FADE_OUT, MODE_STAGE_SELECT);
-        }
+        AdvanceToNextPlayer();
     }
     else if (GetKeyboardTrigger(DIK_SPACE) || IsButtonTriggered(0, BUTTON_B))
     {
@@ -201,6 +206,8 @@ void UpdatePlayerSelect(void)
     if (alpha >= 1.0f) { alpha = 1.0f; flag_alpha = TRUE; }
 }
 
+
+// ===== 置き換え：DrawPlayerSelect =====
 void DrawPlayerSelect(void)
 {
     SetDepthEnable(FALSE);
@@ -258,13 +265,15 @@ void DrawPlayerSelect(void)
             GetDeviceContext()->Draw(4, 0);
         }
 
+        // 選択済みプレイヤーの枠
         for (int p = 0; p < MAX_PLAYERS; p++)
         {
             if (g_SelectedCharIndex[p] == i && g_SelectFrameTex[p])
             {
                 GetDeviceContext()->PSSetShaderResources(0, 1, &g_SelectFrameTex[p]);
-                SetSpriteColor(g_VertexBuffer, x, yPos-15.0f, TEXTURE_WIDTH_PLAYER_ICON*1.2f, TEXTURE_HEIGHT_PLAYER_ICON*1.5f,
-                    0, 0, 1, 1, XMFLOAT4(1, 1, 1, 0.6f));
+                SetSpriteColor(g_VertexBuffer, x, yPos - 15.0f,
+                    TEXTURE_WIDTH_PLAYER_ICON * 1.2f, TEXTURE_HEIGHT_PLAYER_ICON * 1.5f,
+                    0, 0, 1, 1, XMFLOAT4(1, 1, 1, 1));
                 GetDeviceContext()->Draw(4, 0);
             }
         }
