@@ -92,36 +92,27 @@ HRESULT InitItem(void)
 	{
 		// [目的] 巨大化アイテムの初期化（全要素をInitITgiantで初期化する）
 		giant[i].InitITgiant();
-	}
-	for (int i = 0; i < ITEM_MAX; i++)
-	{
+
 		//回復アイテムの初期化
 		heal[i].InitITheal();
+
+		// [目的] ボールアイテムの初期化（全要素をInitITballで初期化する）
+		ball[i].InitITball();
+
+		// [目的] ブーメランアイテムの初期化（全要素をInitITboomで初期化する）
+		boom[i].InitITboom();
+
+		// [目的] ハンマーアイテムの初期化（全要素をInitITHamrで初期化する）
+		hamr[i].InitITHamr();
+
+		// [目的] ボムアイテムの初期化（全要素をInitITbombで初期化する）
+		bomb[i].InitITbomb();
+
 	}
 	for (int i = 0; i < 1; i++)
 	{
 		// [目的] 透明化アイテムの初期化（全要素をInitITinvisibleで初期化する）
 		invisible[i].InitITinvisible();
-	}
-	for (int i = 0; i < ITEM_MAX; i++)
-	{
-		// [目的] ボールアイテムの初期化（全要素をInitITballで初期化する）
-		ball[i].InitITball();
-	}
-	for (int i = 0; i < ITEM_MAX; i++)
-	{
-		// [目的] ブーメランアイテムの初期化（全要素をInitITboomで初期化する）
-		boom[i].InitITboom();
-	}
-	for (int i = 0; i < ITEM_MAX; i++)
-	{
-		// [目的] ハンマーアイテムの初期化（全要素をInitITHamrで初期化する）
-		hamr[i].InitITHamr();
-	}
-	for (int i = 0; i < ITEM_MAX; i++)
-	{
-		// [目的] ボムアイテムの初期化（全要素をInitITbombで初期化する）
-		bomb[i].InitITbomb();
 	}
 
 	// BGM再生
@@ -139,41 +130,27 @@ void UninitItem(void)
 	{
 		// 巨大化アイテムの終了処理
 		giant[i].UninitITgiant();
-	}
-	for (int i = 0; i < ITEM_MAX; i++)
-	{
+
 		// 回復アイテムの終了処理
 		heal[i].UninitITheal();
+
+		//ボールアイテムの終了処理
+		ball[i].UninitITball();
+
+		//ボムアイテムの終了処理
+		bomb[i].UninitITbomb();
+
+		// ブーメランの終了処理
+		boom[i].UninitITboom();
+
+		// ハンマーの終了処理
+		hamr[i].UninitITHamr();
 	}
 
 	for (int i = 0; i < 1; i++)
 	{
 		// 透明化アイテムの終了処理
 		invisible[i].UninitITinvisible();
-	}
-
-	for (int i = 0; i < ITEM_MAX; i++)
-	{
-		//ボールアイテムの終了処理
-		ball[i].UninitITball();
-	}
-
-	for (int i = 0; i < ITEM_MAX; i++)
-	{
-		//ボムアイテムの終了処理
-		bomb[i].UninitITbomb();
-	}
-
-	for (int i = 0; i < ITEM_MAX; i++)
-	{
-		// ブーメランの終了処理
-		boom[i].UninitITboom();
-	}
-
-	for (int i = 0; i < ITEM_MAX; i++)
-	{
-		// ハンマーの終了処理
-		hamr[i].UninitITHamr();
 	}
 }
 
@@ -273,36 +250,27 @@ void UpdateItem(void)
 	{
 		// [目的] 巨大化アイテムの更新（全要素をUpdateITgiantで更新する）
 		giant[i].UpdateITgiant();
-	}
-	for (int i = 0; i < ITEM_MAX; i++)
-	{
+
 		// 回復アイテムの更新処理
 		heal[i].UpdateITheal();
+
+		// [目的] ボールアイテムの更新（全要素をUpdateITballで更新する）
+		ball[i].UpdateITball();
+
+		// [目的] ブーメランアイテムの更新（全要素をUpdateITboomで更新する）
+		boom[i].UpdateITboom();
+
+		// [目的] ハンマーアイテムの更新（全要素をUpdateITHamrで更新する）
+		hamr[i].UpdateITHamr();
+
+		// [目的] ボムアイテムの更新（全要素をUpdateITbombで更新する）
+		bomb[i].UpdateITbomb();
 	}
+
 	for (int i = 0; i < 1; i++)
 	{
 		// [目的] 透明化アイテムの更新（全要素をUpdateITinvisibleで更新する）
 		invisible[i].UpdateITinvisible();
-	}
-	for (int i = 0; i < ITEM_MAX; i++)
-	{
-		// [目的] ボールアイテムの更新（全要素をUpdateITballで更新する）
-		ball[i].UpdateITball();
-	}
-	for (int i = 0; i < ITEM_MAX; i++)
-	{
-		// [目的] ブーメランアイテムの更新（全要素をUpdateITboomで更新する）
-		boom[i].UpdateITboom();
-	}
-	for (int i = 0; i < ITEM_MAX; i++)
-	{
-		// [目的] ハンマーアイテムの更新（全要素をUpdateITHamrで更新する）
-		hamr[i].UpdateITHamr();
-	}
-	for (int i = 0; i < ITEM_MAX; i++)
-	{
-		// [目的] ボムアイテムの更新（全要素をUpdateITbombで更新する）
-		bomb[i].UpdateITbomb();
 	}
 }
 
@@ -315,36 +283,30 @@ void DrawItem(void)
 	{
 		// [目的] 巨大化アイテムの描画（全要素をDrawITgiantで描画する）
 		giant[i].DrawITgiant();
-	}
-	for (int i = 0; i < ITEM_MAX; i++)
-	{
+
 		// 回復アイテムの描画処理
 		heal[i].DrawITheal();
+
+		// [目的] ボールアイテムの描画（全要素をDrawITballで描画する）
+		ball[i].DrawITball();
+
+		// [目的] ブーメランアイテムの描画（全要素をDrawITboomで描画する）
+		boom[i].DrawITboom();
+
+		// [目的] ブーメランアイテムの描画（全要素をDrawITboomで描画する）
+		boom[i].DrawITboom();
+
+		// [目的] ハンマーアイテムの描画（全要素をDrawITHamrで描画する）
+		hamr[i].DrawITHamr();
+
+		// [目的] ボムアイテムの描画（全要素をDrawITbombで描画する）
+		bomb[i].DrawITbomb();
 	}
+
 	for (int i = 0; i < 1; i++)
 	{
 		// [目的] 透明化アイテムの描画（全要素をDrawITinvisibleで描画する）
 		invisible[i].DrawITinvisible();
-	}
-	for (int i = 0; i < ITEM_MAX; i++)
-	{
-		// [目的] ボールアイテムの描画（全要素をDrawITballで描画する）
-		ball[i].DrawITball();
-	}
-	for (int i = 0; i < ITEM_MAX; i++)
-	{
-		// [目的] ブーメランアイテムの描画（全要素をDrawITboomで描画する）
-		boom[i].DrawITboom();
-	}
-	for (int i = 0; i < ITEM_MAX; i++)
-	{
-		// [目的] ハンマーアイテムの描画（全要素をDrawITHamrで描画する）
-		hamr[i].DrawITHamr();
-	}
-	for (int i = 0; i < ITEM_MAX; i++)
-	{
-		// [目的] ボムアイテムの描画（全要素をDrawITbombで描画する）
-		bomb[i].DrawITbomb();
 	}
 
 	// 2Dの物を描画する処理
@@ -368,45 +330,193 @@ void DrawItem(void)
 //=============================================================================
 void CheckHitItem(void)
 {
-	// ===== 巨大化 =====
 	for (int i = 0; i < ITEM_MAX; ++i)
 	{
-		if (!giant[i].IsUsedITgiant() || giant[i].IsPickedITgiant())
-			continue;
-
-		const XMFLOAT3 gi_pos = giant[i].GetPositionITgiant();
-
-		for (int j = 0; j < MAX_PLAYER; ++j)
+		// ===== 巨大化 =====
 		{
-			PLAYER* pj = GetPlayer(j);
-			if (!pj || !pj->use) continue;
+			if (!giant[i].IsUsedITgiant() || giant[i].IsPickedITgiant())
+				continue;
 
-			if (CollisionBC(pj->pos, gi_pos, pj->size, GIANT_SIZE))
+			const XMFLOAT3 gi_pos = giant[i].GetPositionITgiant();
+
+			for (int j = 0; j < MAX_PLAYER; ++j)
 			{
-				giant[i].PickITgiant(j);
+				PLAYER* pj = GetPlayer(j);
+				if (!pj || !pj->use) continue;
+
+				if (CollisionBC(pj->pos, gi_pos, pj->size, GIANT_SIZE))
+				{
+					giant[i].PickITgiant(j);
+				}
 			}
 		}
-	}
 
-	for (int i = 0; i < ITEM_MAX; i++)
-	{
 		// ===== 回復アイテム =====
-		if (!heal[i].IsUsedITheal())
-		continue;
-
-		XMFLOAT3 heal_pos = heal[i].GetPositionITheal();
-		for (int j = 0; j < MAX_PLAYER; j++)
 		{
-			PLAYER* pj = GetPlayer(j);
-			if (!pj || !pj->use) continue;
+			if (!heal[i].IsUsedITheal())
+				continue;
 
-			if (CollisionBC(pj->pos, heal_pos, pj->size, HEAL_SIZE))
+			XMFLOAT3 heal_pos = heal[i].GetPositionITheal();
+			for (int j = 0; j < MAX_PLAYER; j++)
 			{
-				heal[i].PickITheal(j);
+				PLAYER* pj = GetPlayer(j);
+				if (!pj || !pj->use) continue;
+
+				if (CollisionBC(pj->pos, heal_pos, pj->size, HEAL_SIZE))
+				{
+					heal[i].PickITheal(j);
+				}
 			}
 		}
-	}
+		// ===== ボール =====
+		{
+			if (!ball[i].IsUsedITball())
+				continue;
 
+			const XMFLOAT3 ball_pos = ball[i].GetPositionITball();
+			const BOOL picked = ball[i].IsPickedITball();
+			const BOOL threw = ball[i].IsThrewITball();
+
+			// フロアに落ちている → 取得判定
+			if (!picked && !threw)
+			{
+				for (int j = 0; j < MAX_PLAYER; ++j)
+				{
+					PLAYER* pj = GetPlayer(j);
+					if (!pj || !pj->use) continue;
+
+					if (CollisionBC(pj->pos, ball_pos, pj->size, BALL_SIZE) && !pj->haveWeapon)
+					{
+						ball[i].PickITball(j);
+					}
+				}
+			}
+			// 投擲中 → ヒット判定
+			else if (threw && !picked)
+			{
+				for (int j = 0; j < MAX_PLAYER; ++j)
+				{
+					PLAYER* pj = GetPlayer(j);
+					if (!pj || !pj->use) continue;
+					if (pj->invisible) continue;
+					if (CollisionBC(pj->pos, ball_pos, pj->size, BALL_SIZE))
+					{
+						ball[i].HitITball(j); // 自己ヒットは側で弾いている実装です
+					}
+				}
+			}
+		}
+
+		// ===== ボム =====
+		{
+			if (!bomb[i].IsUsedITbomb())
+				continue;
+
+			const XMFLOAT3 bomb_pos = bomb[i].GetPositionITbomb();
+			const BOOL picked = bomb[i].IsPickedITbomb();
+			const BOOL expuse = bomb[i].IsExpUseITbomb();
+			const BOOL threw = bomb[i].IsThrewITbomb();
+
+			// 落ちている → 取得判定
+			if (!picked && !expuse && !threw)
+			{
+				for (int j = 0; j < MAX_PLAYER; ++j)
+				{
+					PLAYER* pj = GetPlayer(j);
+					if (!pj || !pj->use) continue;
+
+					if (CollisionBC(pj->pos, bomb_pos, pj->size, BOMB_SIZE))
+					{
+						bomb[i].PickITbomb(j);
+					}
+				}
+			}
+			// 爆発中 → ダメージ判定
+			else if (expuse)
+			{
+				const float expsize = bomb[i].GetExpSizeITbomb();
+				for (int j = 0; j < MAX_PLAYER; ++j)
+				{
+					PLAYER* pj = GetPlayer(j);
+					if (!pj || !pj->use) continue;
+					if (pj->invisible) continue;
+					if (CollisionBC(pj->pos, bomb_pos, pj->size, expsize))
+					{
+						bomb[i].HitITbomb(j);
+					}
+				}
+			}
+		}
+
+		// ===== ブーメラン =====
+		{
+			if (!boom[i].IsUsedITboom())
+				continue;
+
+			const XMFLOAT3 boom_pos = boom[i].GetPositionITboom();
+			const BOOL picked = boom[i].IsPickedITboom();
+			const BOOL threw = boom[i].IsThrewITboom();
+
+			// 落ちている → 取得判定
+			if (!picked && !threw)
+			{
+				for (int j = 0; j < MAX_PLAYER; ++j)
+				{
+					PLAYER* pj = GetPlayer(j);
+					if (!pj || !pj->use) continue;
+
+					if (CollisionBC(pj->pos, boom_pos, pj->size, BOOM_SIZE))
+					{
+						boom[i].PickITboom(j);
+					}
+				}
+			}
+			// 飛行中 → ヒット判定
+			else if (threw)
+			{
+				for (int j = 0; j < MAX_PLAYER; ++j)
+				{
+					PLAYER* pj = GetPlayer(j);
+					if (!pj || !pj->use) continue;
+					if (pj->invisible) continue;
+					if (CollisionBC(pj->pos, boom_pos, pj->size, BOOM_SIZE))
+					{
+						boom[i].HitITboom(j);
+					}
+				}
+			}
+		}
+
+		// ===== ハンマー =====
+		{
+			if (!hamr[i].IsUsedITHamr())
+				continue;
+
+			const BOOL picked = hamr[i].IsPickedITHamr();
+			// 装備中はハンマーの「頭」のワールド位置で攻撃判定。未取得時は本体位置でPick。
+			const XMFLOAT3 test_pos = picked ? hamr[i].GetHeadWorldPosition()
+				: hamr[i].GetPositionITHamr();
+
+			for (int j = 0; j < MAX_PLAYER; ++j)
+			{
+				PLAYER* pj = GetPlayer(j);
+				if (!pj || !pj->use) continue;
+				if (pj->invisible) continue;
+				if (CollisionBC(pj->pos, test_pos, pj->size, HAMR_SIZE))
+				{
+					if (!picked) hamr[i].PickITHamr(j);
+					else         hamr[i].HitITHamr(j);
+				}
+			}
+
+#if defined(_DEBUG)
+			// デバッグ可視化（不要なら削除OK）
+			DrawDebugSphereOutline(test_pos, HAMR_SIZE, XMFLOAT4(1, 0.5f, 0, 1));
+			DebugLine_Render(GetCameraViewProjMatrix());
+#endif
+		}
+
+	}
 
 	// ===== 透明化 =====
 	for (int i = 0; i < 1; ++i)
@@ -427,158 +537,6 @@ void CheckHitItem(void)
 			}
 		}
 	}
-
-	// ===== ボール =====
-	for (int i = 0; i < ITEM_MAX; ++i)
-	{
-		if (!ball[i].IsUsedITball())
-			continue;
-
-		const XMFLOAT3 ball_pos = ball[i].GetPositionITball();
-		const BOOL picked = ball[i].IsPickedITball();
-		const BOOL threw = ball[i].IsThrewITball();
-
-		// フロアに落ちている → 取得判定
-		if (!picked && !threw)
-		{
-			for (int j = 0; j < MAX_PLAYER; ++j)
-			{
-				PLAYER* pj = GetPlayer(j);
-				if (!pj || !pj->use) continue;
-
-				if (CollisionBC(pj->pos, ball_pos, pj->size, BALL_SIZE) && !pj->haveWeapon)
-				{
-					ball[i].PickITball(j);
-				}
-			}
-		}
-		// 投擲中 → ヒット判定
-		else if (threw && !picked)
-		{
-			for (int j = 0; j < MAX_PLAYER; ++j)
-			{
-				PLAYER* pj = GetPlayer(j);
-				if (!pj || !pj->use) continue;
-				if (pj->invisible) continue;
-				if (CollisionBC(pj->pos, ball_pos, pj->size, BALL_SIZE))
-				{
-					ball[i].HitITball(j); // 自己ヒットは側で弾いている実装です
-				}
-			}
-		}
-	}
-
-	// ===== ボム =====
-	for (int i = 0; i < ITEM_MAX; ++i)
-	{
-		if (!bomb[i].IsUsedITbomb())
-			continue;
-
-		const XMFLOAT3 bomb_pos = bomb[i].GetPositionITbomb();
-		const BOOL picked = bomb[i].IsPickedITbomb();
-		const BOOL expuse = bomb[i].IsExpUseITbomb();
-		const BOOL threw = bomb[i].IsThrewITbomb();
-
-		// 落ちている → 取得判定
-		if (!picked && !expuse && !threw)
-		{
-			for (int j = 0; j < MAX_PLAYER; ++j)
-			{
-				PLAYER* pj = GetPlayer(j);
-				if (!pj || !pj->use) continue;
-
-				if (CollisionBC(pj->pos, bomb_pos, pj->size, BOMB_SIZE))
-				{
-					bomb[i].PickITbomb(j);
-				}
-			}
-		}
-		// 爆発中 → ダメージ判定
-		else if (expuse)
-		{
-			const float expsize = bomb[i].GetExpSizeITbomb();
-			for (int j = 0; j < MAX_PLAYER; ++j)
-			{
-				PLAYER* pj = GetPlayer(j);
-				if (!pj || !pj->use) continue;
-				if (pj->invisible) continue;
-				if (CollisionBC(pj->pos, bomb_pos, pj->size, expsize))
-				{
-					bomb[i].HitITbomb(j);
-				}
-			}
-		}
-	}
-
-	// ===== ブーメラン =====
-	for (int i = 0; i < ITEM_MAX; ++i)
-	{
-		if (!boom[i].IsUsedITboom())
-			continue;
-
-		const XMFLOAT3 boom_pos = boom[i].GetPositionITboom();
-		const BOOL picked = boom[i].IsPickedITboom();
-		const BOOL threw = boom[i].IsThrewITboom();
-
-		// 落ちている → 取得判定
-		if (!picked && !threw)
-		{
-			for (int j = 0; j < MAX_PLAYER; ++j)
-			{
-				PLAYER* pj = GetPlayer(j);
-				if (!pj || !pj->use) continue;
-
-				if (CollisionBC(pj->pos, boom_pos, pj->size, BOOM_SIZE))
-				{
-					boom[i].PickITboom(j);
-				}
-			}
-		}
-		// 飛行中 → ヒット判定
-		else if (threw)
-		{
-			for (int j = 0; j < MAX_PLAYER; ++j)
-			{
-				PLAYER* pj = GetPlayer(j);
-				if (!pj || !pj->use) continue;
-				if (pj->invisible) continue;
-				if (CollisionBC(pj->pos, boom_pos, pj->size, BOOM_SIZE))
-				{
-					boom[i].HitITboom(j);
-				}
-			}
-		}
-	}
-
-	// ===== ハンマー =====
-	for (int i = 0; i < ITEM_MAX; ++i)
-	{
-		if (!hamr[i].IsUsedITHamr())
-			continue;
-
-		const BOOL picked = hamr[i].IsPickedITHamr();
-		// 装備中はハンマーの「頭」のワールド位置で攻撃判定。未取得時は本体位置でPick。
-		const XMFLOAT3 test_pos = picked ? hamr[i].GetHeadWorldPosition()
-			: hamr[i].GetPositionITHamr();
-
-		for (int j = 0; j < MAX_PLAYER; ++j)
-		{
-			PLAYER* pj = GetPlayer(j);
-			if (!pj || !pj->use) continue;
-			if (pj->invisible) continue;
-			if (CollisionBC(pj->pos, test_pos, pj->size, HAMR_SIZE))
-			{
-				if (!picked) hamr[i].PickITHamr(j);
-				else         hamr[i].HitITHamr(j);
-			}
-		}
-
-#if defined(_DEBUG)
-		// デバッグ可視化（不要なら削除OK）
-		DrawDebugSphereOutline(test_pos, HAMR_SIZE, XMFLOAT4(1, 0.5f, 0, 1));
-		DebugLine_Render(GetCameraViewProjMatrix());
-#endif
-	}
 }
 
 //=============================================================================
@@ -587,7 +545,7 @@ void CheckHitItem(void)
 void ItemSpown(void)
 {
 	//int itemNo = GetRand(0, ITEM_TOTAL_MAX - 1);//本来
-	int itemNo = GetRand(0, 5);//仮置き
+	int itemNo = GetRand(0, 6);//仮置き
 	XMFLOAT3 SpawnPos = XMFLOAT3(GetRandf(-500.0f, 500.0f), 0.0f, GetRandf(-500.0f, 500.0f));
 
 	switch (itemNo)
@@ -659,6 +617,17 @@ void ItemSpown(void)
 			}
 		}
 		break;
+	case (6): // 回復アイテム
+		for (int i = 0; i < ITEM_MAX; i++)
+		{
+			if (!heal[i].IsUsedITheal())
+			{
+				heal[i].SetITheal(SpawnPos);
+				break;
+			}
+		}
+		break;
+
 	}
 }
 
