@@ -1,17 +1,18 @@
 #pragma once
+#include <DirectXMath.h>
 
+HRESULT InitStageSelect(void);
+void    UninitStageSelect(void);
+void    UpdateStageSelect(void);
+void    DrawStageSelect(void);
 
-// ステージ選択画面の関数宣言
-HRESULT InitStageSelect(void);    // 初期化
-void UninitStageSelect(void);     // 終了処理
-void UpdateStageSelect(void);     // 更新処理
-void DrawStageSelect(void);       // 描画処理
+// 実体は stage_select.cpp にある
+extern char g_SelectedStageFile[64];
 
-// 3Dステージ選択用の構造体
 struct STAGE_SELECT_3D {
-    XMFLOAT3 position;   // ステージの位置
-    XMFLOAT3 rotation;   // ステージの回転
-    float scale;         // ステージのスケール
-    int stageId;         // ステージID
-    bool isSelected;     // 選択中かどうか
+    DirectX::XMFLOAT3 position;
+    DirectX::XMFLOAT3 rotation;
+    float             scale;
+    int               stageId;
+    bool              isSelected;
 };

@@ -1,8 +1,5 @@
 //=============================================================================
-//
 // ゲーム画面処理 [game.cpp]
-// Author : 
-//
 //=============================================================================
 #include "main.h"
 #include "renderer.h"
@@ -23,280 +20,171 @@
 #include "debugproc.h"
 #include "player_select.h"
 #include "stageobject.h"
+#include "stage_select.h"   // ★ 追加：g_SelectedStageFile
 
-//ステージギミック用
+// ステージギミック
 #include "SG_wind.h"
 #include "SG_warpgate.h"
 #include "SG_car.h"
-//アイテム用
+// アイテム
 #include "item.h"
-//タイム用
+// タイム
 #include "time.h"
-//デバッグ表示
+// デバッグ表示
 #include "debugline.h"
 
 //*****************************************************************************
-// マクロ定義
-//*****************************************************************************
-//ステージギミック用
-//アイテム用
-
-
-//*****************************************************************************
-// プロトタイプ宣言
+// マクロ定義 / プロトタイプ
 //*****************************************************************************
 void CheckHit(void);
 
-
-
 //*****************************************************************************
-// グローバル変数
+// グローバル
 //*****************************************************************************
-static int	g_ViewPortType_Game = TYPE_FULL_SCREEN;
+static int  g_ViewPortType_Game = TYPE_FULL_SCREEN;
+static BOOL g_bPause = TRUE;
 
-static BOOL	g_bPause = TRUE;	// ポーズON/OFF
-
-
-//ステージギミック用
-WIND wind;
+WIND     wind;
 WARPGATE warpgate[2];
 
 //=============================================================================
-// 初期化処理
+// 初期化
 //=============================================================================
 HRESULT InitGame(void)
 {
 	g_ViewPortType_Game = TYPE_FULL_SCREEN;
 
-	// フィールドの初期化
-	InitMeshField(XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), 100, 100, 13.0f, 13.0f);
+	// フィールド
+	InitMeshField(XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 0), 100, 100, 13.0f, 13.0f);
 
-	// ライトを有効化	// 影の初期化処理
+	// 影
 	InitShadow();
 
+	// ステージ（モデル→インスタンス）
 	InitStageModels();
-	LoadStageObjects(g_SelectedStageFile);  // ← ここで選んだファイルをロード
+	LoadStageObjects(g_SelectedStageFile);
 
-	// プレイヤーの初期化
-	InitPlayer();
-
-	// 壁の初期化
-	InitMeshWall(XMFLOAT3(0.0f, 0.0f, MAP_TOP), XMFLOAT3(0.0f, 0.0f, 0.0f),
-		XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 16, 2, 80.0f, 80.0f);
-	InitMeshWall(XMFLOAT3(MAP_LEFT, 0.0f, 0.0f), XMFLOAT3(0.0f, -XM_PI * 0.50f, 0.0f),
-		XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 16, 2, 80.0f, 80.0f);
-	InitMeshWall(XMFLOAT3(MAP_RIGHT, 0.0f, 0.0f), XMFLOAT3(0.0f, XM_PI * 0.50f, 0.0f),
-		XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 16, 2, 80.0f, 80.0f);
-	InitMeshWall(XMFLOAT3(0.0f, 0.0f, MAP_DOWN), XMFLOAT3(0.0f,  XM_PI, 0.0f),
-		XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 16, 2, 80.0f, 80.0f);
-
-	// 壁(裏側用の半透明)
-	InitMeshWall(XMFLOAT3(0.0f, 0.0f, MAP_TOP), XMFLOAT3(0.0f,    XM_PI, 0.0f),
-		XMFLOAT4(1.0f, 1.0f, 1.0f, 0.25f), 16, 2, 80.0f, 80.0f);
-	InitMeshWall(XMFLOAT3(MAP_LEFT, 0.0f, 0.0f), XMFLOAT3(0.0f,   XM_PI * 0.50f, 0.0f),
-		XMFLOAT4(1.0f, 1.0f, 1.0f, 0.25f), 16, 2, 80.0f, 80.0f);
-	InitMeshWall(XMFLOAT3(MAP_RIGHT, 0.0f, 0.0f), XMFLOAT3(0.0f, -XM_PI * 0.50f, 0.0f),
-		XMFLOAT4(1.0f, 1.0f, 1.0f, 0.25f), 16, 2, 80.0f, 80.0f);
-	InitMeshWall(XMFLOAT3(0.0f, 0.0f, MAP_DOWN), XMFLOAT3(0.0f, 0.0f, 0.0f),
-		XMFLOAT4(1.0f, 1.0f, 1.0f, 0.25f), 16, 2, 80.0f, 80.0f);
-
-
-	// スコアの初期化
-	InitScore();
-
-	// タイムの初期化
-	InitTime();
-
-	//// パーティクルの初期化
-	//InitParticle();
-
-	//風の初期化
-	wind.InitSGwind();
-	//wind.SetSGwind();
-
-	//ワープゲートの初期化
-	for (int i = 0; i < MAX_WG; i++)
-	{
-		warpgate[i].InitSGwarpgate();
-		warpgate[i].SetSGwarpgate(XMFLOAT3(0.0f + (300.0f * i), 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(1.0f, 1.0f, 1.0f));
+	// ★ 水上アスレ対応：ファイル名で水面Yを決定
+	if (strstr(g_SelectedStageFile, "beach")) {
+		// たとえば床（bg_1.obj）の高さを 0 と想定（必要なら値は調整）
+		SetWaterLevel(0.0f);
+	}
+	else {
+		// 無効化
+		SetWaterLevel(-1.0e9f);
 	}
 
-	// 車ギミックの初期化
+	// プレイヤー
+	InitPlayer();
+
+	// 壁
+	InitMeshWall(XMFLOAT3(0.0f, 0.0f, MAP_TOP), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT4(1, 1, 1, 1), 16, 2, 80.0f, 80.0f);
+	InitMeshWall(XMFLOAT3(MAP_LEFT, 0.0f, 0.0f), XMFLOAT3(0.0f, -XM_PI * 0.50f, 0.0f), XMFLOAT4(1, 1, 1, 1), 16, 2, 80.0f, 80.0f);
+	InitMeshWall(XMFLOAT3(MAP_RIGHT, 0.0f, 0.0f), XMFLOAT3(0.0f, XM_PI * 0.50f, 0.0f), XMFLOAT4(1, 1, 1, 1), 16, 2, 80.0f, 80.0f);
+	InitMeshWall(XMFLOAT3(0.0f, 0.0f, MAP_DOWN), XMFLOAT3(0.0f, XM_PI, 0.0f), XMFLOAT4(1, 1, 1, 1), 16, 2, 80.0f, 80.0f);
+	// 裏面半透明
+	InitMeshWall(XMFLOAT3(0.0f, 0.0f, MAP_TOP), XMFLOAT3(0.0f, XM_PI, 0.0f), XMFLOAT4(1, 1, 1, 0.25f), 16, 2, 80.0f, 80.0f);
+	InitMeshWall(XMFLOAT3(MAP_LEFT, 0.0f, 0.0f), XMFLOAT3(0.0f, XM_PI * 0.50f, 0.0f), XMFLOAT4(1, 1, 1, 0.25f), 16, 2, 80.0f, 80.0f);
+	InitMeshWall(XMFLOAT3(MAP_RIGHT, 0.0f, 0.0f), XMFLOAT3(0.0f, -XM_PI * 0.50f, 0.0f), XMFLOAT4(1, 1, 1, 0.25f), 16, 2, 80.0f, 80.0f);
+	InitMeshWall(XMFLOAT3(0.0f, 0.0f, MAP_DOWN), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT4(1, 1, 1, 0.25f), 16, 2, 80.0f, 80.0f);
+
+	// スコア・タイム
+	InitScore();
+	InitTime();
+
+	// 風
+	wind.InitSGwind();
+
+	// ワープゲート
+	for (int i = 0; i < MAX_WG; i++) {
+		warpgate[i].InitSGwarpgate();
+		warpgate[i].SetSGwarpgate(XMFLOAT3(0.0f + (300.0f * i), 0.0f, 0.0f),
+			XMFLOAT3(0, 0, 0), XMFLOAT3(1, 1, 1));
+	}
+
+	// 車
 	g_CarSystem.Init();
 
-	//アイテムの初期化
+	// アイテム
 	InitItem();
 
-	// BGM再生
+	// BGM
 	PlaySound(SOUND_LABEL_BGM_party);
 
 	return S_OK;
 }
 
 //=============================================================================
-// 終了処理
+// 終了
 //=============================================================================
 void UninitGame(void)
 {
-	//// パーティクルの終了処理
-	//UninitParticle();
-
-	// スコアの終了処理
 	UninitScore();
-
-	// タイムの終了処理
 	UninitTime();
-
-	// 壁の終了処理
 	UninitMeshWall();
-
-	// 地面の終了処理
 	UninitMeshField();
-
-	// プレイヤーの終了処理
 	UninitPlayer();
-
-	// 影の終了処理
 	UninitShadow();
 
-	// 風の終了処理
 	wind.UninitSGwind();
+	for (int i = 0; i < MAX_WG; i++) { warpgate[i].UninitSGwarpgate(); }
 
-	// ワープゲートの終了処理
-	for (int i = 0; i < MAX_WG; i++)
-	{
-		warpgate[i].UninitSGwarpgate();
-	}
-
-	// 車ギミックの終了処理
 	g_CarSystem.Uninit();
-
-	//アイテムの終了処理
 	UninitItem();
-
 }
 
 //=============================================================================
-// 更新処理
+// 更新
 //=============================================================================
 void UpdateGame(void)
 {
-	UpdateDeltaTime(); // ← 最初に呼ぶ
+	UpdateDeltaTime();
 
 #ifdef _DEBUG
-	if (GetKeyboardTrigger(DIK_V))
-	{
-		g_ViewPortType_Game = (g_ViewPortType_Game + 1) % TYPE_NONE;
-		SetViewPort(g_ViewPortType_Game);
-	}
-
-	if (GetKeyboardTrigger(DIK_P))
-	{
-		g_bPause = g_bPause ? FALSE : TRUE;
-	}
-
-
+	if (GetKeyboardTrigger(DIK_V)) { g_ViewPortType_Game = (g_ViewPortType_Game + 1) % TYPE_NONE; SetViewPort(g_ViewPortType_Game); }
+	if (GetKeyboardTrigger(DIK_P)) { g_bPause = g_bPause ? FALSE : TRUE; }
 #endif
+	if (g_bPause == FALSE) return;
 
-	if(g_bPause == FALSE)
-		return;
-
-	// 地面処理の更新
 	UpdateMeshField();
-
-	// プレイヤーの更新処理
 	UpdatePlayer();
-
-	// 壁処理の更新
 	UpdateMeshWall();
-
-	//アイテムの更新処理
 	UpdateItem();
 
-	// 車処理の更新
 	g_CarSystem.Update();
-	g_CarSystem.CheckCarHitPlayers(); // プレイヤーと車の当たり判定
+	g_CarSystem.CheckCarHitPlayers();
 
-	// 影の更新処理
 	UpdateShadow();
 
-	// 当たり判定処理
-	CheckHit();
-
-	//アイテムの当たり判定処理
+	CheckHit();       // 既存の当たり判定群
 	CheckHitItem();
 
-	// スコアの更新処理
 	UpdateScore();
-
-	// タイムの更新処理
 	UpdateTime();
 
-	// 風の更新処理
 	wind.UpdateSGwind();
-
-	// ワープゲートの更新処理
-	for (int i = 0; i < MAX_WG; i++)
-	{
-		warpgate[i].UpdateSGwarpgate();
-	}
-
-
+	for (int i = 0; i < MAX_WG; i++) { warpgate[i].UpdateSGwarpgate(); }
 }
 
 //=============================================================================
-// 描画処理
+// 描画
 //=============================================================================
 void DrawGame0(void)
 {
-	// 3Dの物を描画する処理
-	// 地面の描画処理
 	DrawMeshField();
-
-	// 影の描画処理
 	DrawShadow();
-
 	DrawStageObjects();
-
-	// プレイヤーの描画処理
 	DrawPlayer();
-
-	// 車の描画処理
 	g_CarSystem.Draw();
-
-	//アイテムの描画処理
 	DrawItem();
-
-	// 壁の描画処理
 	DrawMeshWall();
+	for (int i = 0; i < MAX_WG; i++) { warpgate[i].DrawSGwarpgate(); }
 
-	// ワープゲートの描画処理
-	for (int i = 0; i < MAX_WG; i++)
-	{
-		warpgate[i].DrawSGwarpgate();
-	}
-
-	//// パーティクルの描画処理
-	//DrawParticle();
-
-
-	// 2Dの物を描画する処理
-	// Z比較なし
 	SetDepthEnable(FALSE);
-
-	// ライティングを無効
 	SetLightEnable(FALSE);
-
-	// スコアの描画処理
 	DrawScore();
-
-	// タイムの描画処理
 	DrawTime();
-
-	// ライティングを有効に
 	SetLightEnable(TRUE);
-
-	// Z比較あり
 	SetDepthEnable(TRUE);
 }
 

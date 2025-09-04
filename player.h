@@ -181,3 +181,5 @@ float AI_Frand01(void);
 void  AI_ForceAttack(int playerIndex);
 float YawFromDir(float vx, float vz);
 void AI_PickNewWanderTarget(int selfIndex, const XMFLOAT3& origin);
+void UpdateFallAndRespawn(int idx);
+bool IsBeachStage();

@@ -15,6 +15,7 @@
 #include "meshfield.h"
 #include "item.h"
 #include "player_select.h"
+#include "stageobject.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -101,7 +102,7 @@ float  g_PlayerAnimBlendFrom[MAX_PLAYER][PLAYER_PARTS_MAX] = { 0 };
 static ID3D11Buffer* g_PlayerHpBarVertexBuffer = nullptr;
 static float g_NoiseClock = 0.0f;
 
-
+static DirectX::XMFLOAT3 g_LastSafePos[MAX_PLAYER] = { DirectX::XMFLOAT3(0,0,0) };
 // CPU用の簡易ステアリング状態
 struct SimpleAI {
     int   target;        // 追う相手
@@ -257,7 +258,7 @@ HRESULT InitPlayer(void)
         g_Player[i].use = TRUE;
 
         g_Player[i].size = PLAYER_SIZE;
-        g_Player[i].radius = PLAYER_SIZE;         // ★ 半径を有効値に
+        g_Player[i].radius = PLAYER_SIZE; 
         g_Player[i].prevPos = g_Player[i].pos;
 
         // カプセル初期化（仮。毎フレーム更新で上書き）
@@ -277,6 +278,9 @@ HRESULT InitPlayer(void)
 
         roty = 0.0f;
         g_Player[i].parent = NULL;
+
+        //安全地点の初期化（開始時の位置）
+        g_LastSafePos[i] = g_Player[i].pos;
     }
     g_Player[0].pos = XMFLOAT3(-150.0f, PLAYER_OFFSET_Y + 100.0f, 150.0f);
     g_Player[1].pos = XMFLOAT3(150.0f, PLAYER_OFFSET_Y + 100.0f, 150.0f);
@@ -342,6 +346,8 @@ void UpdatePlayer(void)
             // --- 法線に沿った姿勢補正（Slerp） ---
             UpdatePoseByGroundNormal(i, groundN);
 
+            // --- ★ 落下検知＆復帰（水上/キルゾーン） ---
+            UpdateFallAndRespawn(i);
             // --- 階層アニメ更新 ---
             UpdatePlayerPartsAnimation(i);
 
@@ -1228,4 +1234,59 @@ void AI_PickNewWanderTarget(int selfIndex, const XMFLOAT3& origin)
     g_PartyAI[selfIndex].wanderTarget = tgt;
     g_PartyAI[selfIndex].wanderSpeedScale = 0.85f + 0.3f * AI_Frand01();
     g_PartyAI[selfIndex].thinkCooldown = 36 + (rand() % 25); // 36〜60F
+}
+
+bool IsBeachStage()
+{
+    // g_SelectedStageFile に "beach" が含まれたら水上アスレ扱い
+    const char* s = g_SelectedStageFile;
+    if (!s) return false;
+    for (const char* p = s; *p; ++p) {
+        char c = *p;
+        if (c >= 'A' && c <= 'Z') c = char(c - 'A' + 'a'); // 小文字化
+        if (c == 'b' && p[1] == 'e' && p[2] == 'a' && p[3] == 'c' && p[4] == 'h') return true;
+    }
+    return false;
+}
+
+void UpdateFallAndRespawn(int idx)
+{
+    PLAYER& pl = GetPlayer(idx)[0]; // GetPlayer(idx) がポインタ返しでも安全に
+
+    // 1) 床めり込みの押し戻し（坂・段差で“地面に押し戻す”）
+    ResolveFloorPenetration(&pl.pos, pl.radius, 0.02f);  // 上下分離
+
+    // 2) “安全地点”の更新（床上で安定しているとみなせるフレーム）
+    static DirectX::XMFLOAT3 s_LastSafePos[MAX_PLAYER];
+    const float dy = pl.pos.y - pl.prevPos.y;
+    if (fabsf(dy) < 0.2f) s_LastSafePos[idx] = pl.pos;
+
+    // 3) 水上アスレ（beach）での落水復帰
+    auto isBeach = []() -> bool {
+        extern char g_SelectedStageFile[];
+        for (const char* p = g_SelectedStageFile; *p; ++p) {
+            char c = (*p | 32);
+            if (c == 'b' && (p[1] | 32) == 'e' && (p[2] | 32) == 'a' && (p[3] | 32) == 'c' && (p[4] | 32) == 'h') return true;
+        }
+        return false;
+        };
+    const float waterY = GetWaterLevel();
+    if (isBeach() && waterY > -1.0e8f && pl.pos.y < (waterY - 2.0f)) {
+        DirectX::XMFLOAT3 revive;
+        if (!StageGetNearestFloorPoint(pl.pos, &revive, pl.radius + 0.1f)) {
+            revive = s_LastSafePos[idx]; revive.y += pl.radius + 0.1f;
+        }
+        pl.pos = revive; pl.prevPos = pl.pos;
+        return;
+    }
+
+    // 4) キルゾーン（どこまでも落下した時の保険）
+    if (pl.pos.y < -50.0f) {
+        DirectX::XMFLOAT3 revive;
+        if (!StageGetNearestFloorPoint(pl.pos, &revive, pl.radius + 0.1f)) {
+            revive = s_LastSafePos[idx]; revive.y += pl.radius + 0.1f;
+        }
+        pl.pos = revive; pl.prevPos = pl.pos;
+        return;
+    }
 }
