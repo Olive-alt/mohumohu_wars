@@ -10,7 +10,7 @@
 
 
 #define MAX_STAGES 2
-#define TEXTURE_WIDTH_STAGE_ICON (200)
+#define TEXTURE_WIDTH_STAGE_ICON (300)
 #define TEXTURE_HEIGHT_STAGE_ICON (300)
 
 static int g_SelectedStage = 1;
@@ -21,8 +21,8 @@ static ID3D11ShaderResourceView* g_Texture[4] = { NULL };
 
 static const char* g_TexturName[4] = {
     "data/TEXTURE/bg003.jpg",
-    "data/TEXTURE/Select_stage/stage1.png",
-    "data/TEXTURE/Select_stage/stage2.png",
+    "data/TEXTURE/Select_stage/stage3.png",
+    "data/TEXTURE/Select_stage/stage4.png",
     "data/TEXTURE/Select_stage/stage_title.png"
 };
 
