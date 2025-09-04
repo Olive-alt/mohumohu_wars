@@ -21,6 +21,7 @@
 //アイテム用
 #include "IT_giant.h"
 #include "IT_invisible.h"
+#include "IT_heal.h"
 
 //デバッグ表示
 #include "debugline.h"
@@ -49,8 +50,9 @@ static BOOL	g_bPause = TRUE;	// ポーズON/OFF
 int SpownTime = 0;
 
 //アイテム用
-//アイテム用
 GIANT giant[ITEM_MAX];
+
+HEAL heal[ITEM_MAX];
 
 INVISIBLE invisible[1];
 
@@ -90,6 +92,11 @@ HRESULT InitItem(void)
 	{
 		// [目的] 巨大化アイテムの初期化（全要素をInitITgiantで初期化する）
 		giant[i].InitITgiant();
+	}
+	for (int i = 0; i < ITEM_MAX; i++)
+	{
+		//回復アイテムの初期化
+		heal[i].InitITheal();
 	}
 	for (int i = 0; i < 1; i++)
 	{
@@ -132,6 +139,11 @@ void UninitItem(void)
 	{
 		// 巨大化アイテムの終了処理
 		giant[i].UninitITgiant();
+	}
+	for (int i = 0; i < ITEM_MAX; i++)
+	{
+		// 回復アイテムの終了処理
+		heal[i].UninitITheal();
 	}
 
 	for (int i = 0; i < 1; i++)
@@ -182,13 +194,25 @@ void UpdateItem(void)
 		g_bPause = g_bPause ? FALSE : TRUE;
 	}
 
+	if (GetKeyboardTrigger(DIK_5))
+	{
+		for (int i = 0; i < 10; i++)
+		{
+			if (!heal[i].IsUsedITheal())
+			{
+				heal[i].SetITheal(XMFLOAT3(100.0f, 0.0f, 0.0f));
+				break;
+			}
+		}
+	}
+
 	if (GetKeyboardTrigger(DIK_6))
 	{
 		for (int i = 0; i < 10; i++)
 		{
 			if (!giant[i].IsUsedITgiant())
 			{
-				giant[i].SetITgiant(XMFLOAT3(100.0f, 0.0f, 100.0f));
+				giant[i].SetITgiant(XMFLOAT3(200.0f, 0.0f, 0.0f));
 				break;
 			}
 		}
@@ -200,7 +224,7 @@ void UpdateItem(void)
 		{
 			if (!invisible[i].IsUsedITinvisible())
 			{
-				invisible[i].SetITinvisible(XMFLOAT3(200.0f, 0.0f, 100.0f));
+				invisible[i].SetITinvisible(XMFLOAT3(300.0f, 0.0f, 0.0f));
 				break;
 			}
 		}
@@ -212,7 +236,7 @@ void UpdateItem(void)
 		{
 			if (!ball[i].IsUsedITball())
 			{
-				ball[i].SetITballObject(XMFLOAT3(-100.0f, 0.0f, -100.0f));
+				ball[i].SetITballObject(XMFLOAT3(400.0f, 0.0f, 0.0f));
 				break;
 			}
 		}
@@ -224,7 +248,7 @@ void UpdateItem(void)
 		{
 			if (!bomb[i].IsUsedITbomb())
 			{
-				bomb[i].SetITbombObject(XMFLOAT3(-300.0f, 0.0f, -100.0f));
+				bomb[i].SetITbombObject(XMFLOAT3(500.0f, 0.0f, 0.0f));
 				break;
 			}
 		}
@@ -249,6 +273,11 @@ void UpdateItem(void)
 	{
 		// [目的] 巨大化アイテムの更新（全要素をUpdateITgiantで更新する）
 		giant[i].UpdateITgiant();
+	}
+	for (int i = 0; i < ITEM_MAX; i++)
+	{
+		// 回復アイテムの更新処理
+		heal[i].UpdateITheal();
 	}
 	for (int i = 0; i < 1; i++)
 	{
@@ -286,6 +315,11 @@ void DrawItem(void)
 	{
 		// [目的] 巨大化アイテムの描画（全要素をDrawITgiantで描画する）
 		giant[i].DrawITgiant();
+	}
+	for (int i = 0; i < ITEM_MAX; i++)
+	{
+		// 回復アイテムの描画処理
+		heal[i].DrawITheal();
 	}
 	for (int i = 0; i < 1; i++)
 	{
@@ -353,6 +387,26 @@ void CheckHitItem(void)
 			}
 		}
 	}
+
+	for (int i = 0; i < ITEM_MAX; i++)
+	{
+		// ===== 回復アイテム =====
+		if (!heal[i].IsUsedITheal())
+		continue;
+
+		XMFLOAT3 heal_pos = heal[i].GetPositionITheal();
+		for (int j = 0; j < MAX_PLAYER; j++)
+		{
+			PLAYER* pj = GetPlayer(j);
+			if (!pj || !pj->use) continue;
+
+			if (CollisionBC(pj->pos, heal_pos, pj->size, HEAL_SIZE))
+			{
+				heal[i].PickITheal(j);
+			}
+		}
+	}
+
 
 	// ===== 透明化 =====
 	for (int i = 0; i < 1; ++i)

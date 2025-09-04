@@ -17,7 +17,7 @@
 #define TEXTURE_WIDTH        (16)    // キャラサイズ
 #define TEXTURE_HEIGHT       (32)    // 
 #define TEXTURE_MAX          (1)     // テクスチャの数
-#define SCORE_PLAYER_MAX     (2)     // プレイヤーの数（2人用に変更）
+#define SCORE_PLAYER_MAX     (4)     // プレイヤーの数（2人用に変更）
 
 //*****************************************************************************
 // プロトタイプ宣言
@@ -44,8 +44,11 @@ static BOOL   g_Load = FALSE;
 
 // 各プレイヤーのスコア表示座標
 static XMFLOAT3 g_Pos[SCORE_PLAYER_MAX] = {
-    XMFLOAT3(500.0f, 20.0f, 0.0f),   // プレイヤー1
-    XMFLOAT3(700.0f, 20.0f, 0.0f),   // プレイヤー2
+    XMFLOAT3(200.0f, 20.0f, 0.0f),   // プレイヤー1
+    XMFLOAT3(400.0f, 20.0f, 0.0f),   // プレイヤー2
+    XMFLOAT3(600.0f, 20.0f, 0.0f),   // プレイヤー2
+    XMFLOAT3(800.0f, 20.0f, 0.0f),   // プレイヤー2
+
     // 3人目以降はここに追加
 };
 
@@ -57,7 +60,6 @@ HRESULT InitScore(void)
 {
     ID3D11Device* pDevice = GetDevice();
 
-    //テクスチャ生成
     for (int i = 0; i < TEXTURE_MAX; i++)
     {
         g_Texture[i] = NULL;
@@ -69,7 +71,6 @@ HRESULT InitScore(void)
             NULL);
     }
 
-    // 頂点バッファ生成
     D3D11_BUFFER_DESC bd;
     ZeroMemory(&bd, sizeof(bd));
     bd.Usage = D3D11_USAGE_DYNAMIC;
@@ -78,15 +79,13 @@ HRESULT InitScore(void)
     bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     GetDevice()->CreateBuffer(&bd, NULL, &g_VertexBuffer);
 
-    // プレイヤーの初期化
     g_Use = TRUE;
     g_w = TEXTURE_WIDTH;
     g_h = TEXTURE_HEIGHT;
     g_TexNo = 0;
 
-    //// 各プレイヤーのスコア初期化
-    //for (int i = 0; i < SCORE_PLAYER_MAX; i++)
-    //    g_Score[i] = 0;
+    // ensure both players start at 0
+    ResetScore();
 
     g_Load = TRUE;
     return S_OK;
@@ -132,11 +131,12 @@ void UpdateScore(void)
 //=============================================================================
 void DrawScore(void)
 {
-    if (GetMode() == MODE_RESULT)
+    if (GetMode() == MODE_RESULT || GetMode() == MODE_GAME)
     {
         DrawScoreAbovePlayers();
         return;
     }
+
 
     // 頂点バッファ設定
     UINT stride = sizeof(VERTEX_3D);
@@ -230,8 +230,8 @@ void DrawScoreAbovePlayers(void)
     PLAYER* players = GetPlayer();
 
     // 数字一桁のサイズ（ワールド座標系）
-    const float DIGIT_WIDTH = 4.0f;
-    const float DIGIT_HEIGHT = 8.0f;
+    const float DIGIT_WIDTH = 8.0f;
+    const float DIGIT_HEIGHT = 16.0f;
 
     // スコア表示用テクスチャのマテリアル設定
     MATERIAL mat = {};
@@ -246,7 +246,7 @@ void DrawScoreAbovePlayers(void)
         if (!players[p].use) continue;
 
         XMFLOAT3 scorePos = players[p].pos;
-        scorePos.y += 28.0f; // HPバーの上に表示
+        scorePos.y += 48.0f; // HPバーの上に表示
 
         int score = g_Score[p];
 

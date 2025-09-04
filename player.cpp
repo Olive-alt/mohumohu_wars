@@ -253,7 +253,7 @@ HRESULT InitPlayer(void)
         g_Player[i].UpVector = XMFLOAT3(0, 1, 0);
 
         g_Player[i].spd = 0.0f;
-        g_Player[i].hp = 3.0f;
+        g_Player[i].hp = PLAYER_HP_MAX;
         g_Player[i].use = TRUE;
 
         g_Player[i].size = PLAYER_SIZE;
