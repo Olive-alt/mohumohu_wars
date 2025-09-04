@@ -7,7 +7,7 @@
 #include "debugproc.h"
 #include "shadow.h"
 #include "sound.h"
-
+#include "score.h"
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
@@ -295,6 +295,7 @@ void BOOM::UpdateITboom(void)
 				count = 0.0f;
 				returning = false;
 				boomerangTime = 0.0f;
+				scoredThisThrow = false;   // ★ 新しい投げなのでスコアフラグをリセット
 
 				// スタート位置 = プレイヤーの手
 				startPos.x = player->pos.x - sinf(XM_PI) * 1.0f;
@@ -486,11 +487,21 @@ void BOOM::HitITboom(int p_Index)
 	// 自分自身に当たるのを防ぐ
 	if (p_Index == PlayerIndex) return;
 
-	// ノックバック方向を計算（ボールと同じように）
+	PLAYER* target = GetPlayer(p_Index);
+	if (!target || !target->use) return;  // 無効なプレイヤーは無視
+
+	// ---- スコア加算 ----
+	// 投げごとに1回だけ加点する
+	if (PlayerIndex >= 0 && !scoredThisThrow) {
+		AddScore(PlayerIndex, 100);   // 所有者に100点加算
+		scoredThisThrow = true;       // フラグを立てて二重加算防止
+	}
+
+	// ---- ノックバック方向を計算 ----
 	XMFLOAT3 hitDir;
-	hitDir.x = GetPlayer(p_Index)->pos.x - pos.x;
+	hitDir.x = target->pos.x - pos.x;
 	hitDir.y = 0.0f;
-	hitDir.z = GetPlayer(p_Index)->pos.z - pos.z;
+	hitDir.z = target->pos.z - pos.z;
 	float len = sqrtf(hitDir.x * hitDir.x + hitDir.z * hitDir.z);
 	if (len > 0.001f) {
 		hitDir.x /= len;
@@ -503,10 +514,11 @@ void BOOM::HitITboom(int p_Index)
 	// プレイヤーを吹っ飛ばす
 	OnPlayerHit(p_Index, hitDir);
 
-	// 当たったプレイヤーから武器を外す
-	GetPlayer(p_Index)->haveWeapon = FALSE;
-	PlaySound(SOUND_LABEL_SE_shot002);
+	// 当たったプレイヤーの武器を解除
+	target->haveWeapon = FALSE;
 
+	// ヒット音再生
+	PlaySound(SOUND_LABEL_SE_shot002);
 }
 
 

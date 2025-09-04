@@ -53,6 +53,10 @@ private:
     // ★追加：耐久（3回で壊れる）
     int  swingCount = 0;
 
+	// ★追加：1スイング中に何度も得点しないようにする
+    bool scoredThisSwing;
+
+
 public:
     HRESULT InitITHamr(void);
     void    UninitITHamr(void);

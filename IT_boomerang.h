@@ -56,6 +56,9 @@ private:
 	float spinAngle; // Radians
 	float spinSpeed; // Radians per frame (or per time)
 	bool wantToThrow = false;
+	// BOOMクラス内に追加
+	bool scoredThisThrow;   // この投げでスコアを加算済みかどうか
+
 public:
 	HRESULT InitITboom(void);
 	void UninitITboom(void);
