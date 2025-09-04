@@ -131,11 +131,12 @@ void UpdateScore(void)
 //=============================================================================
 void DrawScore(void)
 {
-    if (GetMode() == MODE_RESULT||MODE_GAME)
+    if (GetMode() == MODE_RESULT || GetMode() == MODE_GAME)
     {
         DrawScoreAbovePlayers();
         return;
     }
+
 
     // 頂点バッファ設定
     UINT stride = sizeof(VERTEX_3D);
