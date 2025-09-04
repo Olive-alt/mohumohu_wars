@@ -7,7 +7,7 @@
 #include "debugproc.h"
 #include "shadow.h"
 #include "sound.h"
-
+#include "score.h"
 //*****************************************************************************
 // マクロ
 //*****************************************************************************
@@ -156,9 +156,11 @@ void HAMR::UpdateITHamr(void)
         if (!to_swing && wantToSwing)
         {
             to_swing = TRUE;
-            wantToSwing = false;          // 1回消費
+            wantToSwing = false;
+            scoredThisSwing = false; // <-- reset at start of swing
             PlaySound(SOUND_LABEL_SE_shot002);
         }
+
     }
 
     // スイング
@@ -263,23 +265,33 @@ void HAMR::SetITHamrObject(XMFLOAT3 set_pos)
 //=============================================================================
 // ヒット（装備中の当たり判定から呼ばれる）
 //=============================================================================
+
 void HAMR::HitITHamr(int p_Index)
 {
-    if (p_Index == PlayerIndex) return;
+    if (p_Index == PlayerIndex) return;   // 自分自身には当たり判定しない
 
     PLAYER* player = GetPlayer(p_Index);
-    if (!player || !player->use) return;
+    if (!player || !player->use) return;  // 無効なプレイヤーは無視
 
-    // 叩かれ演出（既存処理があれば置き換え）
-    // 例：つぶし演出
+    // ---- スコア加算 ----
+    // 1スイングにつき1回だけ加点する
+    if (!scoredThisSwing)
+    {
+        AddScore(PlayerIndex, 100);  // ハンマーの所有者に100点を加算
+        scoredThisSwing = true;      // フラグを立てて二重加算を防止
+    }
+
+    // ---- つぶれ演出 ----
     if (!player->squished)
-        player->originalScl = player->scl;
-    player->scl.y = 0.3f;
-    player->scl.x = 1.4f;
-    player->scl.z = 1.4f;
-    player->squished = true;
-    player->squishTimer = 5.0f;
+        player->originalScl = player->scl; // 元のスケールを保存
+
+    player->scl.y = 0.3f;   // 高さを縮める
+    player->scl.x = 1.4f;   // 横方向に広げる
+    player->scl.z = 1.4f;   // 奥行きも広げる
+    player->squished = true;          // つぶれ状態フラグ
+    player->squishTimer = 5.0f;       // 5秒間継続
 }
+
 
 //=============================================================================
 // 取得（地面から拾う）

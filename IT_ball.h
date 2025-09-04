@@ -45,6 +45,7 @@ private:
 
 	XMFLOAT4X4		m_mtxWorld;	// ワールドマトリックス
 
+	BOOL scoredThisThrow; 
 public:
 	HRESULT InitITball(void);
 	void UninitITball(void);

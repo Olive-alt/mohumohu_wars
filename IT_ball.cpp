@@ -6,7 +6,7 @@
 #include "camera.h"
 #include "debugproc.h"
 #include "shadow.h"
-
+#include "score.h"
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
@@ -319,30 +319,41 @@ void BALL::SetITball(XMFLOAT3 set_pos, XMFLOAT3 p_rot)
 
 void BALL::HitITball(int p_Index)
 {
-	if (p_Index == PlayerIndex) return;
-
-	use = FALSE;
-	to_throw = FALSE;
+	if (p_Index == PlayerIndex) return;   // 自分自身には当たり判定しない
 
 	PLAYER* player = GetPlayer(p_Index);
-	// player->use = FALSE; // ←これをやめる
+	if (!player || !player->use) return;  // 無効なプレイヤーは無視
 
-	// ---- 追加：hitDirection計算とOnPlayerHit呼び出し ----
+	// ---- スコア加算 ----
+	// ボールを投げたプレイヤー（PlayerIndex）に加点
+	if (PlayerIndex >= 0) {
+		AddScore(PlayerIndex, 100);  // ボールは100点
+	}
+
+	// ---- 既存のノックバック処理 ----
+	use = FALSE;        // ボールを無効化
+	to_throw = FALSE;   // 投げ状態解除
+
+	// 当たった方向ベクトルを計算
 	XMFLOAT3 hitDir;
-	// 「ボール → プレイヤー」の方向に吹っ飛ばしたいならこう
 	hitDir.x = player->pos.x - pos.x;
-	hitDir.y = 0.0f; // 地面方向だけ
+	hitDir.y = 0.0f;
 	hitDir.z = player->pos.z - pos.z;
+
 	float len = sqrtf(hitDir.x * hitDir.x + hitDir.z * hitDir.z);
 	if (len > 0.001f) {
 		hitDir.x /= len;
 		hitDir.z /= len;
 	}
 	else {
-		hitDir.x = 1.0f; hitDir.z = 0.0f;
+		hitDir.x = 1.0f;
+		hitDir.z = 0.0f;
 	}
+
+	// プレイヤーにヒット処理を適用
 	OnPlayerHit(p_Index, hitDir);
 
+	// 所有者をリセット（同じボールで二重に加点しないようにする）
 	PlayerIndex = -1;
 }
 

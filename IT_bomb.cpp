@@ -6,7 +6,7 @@
 #include "camera.h"
 #include "debugproc.h"
 #include "shadow.h"
-
+#include "score.h"
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
@@ -401,12 +401,26 @@ void BOMB::SetITbomb(XMFLOAT3 set_pos, XMFLOAT3 p_rot)
 
 void BOMB::HitITbomb(int p_Index)
 {
-	if (p_Index == PlayerIndex)return;
+	if (p_Index == PlayerIndex) return;   // 自分自身には当たり判定しない
 
 	PLAYER* player = GetPlayer(p_Index);
-	player->use = FALSE;
-	PlayerIndex = -1;
+	if (!player || !player->use) return;  // 無効なプレイヤーは無視
+
+	// ---- スコア加算 ----
+	if (PlayerIndex >= 0) {
+		AddScore(PlayerIndex, 150);  // 爆弾は150点とする
+	}
+
+	// ---- 爆弾の効果（既存処理）----
+	player->use = FALSE;  // プレイヤーを無効化（やられ判定など）
+
+	// ---- 爆弾のリセット ----
+	PlayerIndex = -1;     // 所有者をリセット（多重加点防止）
+	use = FALSE;          // 爆弾を無効化
+	to_throw = FALSE;     // 投げ状態解除
+	expUse = FALSE;       // 爆発状態解除
 }
+
 
 void BOMB::PickITbomb(int p_Index)
 {
