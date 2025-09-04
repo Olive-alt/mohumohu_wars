@@ -6,6 +6,7 @@
 #include "camera.h"
 #include "debugproc.h"
 #include "shadow.h"
+#include "sound.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -467,6 +468,8 @@ void BOOM::HitITboom(int p_Index)
 
 	// 当たったプレイヤーから武器を外す
 	GetPlayer(p_Index)->haveWeapon = FALSE;
+	PlaySound(SOUND_LABEL_SE_shot002);
+
 }
 
 
