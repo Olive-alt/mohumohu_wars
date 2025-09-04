@@ -9,7 +9,7 @@
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
-#define	MODEL_HEAL		"data/MODEL/item/item_heal.obj"			// 読み込むモデル名
+#define	MODEL_HEAL		"data/MODEL/item/item_big2.obj"			// 読み込むモデル名
 
 #define HEAL_SCL_RATE		(3.0f)							// 巨大化の倍率
 #define HEAL_TIME			(600.0f)							// 巨大化の倍率
