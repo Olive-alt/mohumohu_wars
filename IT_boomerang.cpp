@@ -1,4 +1,4 @@
-#include "main.h"
+ï»¿#include "main.h"
 #include "input.h"
 #include "IT_boomerang.h"
 #include "renderer.h"
@@ -8,37 +8,48 @@
 #include "shadow.h"
 
 //*****************************************************************************
-// ƒ}ƒNƒ’è‹`
+// ãƒã‚¯ãƒ­å®šç¾©
 //*****************************************************************************
-#define	MODEL_BOOM  	"data/MODEL/item/item_boomerang.obj"			// “Ç‚İ‚Şƒ‚ƒfƒ‹–¼
+#define	MODEL_BOOM  	"data/MODEL/item/item_boomerang.obj"			// èª­ã¿è¾¼ã‚€ãƒ¢ãƒ‡ãƒ«å
 
-#define	VALUE_MOVE		(10.0f)					// ˆÚ“®—Ê
-#define	VALUE_ROTATE	(XM_PI * 0.02f)			// ‰ñ“]—Ê
+#define	VALUE_MOVE		(10.0f)					// ç§»å‹•é‡
+#define	VALUE_ROTATE	(XM_PI * 0.02f)			// å›è»¢é‡
 
-#define BOOM_SHADOW_SIZE	(0.4f)							// ‰e‚Ì‘å‚«‚³
-#define BOOM_OFFSET_Y		(7.0f)							// ƒvƒŒƒCƒ„[‚Ì‘«Œ³‚ğ‚ ‚í‚¹‚é
-#define	BOOM_DAMAGE			(5.0f)					// ƒ_ƒ[ƒW—Ê
+#define BOOM_SHADOW_SIZE	(0.4f)							// å½±ã®å¤§ãã•
+#define BOOM_OFFSET_Y		(7.0f)							// ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã®è¶³å…ƒã‚’ã‚ã‚ã›ã‚‹
+#define	BOOM_DAMAGE			(5.0f)					// ãƒ€ãƒ¡ãƒ¼ã‚¸é‡
 
 
-//ƒAƒCƒRƒ“—p
-#define TEXTURE_MAX			(1)				// ƒeƒNƒXƒ`ƒƒ‚Ì”
+//ã‚¢ã‚¤ã‚³ãƒ³ç”¨
+#define TEXTURE_MAX			(1)				// ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®æ•°
 
-#define	ICON_WIDTH			(10.0f)			// ’¸“_ƒTƒCƒY
-#define	ICON_HEIGHT			(10.0f)			// ’¸“_ƒTƒCƒY
+#define	ICON_WIDTH			(10.0f)			// é ‚ç‚¹ã‚µã‚¤ã‚º
+#define	ICON_HEIGHT			(10.0f)			// é ‚ç‚¹ã‚µã‚¤ã‚º
+
+// ---- return è»Œé“ï¼†å†ã‚¢ã‚¤ãƒ†ãƒ åŒ–ã®èª¿æ•´ ----
+#define BOOM_REITEMIZE_T        (0.65f)  // æˆ»ã‚ŠtãŒã“ã®å€¤ã‚’è¶…ãˆãŸåœ°ç‚¹ã§å†ã‚¢ã‚¤ãƒ†ãƒ åŒ–
+#define BOOM_RETURN_LATERAL     (28.0f)  // æˆ»ã‚Šè»Œé“ã®æ¨ªã‚ºãƒ¬é‡ï¼ˆã‚«ãƒ¼ãƒ–ã®å¼·ã•ï¼‰
+#define BOOM_REITEMIZE_FALL_Y   (0.0f)   // å†ã‚¢ã‚¤ãƒ†ãƒ åŒ–æ™‚ã®é«˜ã•ï¼ˆåœ°é¢ã®Yã€‚åœ°å½¢ã«åˆã‚ã›ã‚‹ãªã‚‰èª¿æ•´ï¼‰
+#define BOOM_REITEMIZE_FALL_DUR (0.3f)   // å†ã‚¢ã‚¤ãƒ†ãƒ åŒ–ã¾ã§ã®è½ä¸‹æ™‚é–“ï¼ˆtç§’å¾Œã«å†ã‚¢ã‚¤ãƒ†ãƒ åŒ–ï¼‰
+
+#ifndef BOOM_RETURN_OVERSHOOT
+#define BOOM_RETURN_OVERSHOOT 120.0f
+#endif
+
 //*****************************************************************************
-// ƒvƒƒgƒ^ƒCƒvéŒ¾
+// ãƒ—ãƒ­ãƒˆã‚¿ã‚¤ãƒ—å®£è¨€
 //*****************************************************************************
 HRESULT MakeVertexITboomIcon(void);
 
 //*****************************************************************************
-// ƒOƒ[ƒoƒ‹•Ï”
+// ã‚°ãƒ­ãƒ¼ãƒãƒ«å¤‰æ•°
 //*****************************************************************************
-static ID3D11Buffer* g_VertexBuffer = NULL;	// ’¸“_ƒoƒbƒtƒ@
-static ID3D11ShaderResourceView* g_Texture[TEXTURE_MAX] = { NULL };	// ƒeƒNƒXƒ`ƒƒî•ñ
-static BOOL					g_bAlpaTest;		// ƒAƒ‹ƒtƒ@ƒeƒXƒgON/OFF
+static ID3D11Buffer* g_VertexBuffer = NULL;	// é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡
+static ID3D11ShaderResourceView* g_Texture[TEXTURE_MAX] = { NULL };	// ãƒ†ã‚¯ã‚¹ãƒãƒ£æƒ…å ±
+static BOOL					g_bAlpaTest;		// ã‚¢ãƒ«ãƒ•ã‚¡ãƒ†ã‚¹ãƒˆON/OFF
 
 BOOL			boom_load = FALSE;
-DX11_MODEL		boom_model;				// ƒ‚ƒfƒ‹î•ñ
+DX11_MODEL		boom_model;				// ãƒ¢ãƒ‡ãƒ«æƒ…å ±
 
 static char* g_TextureName[] =
 {
@@ -46,7 +57,7 @@ static char* g_TextureName[] =
 };
 
 //=============================================================================
-// ‰Šú‰»ˆ—
+// åˆæœŸåŒ–å‡¦ç†
 //=============================================================================
 HRESULT BOOM::InitITboom(void)
 {
@@ -78,7 +89,7 @@ HRESULT BOOM::InitITboom(void)
 
 	MakeVertexITboomIcon();
 
-	// ƒeƒNƒXƒ`ƒƒ¶¬
+	// ãƒ†ã‚¯ã‚¹ãƒãƒ£ç”Ÿæˆ
 	for (int i = 0; i < TEXTURE_MAX; i++)
 	{
 		g_Texture[i] = NULL;
@@ -90,7 +101,7 @@ HRESULT BOOM::InitITboom(void)
 			NULL);
 	}
 
-	// –Øƒ[ƒN‚Ì‰Šú‰»
+	// æœ¨ãƒ¯ãƒ¼ã‚¯ã®åˆæœŸåŒ–
 	ZeroMemory(&icon_material, sizeof(icon_material));
 	icon_material.Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -108,7 +119,7 @@ HRESULT BOOM::InitITboom(void)
 void BOOM::UninitITboom(void)
 {
 	use = FALSE;
-	// ƒ‚ƒfƒ‹‚Ì‰ğ•úˆ—
+	// ãƒ¢ãƒ‡ãƒ«ã®è§£æ”¾å‡¦ç†
 	if (boom_load == TRUE)
 	{
 		UnloadModel(&boom_model);
@@ -118,14 +129,14 @@ void BOOM::UninitITboom(void)
 	for (int nCntTex = 0; nCntTex < TEXTURE_MAX; nCntTex++)
 	{
 		if (g_Texture[nCntTex] != NULL)
-		{// ƒeƒNƒXƒ`ƒƒ‚Ì‰ğ•ú
+		{// ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®è§£æ”¾
 			g_Texture[nCntTex]->Release();
 			g_Texture[nCntTex] = NULL;
 		}
 	}
 
 	if (g_VertexBuffer != NULL)
-	{// ’¸“_ƒoƒbƒtƒ@‚Ì‰ğ•ú
+	{// é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡ã®è§£æ”¾
 		g_VertexBuffer->Release();
 		g_VertexBuffer = NULL;
 	}
@@ -152,16 +163,16 @@ void BOOM::UpdateITboom(void)
 
 			if (!returning)
 			{
-				// ŠOŒü‚«‚Ì‹O“¹: startPos ‚©‚ç endPos ‚Ö
-				float t = boomerangTime / 1.8f; // 0 ‚©‚ç 1 ‚Ü‚Å
+				// å¤–å‘ãã®è»Œé“: startPos ã‹ã‚‰ endPos ã¸
+				float t = boomerangTime / 1.8f; // 0 ã‹ã‚‰ 1 ã¾ã§
 				if (t >= 1.0f)
 				{
 					t = 1.0f;
 					returning = true;
-					boomerangTime = 0.0f; // –ß‚è‚Ìƒ^ƒCƒ}[ƒŠƒZƒbƒg
+					boomerangTime = 0.0f; // æˆ»ã‚Šã®ã‚¿ã‚¤ãƒãƒ¼ãƒªã‚»ãƒƒãƒˆ
 				}
 
-				// ŠOŒü‚«‚Ì‘È‰~‹O“¹
+				// å¤–å‘ãã®æ¥•å††è»Œé“
 				XMFLOAT3 center;
 				center.x = (startPos.x + endPos.x) * 0.5f;
 				center.y = (startPos.y + endPos.y) * 0.5f;
@@ -186,7 +197,7 @@ void BOOM::UpdateITboom(void)
 					minor.z = (minor.z / minorLen) * arcHeight;
 				}
 
-				float angle = XM_PI * t; // 0 ‚©‚ç PI ‚Ü‚Å
+				float angle = XM_PI * t; // 0 ã‹ã‚‰ PI ã¾ã§
 
 				pos.x = center.x + major.x * cosf(angle) + minor.x * sinf(angle);
 				pos.y = center.y;
@@ -194,62 +205,72 @@ void BOOM::UpdateITboom(void)
 			}
 			else
 			{
-				// “àŒü‚«‚Ì‹O“¹: endPos ‚©‚çƒvƒŒƒCƒ„[‚ÌŒ»İˆÊ’u‚Öi–ˆƒtƒŒ[ƒ€ÄŒvZj
 				PLAYER* player = GetPlayer(PlayerIndex);
 
-				// –ˆƒtƒŒ[ƒ€Aƒ^[ƒQƒbƒg‚ğƒvƒŒƒCƒ„[‚ÌŒ»İˆÊ’u‚É‚·‚é
-				XMFLOAT3 dynamicTarget;
-				dynamicTarget.x = player->pos.x - sin(XM_PI) * 1.0f;
-				dynamicTarget.y = player->pos.y;
-				dynamicTarget.z = player->pos.z - cos(XM_PI) * 1.0f;
-
-				float t = boomerangTime / 1.8f; // 0 ‚©‚ç 1 ‚Ü‚Å
-				if (t >= 1.0f) t = 1.0f;
-
-				// “àŒü‚«‚Ì‘È‰~‹O“¹
-				XMFLOAT3 center;
-				center.x = (endPos.x + dynamicTarget.x) * 0.5f;
-				center.y = (endPos.y + dynamicTarget.y) * 0.5f;
-				center.z = (endPos.z + dynamicTarget.z) * 0.5f;
-
-				XMFLOAT3 major;
-				major.x = (endPos.x - dynamicTarget.x) * 0.5f;
-				major.y = 0.0f;
-				major.z = (endPos.z - dynamicTarget.z) * 0.5f;
-
-				XMFLOAT3 minor;
-				minor.x = -(major.z);
-				minor.y = 0.0f;
-				minor.z = major.x;
-
-				float majorLen = sqrtf(major.x * major.x + major.z * major.z);
-				float arcHeight = 0.2f * majorLen;
-				float minorLen = sqrtf(minor.x * minor.x + minor.z * minor.z);
-				if (minorLen > 0.01f)
+				// â˜… ç›®æ¨™ç‚¹ï¼ˆãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ï¼‰ã®â€œå…ˆâ€ã¸ã‚ªãƒ¼ãƒãƒ¼ã‚·ãƒ¥ãƒ¼ãƒˆã—ã¦è·é›¢ã‚’ä¼¸ã°ã™
+				XMFLOAT3 dynamicTarget = { player->pos.x, player->pos.y, player->pos.z };
 				{
-					minor.x = (minor.x / minorLen) * arcHeight;
-					minor.z = (minor.z / minorLen) * arcHeight;
+					XMFLOAT3 dir = { player->pos.x - endPos.x, 0.0f, player->pos.z - endPos.z };
+					float len = sqrtf(dir.x * dir.x + dir.z * dir.z);
+					if (len > 0.001f) {
+						dir.x /= len; dir.z /= len;
+#ifndef BOOM_RETURN_OVERSHOOT
+#define BOOM_RETURN_OVERSHOOT 160.0f   // â† 120â†’160 ã«å¼·åŒ–
+#endif
+						dynamicTarget.x += dir.x * BOOM_RETURN_OVERSHOOT;
+						dynamicTarget.z += dir.z * BOOM_RETURN_OVERSHOOT;
+					}
 				}
 
-				float angle = XM_PI * t; // 0 ‚©‚ç PI ‚Ü‚Å
+				// â˜… æˆ»ã‚Št
+				float t = boomerangTime / 1.8f;      // 0â†’1
+				if (t > 1.0f) t = 1.0f;
 
-				pos.x = center.x + major.x * cosf(angle) + minor.x * sinf(angle);
+				// â˜… æ¥•å††ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ã‚’æˆ»ã‚Šå´ã§ã‚‚â€œã“ã“ã§â€æ˜ç¤ºè¨ˆç®—ï¼ˆmajor/minorã®ã‚¹ã‚³ãƒ¼ãƒ—ã‚’çµ±ä¸€ï¼‰
+				XMFLOAT3 center = { (endPos.x + dynamicTarget.x) * 0.5f, (endPos.y + dynamicTarget.y) * 0.5f, (endPos.z + dynamicTarget.z) * 0.5f };
+				XMFLOAT3 major = { (endPos.x - dynamicTarget.x) * 0.5f, 0.0f, (endPos.z - dynamicTarget.z) * 0.5f };
+				XMFLOAT3 minor = { -major.z, 0.0f, major.x };
+
+				float majorLen = sqrtf(major.x * major.x + major.z * major.z);
+				float arcHeight = 0.18f * majorLen;
+				float minorLen = sqrtf(minor.x * minor.x + minor.z * minor.z);
+				if (minorLen > 0.01f) { minor.x = (minor.x / minorLen) * arcHeight; minor.z = (minor.z / minorLen) * arcHeight; }
+
+				// â˜… æ¥ç·šæ–¹å‘ã®æ¨ªã‚ºãƒ¬ï¼ˆå¾ŒåŠå¼·ãï¼‰
+#ifndef BOOM_RETURN_LATERAL
+#define BOOM_RETURN_LATERAL 36.0f       // â† 28â†’36 ã«å¼·åŒ–
+#endif
+				XMFLOAT3 tangent = { -major.z, 0.0f, major.x };
+				float tlen = sqrtf(tangent.x * tangent.x + tangent.z * tangent.z);
+				if (tlen > 0.01f) { tangent.x /= tlen; tangent.z /= tlen; }
+				float lateral = BOOM_RETURN_LATERAL * (t * t);
+				XMFLOAT3 lateralOffset = { tangent.x * lateral, 0.0f, tangent.z * lateral };
+
+				// â˜… è§’åº¦ 0â†’PI ã®åŠå‘¨
+				float angle = XM_PI * t;
+				pos.x = center.x + major.x * cosf(angle) + minor.x * sinf(angle) + lateralOffset.x;
 				pos.y = center.y;
-				pos.z = center.z + major.z * cosf(angle) + minor.z * sinf(angle);
+				pos.z = center.z + major.z * cosf(angle) + minor.z * sinf(angle) + lateralOffset.z;
 
-				// –Ú•W‚É\•ª‹ß‚¯‚ê‚ÎƒA[ƒNI—¹
-				float dx = pos.x - dynamicTarget.x;
-				float dy = pos.y - dynamicTarget.y;
-				float dz = pos.z - dynamicTarget.z;
-				float dist = sqrtf(dx * dx + dy * dy + dz * dz);
-				if (t >= 1.0f || dist < 2.0f)
-				{
-					pos = dynamicTarget;
-					to_throw = FALSE;
-					returning = FALSE;
-					pick = TRUE;
-					count = 0.0f;
-					player->haveWeapon = TRUE;
+				// â˜… ãƒ‰ãƒ­ãƒƒãƒ—ï¼ˆå†ã‚¢ã‚¤ãƒ†ãƒ åŒ–ï¼‰ã‚’é…ã‚‰ã›ã¦â€œæˆ»ã‚Šè·é›¢â€ã‚’ç¢ºä¿
+#ifndef BOOM_REITEMIZE_T
+#define BOOM_REITEMIZE_T 0.90f          // â† 0.65â†’0.90 ã«ä¸Šã’ã‚‹
+#endif
+#ifndef BOOM_REITEMIZE_FALL_Y
+#define BOOM_REITEMIZE_FALL_Y 0.0f
+#endif
+				if (t >= BOOM_REITEMIZE_T) {
+					to_throw = FALSE; returning = FALSE; pick = FALSE;
+					if (PlayerIndex >= 0) { if (PLAYER* owner = GetPlayer(PlayerIndex)) owner->haveWeapon = FALSE; }
+					PlayerIndex = -1; pos.y = BOOM_REITEMIZE_FALL_Y; return;
+				}
+
+				// â˜… å¿µã®ãŸã‚ã®çµ‚ç«¯
+				float dx = pos.x - dynamicTarget.x, dz = pos.z - dynamicTarget.z;
+				if (t >= 1.0f || (dx * dx + dz * dz) < (2.0f * 2.0f)) {
+					to_throw = FALSE; returning = FALSE; pick = FALSE;
+					if (PlayerIndex >= 0) { if (PLAYER* owner = GetPlayer(PlayerIndex)) owner->haveWeapon = FALSE; }
+					PlayerIndex = -1; pos.y = BOOM_REITEMIZE_FALL_Y; return;
 				}
 			}
 		}
@@ -274,12 +295,12 @@ void BOOM::UpdateITboom(void)
 				returning = false;
 				boomerangTime = 0.0f;
 
-				// ƒXƒ^[ƒgˆÊ’u = ƒvƒŒƒCƒ„[‚Ìè
+				// ã‚¹ã‚¿ãƒ¼ãƒˆä½ç½® = ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã®æ‰‹
 				startPos.x = player->pos.x - sinf(XM_PI) * 1.0f;
 				startPos.y = player->pos.y;
 				startPos.z = player->pos.z - cosf(XM_PI) * 1.0f;
 
-				// I“_ˆÊ’u = ƒvƒŒƒCƒ„[‘O•û
+				// çµ‚ç‚¹ä½ç½® = ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼å‰æ–¹
 				float throwDistance = 160.0f;
 				endPos.x = player->pos.x + -sinf(rot.y) * throwDistance;
 				endPos.y = player->pos.y;
@@ -287,7 +308,7 @@ void BOOM::UpdateITboom(void)
 
 				pos = startPos;
 
-				wantToThrow = false; // g‚¢I‚í‚Á‚½‚çƒŠƒZƒbƒg
+				wantToThrow = false; // ä½¿ã„çµ‚ã‚ã£ãŸã‚‰ãƒªã‚»ãƒƒãƒˆ
 			}
 
 		}
@@ -304,10 +325,10 @@ void BOOM::UpdateITboom(void)
 
 void BOOM::DrawITboom(void)
 {
-	// ƒ¿ƒeƒXƒgİ’è
+	// Î±ãƒ†ã‚¹ãƒˆè¨­å®š
 	if (g_bAlpaTest == TRUE)
 	{
-		// ƒ¿ƒeƒXƒg‚ğ—LŒø‚É
+		// Î±ãƒ†ã‚¹ãƒˆã‚’æœ‰åŠ¹ã«
 		SetAlphaTestEnable(TRUE);
 	}
 
@@ -317,13 +338,13 @@ void BOOM::DrawITboom(void)
 	{
 		XMMATRIX mtxScl, mtxRot, mtxTranslate, mtxWorld;
 
-		// ƒJƒŠƒ“ƒO–³Œø
+		// ã‚«ãƒªãƒ³ã‚°ç„¡åŠ¹
 		SetCullingMode(CULL_MODE_NONE);
 
-		// ƒ[ƒ‹ƒhƒ}ƒgƒŠƒbƒNƒX‚Ì‰Šú‰»
+		// ãƒ¯ãƒ¼ãƒ«ãƒ‰ãƒãƒˆãƒªãƒƒã‚¯ã‚¹ã®åˆæœŸåŒ–
 		mtxWorld = XMMatrixIdentity();
 
-		// ƒXƒP[ƒ‹‚ğ”½‰f
+		// ã‚¹ã‚±ãƒ¼ãƒ«ã‚’åæ˜ 
 		mtxScl = XMMatrixScaling(scl.x, scl.y, scl.z);
 		mtxWorld = XMMatrixMultiply(mtxWorld, mtxScl);
 
@@ -341,70 +362,70 @@ void BOOM::DrawITboom(void)
 		mtxWorld = XMMatrixMultiply(mtxWorld, mtxRot);
 
 
-		// ˆÚ“®‚ğ”½‰f
+		// ç§»å‹•ã‚’åæ˜ 
 		mtxTranslate = XMMatrixTranslation(pos.x, pos.y, pos.z);
 		mtxWorld = XMMatrixMultiply(mtxWorld, mtxTranslate);
 
-		// ƒ[ƒ‹ƒhƒ}ƒgƒŠƒbƒNƒX‚Ìİ’è
+		// ãƒ¯ãƒ¼ãƒ«ãƒ‰ãƒãƒˆãƒªãƒƒã‚¯ã‚¹ã®è¨­å®š
 		SetWorldMatrix(&mtxWorld);
 
 		XMStoreFloat4x4(&m_mtxWorld, mtxWorld);
 
-		// ƒ‚ƒfƒ‹•`‰æ
+		// ãƒ¢ãƒ‡ãƒ«æç”»
 		DrawModel(&boom_model);
 
-		// ƒJƒŠƒ“ƒOİ’è‚ğ–ß‚·
+		// ã‚«ãƒªãƒ³ã‚°è¨­å®šã‚’æˆ»ã™
 		SetCullingMode(CULL_MODE_BACK);
 	}
 	else if (pick)
 	{
-		// ƒ‰ƒCƒeƒBƒ“ƒO‚ğ–³Œø
+		// ãƒ©ã‚¤ãƒ†ã‚£ãƒ³ã‚°ã‚’ç„¡åŠ¹
 		SetLightEnable(FALSE);
 
 		XMMATRIX mtxScl, mtxTranslate, mtxWorld, mtxView;
 		CAMERA* cam = GetCamera();
 
-		// ’¸“_ƒoƒbƒtƒ@İ’è
+		// é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡è¨­å®š
 		UINT stride = sizeof(VERTEX_3D);
 		UINT offset = 0;
 		GetDeviceContext()->IASetVertexBuffers(0, 1, &g_VertexBuffer, &stride, &offset);
 
-		// ƒvƒŠƒ~ƒeƒBƒuƒgƒ|ƒƒWİ’è
+		// ãƒ—ãƒªãƒŸãƒ†ã‚£ãƒ–ãƒˆãƒãƒ­ã‚¸è¨­å®š
 		GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
-		// ƒ[ƒ‹ƒhƒ}ƒgƒŠƒbƒNƒX‚Ì‰Šú‰»
+		// ãƒ¯ãƒ¼ãƒ«ãƒ‰ãƒãƒˆãƒªãƒƒã‚¯ã‚¹ã®åˆæœŸåŒ–
 		mtxWorld = XMMatrixIdentity();
 
-		// ƒrƒ…[ƒ}ƒgƒŠƒbƒNƒX‚ğæ“¾
+		// ãƒ“ãƒ¥ãƒ¼ãƒãƒˆãƒªãƒƒã‚¯ã‚¹ã‚’å–å¾—
 		mtxView = XMLoadFloat4x4(&cam->mtxView);
 
 
-		// ŠÖ”g‚Á‚½”Å
+		// é–¢æ•°ä½¿ã£ãŸç‰ˆ
 		mtxWorld = XMMatrixInverse(nullptr, mtxView);
 		mtxWorld.r[3].m128_f32[0] = 0.0f;
 		mtxWorld.r[3].m128_f32[1] = 0.0f;
 		mtxWorld.r[3].m128_f32[2] = 0.0f;
 
-		// ƒXƒP[ƒ‹‚ğ”½‰f
+		// ã‚¹ã‚±ãƒ¼ãƒ«ã‚’åæ˜ 
 		mtxScl = XMMatrixScaling(icon_scl.x, icon_scl.y, icon_scl.z);
 		mtxWorld = XMMatrixMultiply(mtxWorld, mtxScl);
 
-		// ˆÚ“®‚ğ”½‰f
+		// ç§»å‹•ã‚’åæ˜ 
 		mtxTranslate = XMMatrixTranslation(icon_pos.x, icon_pos.y, icon_pos.z);
 		mtxWorld = XMMatrixMultiply(mtxWorld, mtxTranslate);
 
-		// ƒ[ƒ‹ƒhƒ}ƒgƒŠƒbƒNƒX‚Ìİ’è
+		// ãƒ¯ãƒ¼ãƒ«ãƒ‰ãƒãƒˆãƒªãƒƒã‚¯ã‚¹ã®è¨­å®š
 		SetWorldMatrix(&mtxWorld);
 
 
-		// ƒ}ƒeƒŠƒAƒ‹İ’è
+		// ãƒãƒ†ãƒªã‚¢ãƒ«è¨­å®š
 		SetMaterial(icon_material);
 
-		//// ƒeƒNƒXƒ`ƒƒİ’è
+		//// ãƒ†ã‚¯ã‚¹ãƒãƒ£è¨­å®š
 		//int texNo = i % TEXTURE_MAX;
-		//if (i == 4)	// ‚T”Ô‚Ì–Ø‚¾‚¯ƒeƒNƒXƒ`ƒƒƒAƒjƒ‚³‚¹‚Ä‚İ‚é
+		//if (i == 4)	// ï¼•ç•ªã®æœ¨ã ã‘ãƒ†ã‚¯ã‚¹ãƒãƒ£ã‚¢ãƒ‹ãƒ¡ã•ã›ã¦ã¿ã‚‹
 		//{
-		//	// ƒeƒNƒXƒ`ƒƒƒAƒjƒ‚Í‚±‚ñ‚ÈŠ´‚¶‚Å—Ç‚¢‚æ
+		//	// ãƒ†ã‚¯ã‚¹ãƒãƒ£ã‚¢ãƒ‹ãƒ¡ã¯ã“ã‚“ãªæ„Ÿã˜ã§è‰¯ã„ã‚ˆ
 		//	g_TexAnim++;
 		//	if ((g_TexAnim % 16) == 0)
 		//	{
@@ -414,14 +435,14 @@ void BOOM::DrawITboom(void)
 		//}
 		//GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[texNo]);
 
-		// ƒ|ƒŠƒSƒ“‚Ì•`‰æ
+		// ãƒãƒªã‚´ãƒ³ã®æç”»
 		GetDeviceContext()->Draw(4, 0);
 
 
-		// ƒ‰ƒCƒeƒBƒ“ƒO‚ğ—LŒø‚É
+		// ãƒ©ã‚¤ãƒ†ã‚£ãƒ³ã‚°ã‚’æœ‰åŠ¹ã«
 		SetLightEnable(TRUE);
 
-		// ƒ¿ƒeƒXƒg‚ğ–³Œø‚É
+		// Î±ãƒ†ã‚¹ãƒˆã‚’ç„¡åŠ¹ã«
 		SetAlphaTestEnable(FALSE);
 
 	}
@@ -432,23 +453,39 @@ void BOOM::SetITboomObject(XMFLOAT3 set_pos, int playerIndex)
 	use = TRUE;
 	pos = set_pos;
 	pick = FALSE;
-	to_throw = FALSE; 
+	to_throw = FALSE;
 	returning = false;
 	PlayerIndex = playerIndex;
-	PLAYER* player = GetPlayer(PlayerIndex);
-	pos = set_pos;
-	startPos = player->pos;
-	rot = player->rot;
-	player->haveWeapon = FALSE;
+
+	if (playerIndex >= 0) {
+		// æ‰‹æŒã¡ã‚¹ãƒãƒ¼ãƒ³ï¼ˆãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã‹ã‚‰ç™ºç”Ÿï¼‰
+		PLAYER* player = GetPlayer(playerIndex);
+		if (player) {
+			startPos = player->pos;
+			rot = player->rot;
+			player->haveWeapon = FALSE; // å¿µã®ãŸã‚ãƒªã‚»ãƒƒãƒˆ
+		}
+		else {
+			// ä¸‡ä¸€ç„¡åŠ¹ãªã‚‰åœ°é¢ã‚¹ãƒãƒ¼ãƒ³ã«ãƒ•ã‚©ãƒ¼ãƒ«ãƒãƒƒã‚¯
+			startPos = set_pos;
+			rot = XMFLOAT3(0, 0, 0);
+			PlayerIndex = -1;
+		}
+	}
+	else {
+		// åœ°é¢ã‚¹ãƒãƒ¼ãƒ³ï¼ˆç„¡æ‰€å±ï¼‰
+		startPos = set_pos;
+		rot = XMFLOAT3(0, 0, 0);
+	}
 }
 
 
 void BOOM::HitITboom(int p_Index)
 {
-	// ©•ª©g‚É“–‚½‚é‚Ì‚ğ–h‚®
+	// è‡ªåˆ†è‡ªèº«ã«å½“ãŸã‚‹ã®ã‚’é˜²ã
 	if (p_Index == PlayerIndex) return;
 
-	// ƒmƒbƒNƒoƒbƒN•ûŒü‚ğŒvZiƒ{[ƒ‹‚Æ“¯‚¶‚æ‚¤‚Éj
+	// ãƒãƒƒã‚¯ãƒãƒƒã‚¯æ–¹å‘ã‚’è¨ˆç®—ï¼ˆãƒœãƒ¼ãƒ«ã¨åŒã˜ã‚ˆã†ã«ï¼‰
 	XMFLOAT3 hitDir;
 	hitDir.x = GetPlayer(p_Index)->pos.x - pos.x;
 	hitDir.y = 0.0f;
@@ -462,10 +499,10 @@ void BOOM::HitITboom(int p_Index)
 		hitDir.x = 1.0f; hitDir.z = 0.0f;
 	}
 
-	// ƒvƒŒƒCƒ„[‚ğ‚Á”ò‚Î‚·
+	// ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã‚’å¹ã£é£›ã°ã™
 	OnPlayerHit(p_Index, hitDir);
 
-	// “–‚½‚Á‚½ƒvƒŒƒCƒ„[‚©‚ç•Ší‚ğŠO‚·
+	// å½“ãŸã£ãŸãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã‹ã‚‰æ­¦å™¨ã‚’å¤–ã™
 	GetPlayer(p_Index)->haveWeapon = FALSE;
 }
 
@@ -488,11 +525,11 @@ void BOOM::PickITboom(int p_Index)
 
 
 //=============================================================================
-// ’¸“_î•ñ‚Ìì¬
+// é ‚ç‚¹æƒ…å ±ã®ä½œæˆ
 //=============================================================================
 HRESULT MakeVertexITboomIcon(void)
 {
-	// ’¸“_ƒoƒbƒtƒ@¶¬
+	// é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡ç”Ÿæˆ
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
 	bd.Usage = D3D11_USAGE_DYNAMIC;
@@ -502,7 +539,7 @@ HRESULT MakeVertexITboomIcon(void)
 
 	GetDevice()->CreateBuffer(&bd, NULL, &g_VertexBuffer);
 
-	// ’¸“_ƒoƒbƒtƒ@‚É’l‚ğƒZƒbƒg‚·‚é
+	// é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡ã«å€¤ã‚’ã‚»ãƒƒãƒˆã™ã‚‹
 	D3D11_MAPPED_SUBRESOURCE msr;
 	GetDeviceContext()->Map(g_VertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &msr);
 
@@ -511,25 +548,25 @@ HRESULT MakeVertexITboomIcon(void)
 	float fWidth = 60.0f;
 	float fHeight = 90.0f;
 
-	// ’¸“_À•W‚Ìİ’è
+	// é ‚ç‚¹åº§æ¨™ã®è¨­å®š
 	vertex[0].Position = XMFLOAT3(-fWidth / 2.0f, fHeight, 0.0f);
 	vertex[1].Position = XMFLOAT3(fWidth / 2.0f, fHeight, 0.0f);
 	vertex[2].Position = XMFLOAT3(-fWidth / 2.0f, 0.0f, 0.0f);
 	vertex[3].Position = XMFLOAT3(fWidth / 2.0f, 0.0f, 0.0f);
 
-	// –@ü‚Ìİ’è
+	// æ³•ç·šã®è¨­å®š
 	vertex[0].Normal = XMFLOAT3(0.0f, 0.0f, -1.0f);
 	vertex[1].Normal = XMFLOAT3(0.0f, 0.0f, -1.0f);
 	vertex[2].Normal = XMFLOAT3(0.0f, 0.0f, -1.0f);
 	vertex[3].Normal = XMFLOAT3(0.0f, 0.0f, -1.0f);
 
-	// ŠgUŒõ‚Ìİ’è
+	// æ‹¡æ•£å…‰ã®è¨­å®š
 	vertex[0].Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	vertex[1].Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	vertex[2].Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	vertex[3].Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
-	// ƒeƒNƒXƒ`ƒƒÀ•W‚Ìİ’è
+	// ãƒ†ã‚¯ã‚¹ãƒãƒ£åº§æ¨™ã®è¨­å®š
 	vertex[0].TexCoord = XMFLOAT2(0.0f, 0.0f);
 	vertex[1].TexCoord = XMFLOAT2(1.0f, 0.0f);
 	vertex[2].TexCoord = XMFLOAT2(0.0f, 1.0f);
