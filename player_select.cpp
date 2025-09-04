@@ -67,21 +67,24 @@ static void AdvanceToNextPlayer(void)
         SetFade(FADE_OUT, MODE_STAGE_SELECT);
         return;
     }
-    // その時点で未使用のキャラから初期選択候補を探す
+
+    // その時点で未使用のキャラから初期選択候補を探す（無限ループ防止）
     g_SelectedPlayer = 0;
-    while (IsTaken(g_SelectedPlayer)) {
+    int guard = 0;
+    while (IsTaken(g_SelectedPlayer) && guard < MAX_CHARACTERS) {
         g_SelectedPlayer = (g_SelectedPlayer + 1) % MAX_CHARACTERS;
+        ++guard;
     }
 }
 
 
-// ===== 置き換え：InitPlayerSelect =====
 HRESULT InitPlayerSelect(void)
 {
     ID3D11Device* pDevice = GetDevice();
     PlaySound(SOUND_LABEL_BGM_bgm_a);
 
-    for (int i = 0; i < MAX_PLAYER; i++) {
+    // ★ MAX_PLAYER → MAX_PLAYERS に統一
+    for (int i = 0; i < MAX_PLAYERS; i++) {
         g_IsCPU[i] = false;
     }
 
@@ -97,26 +100,28 @@ HRESULT InitPlayerSelect(void)
         D3DX11CreateShaderResourceViewFromFile(pDevice, g_PlayerIconNames[i], NULL, NULL, &g_PlayerIcons[i], NULL);
     }
 
-    // 1p/2p/3p枠（3p画像が無い環境でも落ちないようフォールバック）
+    // 1p/2p/3p/4p 枠（存在しない場合は 2p をフォールバック）
     for (int i = 0; i < MAX_PLAYERS; i++)
     {
         g_SelectFrameTex[i] = NULL;
         HRESULT hr = D3DX11CreateShaderResourceViewFromFile(pDevice,
             g_FrameTexNames[i], NULL, NULL, &g_SelectFrameTex[i], NULL);
         if (FAILED(hr)) {
-            // 無ければ2p枠を代用
             D3DX11CreateShaderResourceViewFromFile(pDevice, g_FrameTexNames[1], NULL, NULL, &g_SelectFrameTex[i], NULL);
         }
     }
 
     // 頂点バッファ
+    if (g_VertexBuffer) { g_VertexBuffer->Release(); g_VertexBuffer = NULL; } // ★念のため再生成前に解放
     D3D11_BUFFER_DESC bd = {};
     bd.Usage = D3D11_USAGE_DYNAMIC;
     bd.ByteWidth = sizeof(VERTEX_3D) * 4;
     bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
     bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-    pDevice->CreateBuffer(&bd, NULL, &g_VertexBuffer);
+    HRESULT hrVB = pDevice->CreateBuffer(&bd, NULL, &g_VertexBuffer);
+    if (FAILED(hrVB)) return E_FAIL;
 
+    // ★再入時のために毎回選択状態を初期化
     g_SelectedPlayer = 0;
     g_SelectingPlayerIndex = 0;
     for (int i = 0; i < MAX_PLAYERS; ++i) g_SelectedCharIndex[i] = -1;
@@ -129,11 +134,9 @@ HRESULT InitPlayerSelect(void)
 }
 
 
-// ===== 置き換え：UninitPlayerSelect =====
 void UninitPlayerSelect(void)
 {
-    if (g_Load == FALSE) return;
-
+    // ★常に解放処理を通す（再入時の未解放リソースが残らないように）
     if (g_VertexBuffer)
     {
         g_VertexBuffer->Release();
@@ -156,25 +159,36 @@ void UninitPlayerSelect(void)
     }
 
     g_Load = FALSE;
+
+    // ★安全のため、抜ける時に状態も初期化（戻り先がそのまま再入してもOK）
+    g_SelectedPlayer = 0;
+    g_SelectingPlayerIndex = 0;
+    for (int i = 0; i < MAX_PLAYERS; ++i) {
+        g_SelectedCharIndex[i] = -1;
+        g_IsCPU[i] = false;
+    }
 }
 
-
-// ===== 置き換え：UpdatePlayerSelect =====
 void UpdatePlayerSelect(void)
 {
+    // 進行済み（全員決定）なら何もしない防御
+    if (g_SelectingPlayerIndex >= MAX_PLAYERS) return;
+
     // ← →
     if (GetKeyboardTrigger(DIK_LEFT) || IsButtonTriggered(0, BUTTON_LEFT))
     {
+        int guard = 0;
         do {
             g_SelectedPlayer = (g_SelectedPlayer - 1 + MAX_CHARACTERS) % MAX_CHARACTERS;
-        } while (IsTaken(g_SelectedPlayer));
+        } while (IsTaken(g_SelectedPlayer) && ++guard < MAX_CHARACTERS);
         PlaySound(SOUND_LABEL_SE_switch01);
     }
     else if (GetKeyboardTrigger(DIK_RIGHT) || IsButtonTriggered(0, BUTTON_RIGHT))
     {
+        int guard = 0;
         do {
             g_SelectedPlayer = (g_SelectedPlayer + 1) % MAX_CHARACTERS;
-        } while (IsTaken(g_SelectedPlayer));
+        } while (IsTaken(g_SelectedPlayer) && ++guard < MAX_CHARACTERS);
         PlaySound(SOUND_LABEL_SE_switch01);
     }
 
@@ -192,8 +206,11 @@ void UpdatePlayerSelect(void)
     // Enter：キャラ決定
     if (GetKeyboardTrigger(DIK_RETURN) || IsButtonTriggered(0, BUTTON_A))
     {
-        g_SelectedCharIndex[g_SelectingPlayerIndex] = g_SelectedPlayer;
-        AdvanceToNextPlayer();
+        // 念のため二重確保防止
+        if (!IsTaken(g_SelectedPlayer)) {
+            g_SelectedCharIndex[g_SelectingPlayerIndex] = g_SelectedPlayer;
+            AdvanceToNextPlayer();
+        }
     }
     else if (GetKeyboardTrigger(DIK_SPACE) || IsButtonTriggered(0, BUTTON_B))
     {
