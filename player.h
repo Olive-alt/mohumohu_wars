@@ -51,7 +51,6 @@ struct PLAYER
     int        gateCoolTime;
 
     // ƒoƒt
-    BOOL       big;
     BOOL       invisible;
 
     // •Šíd•¡–h~

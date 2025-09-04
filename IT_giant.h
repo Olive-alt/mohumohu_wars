@@ -17,8 +17,6 @@ private:
 	XMFLOAT3	pos;
 	XMFLOAT3	rot;
 	XMFLOAT3	scl;
-	XMFLOAT3	old_scl;
-	float      old_size;
 	MATERIAL	material;		// マテリアル
 	int			shadowIdx;			// 影のインデックス番号
 

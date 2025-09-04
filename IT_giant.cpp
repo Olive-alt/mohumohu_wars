@@ -45,8 +45,6 @@ HRESULT GIANT::InitITgiant(void)
 	pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	scl = XMFLOAT3(0.2f, 0.2f, 0.2f);
-	old_scl = XMFLOAT3(1.0f, 1.0f, 1.0f);
-	old_size = 0.0f;
 	giantUse = FALSE;
 	giantTimer = 0;
 	PlayerIndex = -1;
@@ -131,28 +129,23 @@ void GIANT::FinishITgiant(void)
 	pick = FALSE;
 	giantTimer = 0;
 	PLAYER* player = GetPlayer(PlayerIndex);
-	player->scl = old_scl;
-	player->size = old_size;
+	player->scl.x /= GIANT_SCL_RATE;
+	player->scl.y /= GIANT_SCL_RATE;
+	player->scl.z /= GIANT_SCL_RATE;
+
+	player->size /= GIANT_SCL_RATE;
 	PlayerIndex = -1;
-	player->big = FALSE;
 }
 
 void GIANT::PickITgiant(int p_Index)
 {
 	PLAYER* player = GetPlayer(p_Index);
 
-	if (!player->big)
-	{
-		old_scl = player->scl;
-		old_size = player->size;
-	}
-
 	giantUse = TRUE;
 	pick = TRUE;
-	player->big = TRUE;
 	PlayerIndex = p_Index;
 	player->scl.x *= GIANT_SCL_RATE;
 	player->scl.y *= GIANT_SCL_RATE;
 	player->scl.z *= GIANT_SCL_RATE;
-	//player->size *= GIANT_SCL_RATE;
+	player->size *= GIANT_SCL_RATE;
 }
