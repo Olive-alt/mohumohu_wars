@@ -44,7 +44,7 @@ HRESULT GIANT::InitITgiant(void)
 	pick = FALSE;
 	pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	scl = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	scl = XMFLOAT3(0.2f, 0.2f, 0.2f);
 	old_scl = XMFLOAT3(1.0f, 1.0f, 1.0f);
 	old_size = 0.0f;
 	giantUse = FALSE;
