@@ -4,6 +4,7 @@
 #include "player.h"
 #include "debugproc.h"
 #include "collision.h"
+#include "sound.h"
 
 // グローバルインスタンス
 CarSystem g_CarSystem;
@@ -190,6 +191,8 @@ void CarSystem::CheckCarHitPlayers()
                 car_player[p].knockbackVel.z = knockbackSpeed * sinf(angle);
                 car_player[p].stunTimer = 1.0f;
                 PrintDebugProc("車前方ヒット：吹っ飛ばし\n");
+                PlaySound(SOUND_LABEL_SE_shot004);
+
             }
             // --------- 壁判定は「後ろ寄り＆短いボックス」 ---------
             else
@@ -218,6 +221,8 @@ void CarSystem::CheckCarHitPlayers()
                     car_player[p].stunTimer = 0.0f;
                     car_player[p].knockbackVel = { 0,0,0 };
                     PrintDebugProc("車横ヒット：壁判定\n");
+                    PlaySound(SOUND_LABEL_SE_shot004);
+
                 }
             }
         }

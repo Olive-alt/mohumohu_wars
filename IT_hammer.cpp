@@ -1,4 +1,4 @@
-#include "main.h"
+ï»¿#include "main.h"        // â˜…é‡è¦ï¼šæœ€åˆã«
 #include "input.h"
 #include "IT_hammer.h"
 #include "renderer.h"
@@ -9,405 +9,366 @@
 #include "sound.h"
 
 //*****************************************************************************
-// ƒ}ƒNƒ’è‹`
+// ãƒã‚¯ãƒ­
 //*****************************************************************************
-#define	MODEL_HAMR  	"data/MODEL/item/item_hammer.obj"			// “Ç‚İ‚Şƒ‚ƒfƒ‹–¼
+#define MODEL_HAMR           "data/MODEL/item/item_hammer.obj"
+#define VALUE_MOVE           (10.0f)
+#define VALUE_ROTATE         (XM_PI * 0.02f)
+#define HAMR_SHADOW_SIZE     (0.4f)
+#define HAMR_OFFSET_Y        (7.0f)
+#define HAMR_DAMAGE          (5.0f)
 
-#define	VALUE_MOVE		(10.0f)					// ˆÚ“®—Ê
-#define	VALUE_ROTATE	(XM_PI * 0.02f)			// ‰ñ“]—Ê
-
-#define HAMR_SHADOW_SIZE	(0.4f)							// ‰e‚Ì‘å‚«‚³
-#define HAMR_OFFSET_Y		(7.0f)							// ƒvƒŒƒCƒ„[‚Ì‘«Œ³‚ğ‚ ‚í‚¹‚é
-#define	HAMR_DAMAGE			(5.0f)					// ƒ_ƒ[ƒW—Ê
-
-
-//ƒAƒCƒRƒ“—p
-#define TEXTURE_MAX			(1)				// ƒeƒNƒXƒ`ƒƒ‚Ì”
-
-#define	ICON_WIDTH			(10.0f)			// ’¸“_ƒTƒCƒY
-#define	ICON_HEIGHT			(10.0f)			// ’¸“_ƒTƒCƒY
-//*****************************************************************************
-// ƒvƒƒgƒ^ƒCƒvéŒ¾
-//*****************************************************************************
-HRESULT MakeVertexITHamrIcon(void);
+// ã‚¢ã‚¤ã‚³ãƒ³ç”¨
+#define TEXTURE_MAX          (1)
+#define ICON_WIDTH           (10.0f)
+#define ICON_HEIGHT          (10.0f)
 
 //*****************************************************************************
-// ƒOƒ[ƒoƒ‹•Ï”
+// ãƒ—ãƒ­ãƒˆã‚¿ã‚¤ãƒ—
 //*****************************************************************************
-static ID3D11Buffer* g_VertexBuffer = NULL;	// ’¸“_ƒoƒbƒtƒ@
-static ID3D11ShaderResourceView* g_Texture[TEXTURE_MAX] = { NULL };	// ƒeƒNƒXƒ`ƒƒî•ñ
-static BOOL					g_bAlpaTest;		// ƒAƒ‹ƒtƒ@ƒeƒXƒgON/OFF
+static HRESULT MakeVertexITHamrIcon(void);
 
-BOOL			hammer_load;
-DX11_MODEL		hammer_model;				// ƒ‚ƒfƒ‹î•ñ
+//*****************************************************************************
+// ã‚°ãƒ­ãƒ¼ãƒãƒ«
+//*****************************************************************************
+static ID3D11Buffer* g_VertexBuffer = NULL;
+static ID3D11ShaderResourceView* g_Texture[TEXTURE_MAX] = { NULL };
+static BOOL                        g_bAlpaTest = FALSE;
 
+static BOOL         hammer_load;
+static DX11_MODEL   hammer_model;
+
+// ãƒ†ã‚¯ã‚¹ãƒãƒ£
 static char* g_TextureName[] =
 {
-	"data/TEXTURE/tree001.png",
+    "data/TEXTURE/tree001.png",
 };
 
 //=============================================================================
-// ‰Šú‰»ˆ—
+// åˆæœŸåŒ–
 //=============================================================================
 HRESULT HAMR::InitITHamr(void)
 {
-	hammer_load = TRUE;
-	LoadModel(MODEL_HAMR, &hammer_model);
+    hammer_load = TRUE;
+    LoadModel(MODEL_HAMR, &hammer_model);
 
-	use = FALSE;
-	to_swing = FALSE;
-	pick = FALSE;
-	pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	scl = XMFLOAT3(1.0f, 1.0f, 1.0f);
-	move = XMFLOAT3(VALUE_MOVE, 1.0f, VALUE_MOVE);
-	size = HAMR_SIZE;
-	count = 0.0f;
-	PlayerIndex = -1;
+    use = FALSE;
+    to_swing = FALSE;
+    pick = FALSE;
 
-	MakeVertexITHamrIcon();
+    pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
+    rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
+    scl = XMFLOAT3(1.0f, 1.0f, 1.0f);
 
-	// ƒeƒNƒXƒ`ƒƒ¶¬
-	for (int i = 0; i < TEXTURE_MAX; i++)
-	{
-		g_Texture[i] = NULL;
-		D3DX11CreateShaderResourceViewFromFile(GetDevice(),
-			g_TextureName[i],
-			NULL,
-			NULL,
-			&g_Texture[i],
-			NULL);
-	}
+    move = XMFLOAT3(VALUE_MOVE, 1.0f, VALUE_MOVE);
+    size = HAMR_SIZE;
+    count = 0.0f;
+    PlayerIndex = -1;
 
-	// –Øƒ[ƒN‚Ì‰Šú‰»
-	ZeroMemory(&icon_material, sizeof(icon_material));
-	icon_material.Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+    // å…¥åŠ›ãƒ»ã‚¹ã‚¤ãƒ³ã‚°çŠ¶æ…‹
+    wantToSwing = false;
+    swingAngle = 0.0f;
 
-	icon_pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	icon_fWidth = ICON_WIDTH;
-	icon_fHeight = ICON_HEIGHT;
-	icon_scl = XMFLOAT3(1.0f / ICON_WIDTH, 1.0f / ICON_HEIGHT, 1.0f / ICON_HEIGHT);
-	icon_use = FALSE;
-	g_bAlpaTest = FALSE;
+    // â˜…è€ä¹…
+    swingCount = 0;
 
-	return S_OK;
+    // ã‚¢ã‚¤ã‚³ãƒ³
+    MakeVertexITHamrIcon();
+    for (int i = 0; i < TEXTURE_MAX; i++)
+    {
+        g_Texture[i] = NULL;
+        D3DX11CreateShaderResourceViewFromFile(
+            GetDevice(), g_TextureName[i], NULL, NULL, &g_Texture[i], NULL);
+    }
+
+    ZeroMemory(&icon_material, sizeof(icon_material));
+    icon_material.Diffuse = XMFLOAT4(1, 1, 1, 1);
+    icon_pos = XMFLOAT3(0, 0, 0);
+    icon_fWidth = ICON_WIDTH;
+    icon_fHeight = ICON_HEIGHT;
+    icon_scl = XMFLOAT3(1.0f / ICON_WIDTH, 1.0f / ICON_HEIGHT, 1.0f / ICON_HEIGHT);
+    icon_use = FALSE;
+
+    g_bAlpaTest = FALSE;
+
+    return S_OK;
 }
 
-
+//=============================================================================
+// çµ‚äº†
+//=============================================================================
 void HAMR::UninitITHamr(void)
 {
-	use = FALSE;
-	// ƒ‚ƒfƒ‹‚Ì‰ğ•úˆ—
-	if (hammer_load == TRUE)
-	{
-		UnloadModel(&hammer_model);
-		hammer_load = FALSE;
-	}
+    use = FALSE;
 
-	for (int nCntTex = 0; nCntTex < TEXTURE_MAX; nCntTex++)
-	{
-		if (g_Texture[nCntTex] != NULL)
-		{// ƒeƒNƒXƒ`ƒƒ‚Ì‰ğ•ú
-			g_Texture[nCntTex]->Release();
-			g_Texture[nCntTex] = NULL;
-		}
-	}
+    if (hammer_load == TRUE)
+    {
+        UnloadModel(&hammer_model);
+        hammer_load = FALSE;
+    }
 
-	if (g_VertexBuffer != NULL)
-	{// ’¸“_ƒoƒbƒtƒ@‚Ì‰ğ•ú
-		g_VertexBuffer->Release();
-		g_VertexBuffer = NULL;
-	}
+    for (int n = 0; n < TEXTURE_MAX; ++n)
+    {
+        if (g_Texture[n] != NULL)
+        {
+            g_Texture[n]->Release();
+            g_Texture[n] = NULL;
+        }
+    }
+    if (g_VertexBuffer != NULL)
+    {
+        g_VertexBuffer->Release();
+        g_VertexBuffer = NULL;
+    }
+
+    // â˜…è€ä¹…ãƒªã‚»ãƒƒãƒˆ
+    swingCount = 0;
+    wantToSwing = false;
+    to_swing = FALSE;
+    pick = FALSE;
+    PlayerIndex = -1;
 }
 
+//=============================================================================
+// æ›´æ–°
+//=============================================================================
 void HAMR::UpdateITHamr(void)
 {
-	if (GetKeyboardTrigger(DIK_F1))
-	{
-		g_bAlpaTest = g_bAlpaTest ? FALSE : TRUE;
-	}
+    if (!use || !hammer_load) return;
 
-	if (use)
-	{
-		if (!hammer_load) return;
+    // è½ã¡ã¦ã„ã‚‹å ´åˆï¼šåœ°é¢ã§ãƒã‚¦ãƒ³ãƒ‰ç­‰ã‚ã‚Œã°ã“ã“ã«
+    if (!pick)
+    {
+        // ã‚¢ã‚¤ãƒ†ãƒ çŠ¶æ…‹ã®è¦‹ã›æ–¹ãŒã‚ã‚Œã°ã“ã“ã«ï¼ˆçœç•¥ãªã—ã§ä½•ã‚‚å¤‰æ›´ã—ã¦ã„ã¾ã›ã‚“ï¼‰
+    }
 
+    // è£…å‚™ä¸­ï¼šãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã®ä½ç½®ãƒ»å‘ãã‚’è¿½å¾“
+    if (pick)
+    {
+        PLAYER* pl = GetPlayer(PlayerIndex);
+        if (pl && pl->use)
+        {
+            pos = pl->pos;
+            rot = pl->rot;
+        }
 
-		if (pick)
-		{
-			PLAYER* player = GetPlayer(PlayerIndex);
-			icon_pos.x = player->pos.x - sin(XM_PI) * 1.0f;
-			icon_pos.y = player->pos.y * 2;
-			icon_pos.z = player->pos.z - cos(XM_PI) * 1.0f;
+        // å…¥åŠ›ï¼šãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼å´ã‹ã‚‰ SetSwingFlag(true) ãŒæ¥ã‚‹
+        if (!to_swing && wantToSwing)
+        {
+            to_swing = TRUE;
+            wantToSwing = false;          // 1å›æ¶ˆè²»
+            PlaySound(SOUND_LABEL_SE_shot002);
+        }
+    }
 
-			pos.x = player->pos.x - sin(XM_PI) * 1.0f;
-			pos.y = player->pos.y;
-			pos.z = player->pos.z - cos(XM_PI) * 1.0f;
+    // ã‚¹ã‚¤ãƒ³ã‚°
+    if (to_swing)
+    {
+        const float swingSpeed = 0.22f;
+        swingAngle += swingSpeed;
 
-			rot = player->rot;
+        if (swingAngle >= swingMax)
+        {
+            swingAngle = swingMax;
+            to_swing = FALSE;
 
+            // â˜…ã“ã“ã§1å›æ¶ˆè²»ï¼ˆ3å›ã§å£Šã‚Œã‚‹ï¼‰
+            swingCount++;
 
-			// Swing trigger
-			if (wantToSwing) // replace with your attack key
-			{
-				to_swing = true;
-				// Start swing timer, animation, etc.
-				PlaySound(SOUND_LABEL_SE_shot002);
+            if (swingCount >= 3)
+            {
+                // æ‰€æŒè§£é™¤
+                if (pick && PlayerIndex >= 0)
+                {
+                    PLAYER* pl = GetPlayer(PlayerIndex);
+                    if (pl) pl->haveWeapon = FALSE; // ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã®æ‰€æŒè§£é™¤ :contentReference[oaicite:2]{index=2}
+                }
 
-				wantToSwing = false; // g‚¢I‚í‚Á‚½‚çƒŠƒZƒbƒg
-			}
-		}
+                // ã‚¢ã‚¤ãƒ†ãƒ ç ´å£Šï¼ˆéè¡¨ç¤ºåŒ–ï¼‰
+                use = FALSE;
+                pick = FALSE;
+                to_swing = FALSE;
+                PlayerIndex = -1;
+                swingCount = 0;
+                scl = XMFLOAT3(0, 0, 0);
+                return;
+            }
+        }
+    }
+    else
+    {
+        const float returnSpeed = 0.12f;
+        if (swingAngle > 0.0f)
+        {
+            swingAngle -= returnSpeed;
+            if (swingAngle < 0.0f) swingAngle = 0.0f;
+        }
+    }
 
-		if (to_swing)
-		{
-			// 1ƒtƒŒ[ƒ€‚Åi‚ŞŠp“x
-			float swingSpeed = 0.2f; // ‘¬‚­‚µ‚½‚¯‚ê‚Î’l‚ğ‘å‚«‚­
-			swingAngle += swingSpeed;
-			if (swingAngle >= swingMax)
-			{
-				swingAngle = swingMax;
-				to_swing = false; // ƒAƒjƒ[ƒVƒ‡ƒ“I—¹
-			}
-		}
-		else
-		{
-			// ‚ä‚Á‚­‚è–ß‚·
-			float returnSpeed = 0.1f; // –ß‚é‘¬‚³(¬‚³‚­‚·‚é‚Ù‚Ç’x‚­–ß‚é)
-			if (swingAngle > 0.0f)
-			{
-				swingAngle -= returnSpeed;
-				if (swingAngle < 0.0f)
-					swingAngle = 0.0f;
-			}
-		}
-
-
-
-
-	}
-#ifdef _DEBUG
-	//PrintDebugProc(
-	//	"HamrPos:(%f,%f,%f)\n",
-	//	pos.x,
-	//	pos.y,
-	//	pos.z
-	//);
-#endif
-
+    // ã‚¢ã‚¤ã‚³ãƒ³ãªã©ã®æ±ç”¨æ›´æ–°ãŒã‚ã‚Œã°ã“ã“ã«ï¼ˆç¾çŠ¶ãã®ã¾ã¾ï¼‰
 }
 
+//=============================================================================
+// æç”»
+//=============================================================================
 void HAMR::DrawITHamr(void)
 {
-	// ƒ¿ƒeƒXƒgİ’è
-	if (g_bAlpaTest == TRUE)
-	{
-		// ƒ¿ƒeƒXƒg‚ğ—LŒø‚É
-		SetAlphaTestEnable(TRUE);
-	}
+    if (!use) return;
 
-	if (!use)return;
+    // ã‚«ãƒªãƒ³ã‚°ã‚’ä¸¡é¢ã«ã™ã‚‹ãªã©ã®æç”»è¨­å®šãŒå¿…è¦ãªã‚‰ã“ã“ã§
+    // SetCullingMode(CULL_MODE_NONE);
 
-	if (!pick)
-	{
-		XMMATRIX mtxScl, mtxRot, mtxTranslate, mtxWorld;
+    // ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã«è£…å‚™ã•ã‚Œã¦ã„ã‚‹å‰æã§ã®å¤‰æ›
+    XMMATRIX mtxWorld = XMMatrixIdentity();
 
-		// ƒJƒŠƒ“ƒO–³Œø
-		SetCullingMode(CULL_MODE_NONE);
+    const float halfH = scl.y * 0.5f;
 
-		// ƒ[ƒ‹ƒhƒ}ƒgƒŠƒbƒNƒX‚Ì‰Šú‰»
-		mtxWorld = XMMatrixIdentity();
+    // Scale
+    mtxWorld = XMMatrixMultiply(mtxWorld, XMMatrixScaling(scl.x, scl.y, scl.z));
+    // ãƒ”ãƒœãƒƒãƒˆç§»å‹•ï¼ˆä¸‹ç«¯ã«å›è»¢ä¸­å¿ƒï¼‰
+    mtxWorld = XMMatrixMultiply(mtxWorld, XMMatrixTranslation(0.0f, halfH, 0.0f));
+    // ã‚¹ã‚¤ãƒ³ã‚°å›è»¢ï¼ˆå‰æ–¹å‘ã¸å€’ã™æƒ³å®šï¼š-Xï¼‰
+    mtxWorld = XMMatrixMultiply(mtxWorld, XMMatrixRotationX(-swingAngle));
+    mtxWorld = XMMatrixMultiply(mtxWorld, XMMatrixTranslation(0.0f, -halfH, 0.0f));
+    // ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼å›è»¢ãƒ»ä½ç½®
+    mtxWorld = XMMatrixMultiply(mtxWorld, XMMatrixRotationRollPitchYaw(rot.x, rot.y, rot.z));
+    mtxWorld = XMMatrixMultiply(mtxWorld, XMMatrixTranslation(pos.x, pos.y, pos.z));
 
-		// ƒXƒP[ƒ‹‚ğ”½‰f
-		mtxScl = XMMatrixScaling(scl.x, scl.y, scl.z);
-		mtxWorld = XMMatrixMultiply(mtxWorld, mtxScl);
+    SetWorldMatrix(&mtxWorld);
+    XMStoreFloat4x4(&m_mtxWorld, mtxWorld);
+    DrawModel(&hammer_model);
 
-		// ‰ñ“]‚ğ”½‰f
-		mtxRot = XMMatrixRotationRollPitchYaw(rot.x, rot.y, rot.z);
-		mtxWorld = XMMatrixMultiply(mtxWorld, mtxRot);
-
-		// ˆÚ“®‚ğ”½‰f
-		mtxTranslate = XMMatrixTranslation(pos.x, pos.y, pos.z);
-		mtxWorld = XMMatrixMultiply(mtxWorld, mtxTranslate);
-
-		// ƒ[ƒ‹ƒhƒ}ƒgƒŠƒbƒNƒX‚Ìİ’è
-		SetWorldMatrix(&mtxWorld);
-
-		XMStoreFloat4x4(&m_mtxWorld, mtxWorld);
-
-		// ƒ‚ƒfƒ‹•`‰æ
-		DrawModel(&hammer_model);
-
-		// ƒJƒŠƒ“ƒOİ’è‚ğ–ß‚·
-		SetCullingMode(CULL_MODE_BACK);
-	}
-	else if (pick)
-	{
-		XMMATRIX mtxScl, mtxWorld;
-
-		// ƒJƒŠƒ“ƒO–³Œø
-		SetCullingMode(CULL_MODE_NONE);
-
-		// ƒ[ƒ‹ƒhƒ}ƒgƒŠƒbƒNƒX‚Ì‰Šú‰»
-		mtxWorld = XMMatrixIdentity();
-
-		// ƒXƒP[ƒ‹‚ğ”½‰f
-		mtxScl = XMMatrixScaling(scl.x, scl.y, scl.z);
-		mtxWorld = XMMatrixMultiply(mtxWorld, mtxScl);
-
-		// ƒ‚ƒfƒ‹‚Ì‚‚³‚Ì”¼•ª
-		float halfHeight = scl.y * 0.5f;
-
-		// ƒsƒ{ƒbƒg‚ğ‰º’[‚É‚µ‚Ä‰ñ“]
-		XMMATRIX mtxPivotUp = XMMatrixTranslation(0.0f, halfHeight, 0.0f);
-		XMMATRIX mtxPivotDown = XMMatrixTranslation(0.0f, -halfHeight, 0.0f);
-		XMMATRIX mtxSwing = XMMatrixRotationX(swingAngle); // Z²‰ñ“]‚È‚çè‘O‚É“|‚ê‚é
-
-		// 1. Scale
-		mtxWorld = XMMatrixIdentity();
-		mtxWorld = XMMatrixMultiply(mtxWorld, XMMatrixScaling(scl.x, scl.y, scl.z));
-
-		// 2. Move pivot up to the bottom of hammer
-		mtxWorld = XMMatrixMultiply(mtxWorld, XMMatrixTranslation(0.0f, halfHeight, 0.0f));
-
-		// 3. Rotate forward around X axis (local right)
-		mtxWorld = XMMatrixMultiply(mtxWorld, XMMatrixRotationX(-swingAngle));
-
-		// 4. Move pivot back down
-		mtxWorld = XMMatrixMultiply(mtxWorld, XMMatrixTranslation(0.0f, -halfHeight, 0.0f));
-
-		// 5. Player rotation (rot.y is yaw - facing direction)
-		mtxWorld = XMMatrixMultiply(mtxWorld, XMMatrixRotationRollPitchYaw(rot.x, rot.y, rot.z));
-
-		// 6. World position
-		mtxWorld = XMMatrixMultiply(mtxWorld, XMMatrixTranslation(pos.x, pos.y, pos.z));
-
-		// Set and draw
-		SetWorldMatrix(&mtxWorld);
-		XMStoreFloat4x4(&m_mtxWorld, mtxWorld);
-		DrawModel(&hammer_model);
-
-
-		// ƒJƒŠƒ“ƒOİ’è‚ğ–ß‚·
-		SetCullingMode(CULL_MODE_BACK);
-
-	}
+    // SetCullingMode(CULL_MODE_BACK);
 }
 
+//=============================================================================
+// ç”Ÿæˆ
+//=============================================================================
 void HAMR::SetITHamrObject(XMFLOAT3 set_pos)
 {
-	use = TRUE;
-	pos = set_pos;
+    use = TRUE;
+    pick = FALSE;
+    to_swing = FALSE;
+    wantToSwing = false;
+
+    pos = set_pos;
+    rot = XMFLOAT3(0, 0, 0);
+    scl = XMFLOAT3(1, 1, 1);
+    PlayerIndex = -1;
+
+    swingAngle = 0.0f;
+    swingCount = 0;
 }
 
-
+//=============================================================================
+// ãƒ’ãƒƒãƒˆï¼ˆè£…å‚™ä¸­ã®å½“ãŸã‚Šåˆ¤å®šã‹ã‚‰å‘¼ã°ã‚Œã‚‹ï¼‰
+//=============================================================================
 void HAMR::HitITHamr(int p_Index)
 {
-	if (p_Index == PlayerIndex)
-		return;
+    if (p_Index == PlayerIndex) return;
 
-	PLAYER* player = GetPlayer(p_Index);
+    PLAYER* player = GetPlayer(p_Index);
+    if (!player || !player->use) return;
 
-	// Only squish if not already squished
-	if (!player->squished)
-		player->originalScl = player->scl;
-
-	player->scl.y = 0.3f;
-	player->scl.x = 1.4f;
-	player->scl.z = 1.4f;
-	player->squished = true;
-	player->squishTimer = 5.0f; // 5 seconds
-
+    // å©ã‹ã‚Œæ¼”å‡ºï¼ˆæ—¢å­˜å‡¦ç†ãŒã‚ã‚Œã°ç½®ãæ›ãˆï¼‰
+    // ä¾‹ï¼šã¤ã¶ã—æ¼”å‡º
+    if (!player->squished)
+        player->originalScl = player->scl;
+    player->scl.y = 0.3f;
+    player->scl.x = 1.4f;
+    player->scl.z = 1.4f;
+    player->squished = true;
+    player->squishTimer = 5.0f;
 }
 
-
-
-
+//=============================================================================
+// å–å¾—ï¼ˆåœ°é¢ã‹ã‚‰æ‹¾ã†ï¼‰
+//=============================================================================
 void HAMR::PickITHamr(int p_Index)
 {
-	PLAYER* player = GetPlayer(p_Index);
-	if (player->haveWeapon)return;
+    PLAYER* pl = GetPlayer(p_Index);
+    if (!pl || !pl->use) return;
+    if (pl->haveWeapon)  return;         // å¤šé‡æ‰€æŒé˜²æ­¢
 
-	pick = TRUE;
+    pick = TRUE;
+    pl->haveWeapon = TRUE;               // æ‰€æŒé–‹å§‹ :contentReference[oaicite:3]{index=3}
+    PlayerIndex = p_Index;
 
-	player->haveWeapon = TRUE;
-	PlayerIndex = p_Index;
-	pos.x = player->pos.x - sin(XM_PI) * 1.0f;
-	pos.y = player->pos.y;
-	pos.z = player->pos.z - cos(XM_PI) * 1.0f;
+    // ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼å‘¨ã‚Šã®è£…å‚™ä½ç½®ã«ã‚¹ãƒŠãƒƒãƒ—
+    pos = pl->pos;
+    rot = pl->rot;
+
+    // è€ä¹…ãƒªã‚»ãƒƒãƒˆ
+    swingCount = 0;
+    swingAngle = 0.0f;
+    wantToSwing = false;
 }
 
-
 //=============================================================================
-// ’¸“_î•ñ‚Ìì¬
+// ãƒãƒ³ãƒãƒ¼é ­ã®ãƒ¯ãƒ¼ãƒ«ãƒ‰åº§æ¨™ï¼ˆå½“ãŸã‚Šåˆ¤å®šç”¨ï¼šè£…å‚™ä¸­ã¯ã“ã¡ã‚‰ã‚’ä½¿ã†ï¼‰
 //=============================================================================
-HRESULT MakeVertexITHamrIcon(void)
-{
-	// ’¸“_ƒoƒbƒtƒ@¶¬
-	D3D11_BUFFER_DESC bd;
-	ZeroMemory(&bd, sizeof(bd));
-	bd.Usage = D3D11_USAGE_DYNAMIC;
-	bd.ByteWidth = sizeof(VERTEX_3D) * 4;
-	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-
-	GetDevice()->CreateBuffer(&bd, NULL, &g_VertexBuffer);
-
-	// ’¸“_ƒoƒbƒtƒ@‚É’l‚ğƒZƒbƒg‚·‚é
-	D3D11_MAPPED_SUBRESOURCE msr;
-	GetDeviceContext()->Map(g_VertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &msr);
-
-	VERTEX_3D* vertex = (VERTEX_3D*)msr.pData;
-
-	float fWidth = 60.0f;
-	float fHeight = 90.0f;
-
-	// ’¸“_À•W‚Ìİ’è
-	vertex[0].Position = XMFLOAT3(-fWidth / 2.0f, fHeight, 0.0f);
-	vertex[1].Position = XMFLOAT3(fWidth / 2.0f, fHeight, 0.0f);
-	vertex[2].Position = XMFLOAT3(-fWidth / 2.0f, 0.0f, 0.0f);
-	vertex[3].Position = XMFLOAT3(fWidth / 2.0f, 0.0f, 0.0f);
-
-	// –@ü‚Ìİ’è
-	vertex[0].Normal = XMFLOAT3(0.0f, 0.0f, -1.0f);
-	vertex[1].Normal = XMFLOAT3(0.0f, 0.0f, -1.0f);
-	vertex[2].Normal = XMFLOAT3(0.0f, 0.0f, -1.0f);
-	vertex[3].Normal = XMFLOAT3(0.0f, 0.0f, -1.0f);
-
-	// ŠgUŒõ‚Ìİ’è
-	vertex[0].Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	vertex[1].Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	vertex[2].Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	vertex[3].Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-
-	// ƒeƒNƒXƒ`ƒƒÀ•W‚Ìİ’è
-	vertex[0].TexCoord = XMFLOAT2(0.0f, 0.0f);
-	vertex[1].TexCoord = XMFLOAT2(1.0f, 0.0f);
-	vertex[2].TexCoord = XMFLOAT2(0.0f, 1.0f);
-	vertex[3].TexCoord = XMFLOAT2(1.0f, 1.0f);
-
-	GetDeviceContext()->Unmap(g_VertexBuffer, 0);
-
-	return S_OK;
-}
-
 XMFLOAT3 HAMR::GetHeadWorldPosition() const
 {
-	float halfHeight = scl.y * 0.5f;
-	float yOffset = 40.0f / scl.y; // Optional: to raise the head by 30 units in world space
+    const float halfH = scl.y * 0.5f;
+    const float yOffset = 40.0f / (scl.y != 0.0f ? scl.y : 1.0f);
 
-	// The local space point for the hammer head (add yOffset if you want to simulate the +30)
-	XMVECTOR localHeadPos = XMVectorSet(0.0f, scl.y + yOffset, 0.0f, 1.0f);
+    XMVECTOR localHead = XMVectorSet(0.0f, scl.y + yOffset, 0.0f, 1.0f);
 
-	XMMATRIX mtx = XMMatrixIdentity();
-	mtx = XMMatrixMultiply(mtx, XMMatrixScaling(scl.x, scl.y, scl.z));
-	mtx = XMMatrixMultiply(mtx, XMMatrixTranslation(0.0f, halfHeight, 0.0f));
-	mtx = XMMatrixMultiply(mtx, XMMatrixRotationX(-swingAngle));
-	mtx = XMMatrixMultiply(mtx, XMMatrixTranslation(0.0f, -halfHeight, 0.0f));
-	mtx = XMMatrixMultiply(mtx, XMMatrixRotationRollPitchYaw(rot.x, rot.y, rot.z));
-	mtx = XMMatrixMultiply(mtx, XMMatrixTranslation(pos.x, pos.y, pos.z));
+    XMMATRIX mtx = XMMatrixIdentity();
+    mtx = XMMatrixMultiply(mtx, XMMatrixScaling(scl.x, scl.y, scl.z));
+    mtx = XMMatrixMultiply(mtx, XMMatrixTranslation(0.0f, halfH, 0.0f));
+    mtx = XMMatrixMultiply(mtx, XMMatrixRotationX(-swingAngle));
+    mtx = XMMatrixMultiply(mtx, XMMatrixTranslation(0.0f, -halfH, 0.0f));
+    mtx = XMMatrixMultiply(mtx, XMMatrixRotationRollPitchYaw(rot.x, rot.y, rot.z));
+    mtx = XMMatrixMultiply(mtx, XMMatrixTranslation(pos.x, pos.y, pos.z));
 
-	XMVECTOR worldHeadPos = XMVector3Transform(localHeadPos, mtx);
+    XMVECTOR worldPos = XMVector3Transform(localHead, mtx);
+    XMFLOAT3 out; XMStoreFloat3(&out, worldPos);
+    return out;
+}
 
-	XMFLOAT3 out;
-	XMStoreFloat3(&out, worldHeadPos);
-	return out;
+//=============================================================================
+// é ‚ç‚¹æƒ…å ±ï¼ˆã‚¢ã‚¤ã‚³ãƒ³ï¼‰
+//=============================================================================
+static HRESULT MakeVertexITHamrIcon(void)
+{
+    // é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡ç”Ÿæˆ
+    D3D11_BUFFER_DESC bd = {};
+    bd.Usage = D3D11_USAGE_DYNAMIC;
+    bd.ByteWidth = sizeof(VERTEX_3D) * 4;
+    bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+    GetDevice()->CreateBuffer(&bd, NULL, &g_VertexBuffer);
+
+    // é ‚ç‚¹ã«å€¤ã‚’å…¥ã‚Œã‚‹
+    D3D11_MAPPED_SUBRESOURCE msr;
+    GetDeviceContext()->Map(g_VertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &msr);
+
+    VERTEX_3D* v = (VERTEX_3D*)msr.pData;
+
+    const float fWidth = 60.0f;
+    const float fHeight = 90.0f;
+
+    // é ‚ç‚¹åº§æ¨™
+    v[0].Position = XMFLOAT3(-fWidth / 2.0f, fHeight, 0.0f);
+    v[1].Position = XMFLOAT3(fWidth / 2.0f, fHeight, 0.0f);
+    v[2].Position = XMFLOAT3(-fWidth / 2.0f, 0.0f, 0.0f);
+    v[3].Position = XMFLOAT3(fWidth / 2.0f, 0.0f, 0.0f);
+
+    // æ³•ç·š
+    v[0].Normal = v[1].Normal = v[2].Normal = v[3].Normal = XMFLOAT3(0.0f, 0.0f, -1.0f);
+
+    // æ‹¡æ•£è‰²
+    v[0].Diffuse = v[1].Diffuse = v[2].Diffuse = v[3].Diffuse = XMFLOAT4(1, 1, 1, 1);
+
+    // UV
+    v[0].TexCoord = XMFLOAT2(0.0f, 0.0f);
+    v[1].TexCoord = XMFLOAT2(1.0f, 0.0f);
+    v[2].TexCoord = XMFLOAT2(0.0f, 1.0f);
+    v[3].TexCoord = XMFLOAT2(1.0f, 1.0f);
+
+    GetDeviceContext()->Unmap(g_VertexBuffer, 0);
+
+    return S_OK;
 }

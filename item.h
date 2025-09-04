@@ -5,10 +5,23 @@
 //
 //=============================================================================
 #pragma once
+#include "IT_giant.h"
+#include "IT_invisible.h"
 #include "IT_ball.h"
+#include "IT_bomb.h"
 #include "IT_boomerang.h"
 #include "IT_hammer.h"
-#include "IT_bomb.h"
+
+
+#define ITEM_MAX	(10)
+#define ITEM_TOTAL_MAX	(6)
+
+extern GIANT giant[ITEM_MAX];
+extern INVISIBLE invisible[1];
+extern BALL ball[ITEM_MAX];
+extern BOOM boom[ITEM_MAX];
+extern HAMR hamr[ITEM_MAX];
+extern BOMB bomb[ITEM_MAX];
 
 //*****************************************************************************
 // プロトタイプ宣言
