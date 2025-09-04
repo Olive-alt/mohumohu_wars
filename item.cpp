@@ -333,10 +333,8 @@ void CheckHitItem(void)
 	for (int i = 0; i < ITEM_MAX; ++i)
 	{
 		// ===== 巨大化 =====
+		if (giant[i].IsUsedITgiant() || !giant[i].IsPickedITgiant())
 		{
-			if (!giant[i].IsUsedITgiant() || giant[i].IsPickedITgiant())
-				continue;
-
 			const XMFLOAT3 gi_pos = giant[i].GetPositionITgiant();
 
 			for (int j = 0; j < MAX_PLAYER; ++j)
@@ -352,10 +350,8 @@ void CheckHitItem(void)
 		}
 
 		// ===== 回復アイテム =====
+		if (heal[i].IsUsedITheal())
 		{
-			if (!heal[i].IsUsedITheal())
-				continue;
-
 			XMFLOAT3 heal_pos = heal[i].GetPositionITheal();
 			for (int j = 0; j < MAX_PLAYER; j++)
 			{
@@ -368,11 +364,10 @@ void CheckHitItem(void)
 				}
 			}
 		}
-		// ===== ボール =====
-		{
-			if (!ball[i].IsUsedITball())
-				continue;
 
+		// ===== ボール =====
+		if (ball[i].IsUsedITball())
+		{
 			const XMFLOAT3 ball_pos = ball[i].GetPositionITball();
 			const BOOL picked = ball[i].IsPickedITball();
 			const BOOL threw = ball[i].IsThrewITball();
@@ -408,10 +403,8 @@ void CheckHitItem(void)
 		}
 
 		// ===== ボム =====
+		if (bomb[i].IsUsedITbomb())
 		{
-			if (!bomb[i].IsUsedITbomb())
-				continue;
-
 			const XMFLOAT3 bomb_pos = bomb[i].GetPositionITbomb();
 			const BOOL picked = bomb[i].IsPickedITbomb();
 			const BOOL expuse = bomb[i].IsExpUseITbomb();
@@ -449,10 +442,8 @@ void CheckHitItem(void)
 		}
 
 		// ===== ブーメラン =====
+		if (boom[i].IsUsedITboom())
 		{
-			if (!boom[i].IsUsedITboom())
-				continue;
-
 			const XMFLOAT3 boom_pos = boom[i].GetPositionITboom();
 			const BOOL picked = boom[i].IsPickedITboom();
 			const BOOL threw = boom[i].IsThrewITboom();
@@ -488,10 +479,8 @@ void CheckHitItem(void)
 		}
 
 		// ===== ハンマー =====
+		if (hamr[i].IsUsedITHamr())
 		{
-			if (!hamr[i].IsUsedITHamr())
-				continue;
-
 			const BOOL picked = hamr[i].IsPickedITHamr();
 			// 装備中はハンマーの「頭」のワールド位置で攻撃判定。未取得時は本体位置でPick。
 			const XMFLOAT3 test_pos = picked ? hamr[i].GetHeadWorldPosition()
@@ -515,7 +504,6 @@ void CheckHitItem(void)
 			DebugLine_Render(GetCameraViewProjMatrix());
 #endif
 		}
-
 	}
 
 	// ===== 透明化 =====
