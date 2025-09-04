@@ -54,12 +54,16 @@ HRESULT InitResult(void)
 	g_ViewPortType_Game = TYPE_FULL_SCREEN;
 
 	// 順位に応じた座標
-	XMFLOAT3 posFirst = XMFLOAT3(20.0f, 60.0f, 0.0f);  // 1位の位置
-	XMFLOAT3 posSecond = XMFLOAT3(-15.0f, 45.0f, 0.0f);  // 2位の位置
+	XMFLOAT3 posRank1 = XMFLOAT3(20.0f, 60.0f, 0.0f);  // 1位の位置
+	XMFLOAT3 posRank2 = XMFLOAT3(-15.0f, 45.0f, 0.0f);  // 2位の位置
+	XMFLOAT3 posRank3 = XMFLOAT3(55.0f, 30.0f, 0.0f);  // 3位の位置
+	XMFLOAT3 posRank4 = XMFLOAT3(-50.0f, 15.0f, 0.0f);  // 4位の位置
 
 	// プレイヤー取得
 	PLAYER* p1 = GetPlayer(0);
 	PLAYER* p2 = GetPlayer(1);
+	PLAYER* p3 = GetPlayer(2);
+	PLAYER* p4 = GetPlayer(3);
 
 	// デバッグ用
 #ifdef DEBUG
@@ -69,8 +73,8 @@ HRESULT InitResult(void)
 	// スコア取得
 	int score1 = GetScore(0);
 	int score2 = GetScore(1);
-
-
+	int score3 = GetScore(2);
+	int score4 = GetScore(3);
 
 	// フィールドの初期化
 	InitMeshField(XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), 100, 100, 13.0f, 13.0f);
@@ -82,19 +86,21 @@ HRESULT InitResult(void)
 	// プレイヤーの初期化
 	InitPlayer();
 
-	if (p1 && p2)
+	if (p1 && p2 && p3 && p4)
 	{
 		if (score1 >= score2)
 		{
-			// 1Pが1位
-			p1->pos = posFirst;
-			p2->pos = posSecond;
+			// 1Pが1位、2Pが2位、3Pが3位、4Pが4位
+			p1->pos = posRank1;
+			p2->pos = posRank2;
+			p3->pos = posRank3;
+			p4->pos = posRank4;
 		}
 		else
 		{
 			// 2Pが1位
-			p1->pos = posSecond;
-			p2->pos = posFirst;
+			p1->pos = posRank2;
+			p2->pos = posRank1;
 		}
 	}
 
