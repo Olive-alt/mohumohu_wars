@@ -333,7 +333,7 @@ void CheckHitItem(void)
 	for (int i = 0; i < ITEM_MAX; ++i)
 	{
 		// ===== ‹‘å‰» =====
-		if (giant[i].IsUsedITgiant() || !giant[i].IsPickedITgiant())
+		if (giant[i].IsUsedITgiant() && !giant[i].IsPickedITgiant())
 		{
 			const XMFLOAT3 gi_pos = giant[i].GetPositionITgiant();
 

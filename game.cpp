@@ -297,36 +297,38 @@ void DrawGame(void)
 //=============================================================================
 void CheckHit(void)
 {
-	PLAYER* player = GetPlayer(); // プレイヤー1 (index=0)
-
 	// ワープ処理
 	for (int i = 0; i < MAX_WG; i++)
 	{
-		bool use = warpgate[i].IsUsed();
-		//敵の有効フラグをチェックする
-		if (use == FALSE)
-			continue;
+		if (!warpgate[i].IsUsed()) continue;
 
-		XMFLOAT3 wg_pos = warpgate[i].GetPosition();
-		XMFLOAT3 wg_hitscl = warpgate[i].GetHitScl();
+		const XMFLOAT3 wg_pos = warpgate[i].GetPosition();
+		const XMFLOAT3 wg_hitscl = warpgate[i].GetHitScl();
 
 		for (int j = 0; j < MAX_PLAYER; j++)
 		{
-			if (CollisionBB(player[j].pos, wg_pos, XMFLOAT3(50.0f, 50.0f, 50.0f), wg_hitscl) && player[j].gateUse == FALSE)
+			PLAYER* pj = GetPlayer(j);
+			if (!pj || !pj->use) continue;
+
+			if (CollisionBB(pj->pos, wg_pos, XMFLOAT3(50.0f, 50.0f, 50.0f), wg_hitscl) &&
+				pj->gateUse == FALSE)
 			{
 				int n = i + 1;
-				if (n > MAX_WG)n = 0;
-				player[j].pos = warpgate[n].GetPosition();
-				player[j].gateUse = TRUE;
+				if (n >= MAX_WG) n = 0;     //範囲ガード
+
+				// テレポート
+				pj->pos = warpgate[n].GetPosition();
+				pj->gateUse = TRUE;
 				PrintDebugProc("warpgateHIT!!!:No%d\n", j);
 			}
 		}
 	}
 
-	for(int i=0;i<MAX_PLAYER;i++)
+	// 終了条件チェック
+	for (int i = 0; i < MAX_PLAYER; i++)
 	{
-		// エネミーが０匹？
-		if (player[i].use ==false)
+		const PLAYER* pj = GetPlayer(i);
+		if (!pj || !pj->use)
 		{
 			SetFade(FADE_OUT, MODE_RESULT);
 		}
