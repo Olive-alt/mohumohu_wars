@@ -27,8 +27,13 @@
 #define TEXTURE_BAR_BG     8   // 音量バー背景（白画像）
 #define TEXTURE_VOL_TITLE  9   // "SOUND"ラベル画像（※未使用可）
 #define TEXTURE_PAW        10  // 音量バー用 肉球ノッチ画像
+#define TEXTURE_TITLE      11  // タイトルロゴ画像
 
-#define TEXTURE_MAX        11  // テクスチャ枚数
+#define TEXTURE_VOL_SETTING      12  // 
+#define TEXTURE_VOL_SETTING_BGM      13  // 
+#define TEXTURE_VOL_SETTING_SE      14  // 
+
+#define TEXTURE_MAX        15  // テクスチャ枚数
 
 #define TITLE_MENU_NUM     3   // メニュー項目数
 
@@ -60,6 +65,12 @@ static char* g_TexturName[TEXTURE_MAX] = {
     "data/TEXTURE/Title/white.png",
     "data/TEXTURE/Title/Sound_Volume.png",
     "data/TEXTURE/Title/ani_paw.png",
+    "data/TEXTURE/Title/ui_title_logo.png",
+
+    "data/TEXTURE/Title/ui_setting_window.png",
+    "data/TEXTURE/Title/ui_setting_slider_bgm.png",
+    "data/TEXTURE/Title/ui_setting_slider_se.png",
+
 };
 
 static BOOL g_Load = FALSE;                 // 読み込みフラグ
@@ -200,6 +211,11 @@ void DrawTitle(void)
     SetSprite(g_VertexBuffer, g_Pos.x, g_Pos.y, g_w, g_h, 0, 0, 1, 1);
     GetDeviceContext()->Draw(4, 0);
 
+    // タイトルロゴ
+    GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[TEXTURE_TITLE]);
+    SetSprite(g_VertexBuffer, g_Pos.x * 1.48, g_Pos.y / 2.4, g_w / 2.2, g_h / 3.2, 0, 0, 1, 1);
+    GetDeviceContext()->Draw(4, 0);
+
     // メニュー項目（ボタン）描画
     for (int i = 0; i < TITLE_MENU_NUM; i++) {
         // 選択中はON画像、それ以外はOFF画像を使う
@@ -220,10 +236,15 @@ void DrawTitle(void)
             GetDeviceContext()->Draw(4, 0);
         }
 
+        // 音量バーの枠
+        GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[TEXTURE_VOL_SETTING]);
+        SetSprite(g_VertexBuffer, g_Pos.x, g_Pos.y, g_w / 2, g_h / 2, 0, 0, 1, 1);
+        GetDeviceContext()->Draw(4, 0);
+
         //--- 音量バー（BGM, SE） ---
         // ラベル画像化する場合はここでg_Texture[X]を描画
-        DrawVolumeBar(400, 300, 320, 32, GetBGMVolume(), setting_select == 0, "BGM");
-        DrawVolumeBar(400, 360, 320, 32, GetSEVolume(), setting_select == 1, "SE");
+        DrawVolumeBar(368, 248, 286, 22, GetBGMVolume(), setting_select == 0, "BGM");
+        DrawVolumeBar(368, 287, 286, 22, GetSEVolume(), setting_select == 1, "SE");
         // ※操作ガイド表示などもここに追加可
     }
 }
@@ -240,9 +261,10 @@ void DrawTitle(void)
 void DrawVolumeBar(float x, float y, float w, float h, float volume, bool selected, const char* label)
 {
     //--- バー背景（白画像 or 灰色） ---
-    if (g_Texture[TEXTURE_BAR_BG]) {
-        GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[TEXTURE_BAR_BG]);
-        SetSprite(g_VertexBuffer, x, y, w, h, 0, 0, 1, 1);
+    if (g_Texture[TEXTURE_VOL_SETTING_SE]) {
+        GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[TEXTURE_VOL_SETTING_SE]);
+        //SetSprite(g_VertexBuffer, x, y, w, h, 0, 0, 1, 1);
+        SetSpriteLeftTop(g_VertexBuffer, x, y, w, h, 0, 0, 1, 1);
         GetDeviceContext()->Draw(4, 0);
     }
     else {
@@ -252,14 +274,15 @@ void DrawVolumeBar(float x, float y, float w, float h, float volume, bool select
 
     //--- バー本体（緑or黄色） ---
     XMFLOAT4 barColor = selected ? XMFLOAT4(1.0f, 1.0f, 0.2f, 1.0f) : XMFLOAT4(0.2f, 1.0f, 0.2f, 1.0f);
-    SetSpriteColor(g_VertexBuffer, x - w / 2 + (w * volume) / 2, y, w * volume, h, 0, 0, 1, 1, barColor);
+    GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[TEXTURE_VOL_SETTING_BGM]);
+    SetSpriteLeftTop(g_VertexBuffer, x, y, w * volume, h, 0, 0, volume, 1);
     GetDeviceContext()->Draw(4, 0);
 
     //--- ノッチ（肉球画像 or 矩形） ---
     if (g_Texture[TEXTURE_PAW]) {
-        float pawX = x - w / 2 + w * volume;
+        float pawX = x + w * volume - 24;
         GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[TEXTURE_PAW]);
-        SetSprite(g_VertexBuffer, pawX, y, 48, 48, 0, 0, 1, 1);
+        SetSpriteLeftTop(g_VertexBuffer, pawX, y - 12, 48, 48, 0, 0, 1, 1);
         GetDeviceContext()->Draw(4, 0);
     }
     else if (selected) {
