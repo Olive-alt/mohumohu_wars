@@ -17,8 +17,8 @@ static ID3D11ShaderResourceView* g_Texture[4] = { NULL }; // îwåi + 2 ÉÇÅ[Éh
 
 static const char* g_TextureName[4] = {
     "data/TEXTURE/bg003.jpg", // îwåi
-    "data/TEXTURE/Select_mode/mode_3.png",
-    "data/TEXTURE/Select_mode/mode_4.png",
+    "data/TEXTURE/Select_mode/mode_score.png",
+    "data/TEXTURE/Select_mode/mode_survival.png",
     "data/TEXTURE/Select_mode/title.png"
 
 };

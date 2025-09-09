@@ -96,9 +96,6 @@
     <ClInclude Include="podium.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="..\0701_text\mode_select.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="IT_ball.h">
       <Filter>ヘッダー ファイル\ITEM</Filter>
     </ClInclude>
@@ -140,6 +137,9 @@
     </ClInclude>
     <ClInclude Include="IT_heal.h">
       <Filter>ヘッダー ファイル\ITEM</Filter>
+    </ClInclude>
+    <ClInclude Include="mode_select.h">
+      <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

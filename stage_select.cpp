@@ -93,7 +93,7 @@ void UpdateStageSelect(void)
 
     if (GetKeyboardTrigger(DIK_RETURN) || IsButtonTriggered(0, BUTTON_A)) {
         PrintDebugProc("Loading %s\n", g_SelectedStageFile);
-        SetFade(FADE_OUT, MODE_GAME);
+        SetFade(FADE_OUT, MODE_MODE_SELECT);
     }
     else if (GetKeyboardTrigger(DIK_SPACE) || IsButtonTriggered(0, BUTTON_B)) {
         SetFade(FADE_OUT, MODE_PLAYER_SELECT);
