@@ -1,8 +1,6 @@
-newmtl boomerang1:node_053c038d_d9a3_4144_a21b_a95657c0656e_mesh0SG
+newmtl lambert2SG
 illum 4
-Kd 0.40 0.70 1.00
+Kd 0.00 1.00 1.00
 Ka 0.00 0.00 0.00
 Tf 1.00 1.00 1.00
 Ni 1.00
-Ks 0.20 0.20 0.20
-Ns 23.00

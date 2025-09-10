@@ -1953,8 +1953,8 @@ vn -0.331741 0.548944 -0.767209
 vn -0.139337 0.845822 -0.514946
 vn -0.176840 0.642198 -0.745861
 s off
-g boomerang1:node_053c038d_d9a3_4144_a21b_a95657c0656e_mesh0
-usemtl boomerang1:node_053c038d_d9a3_4144_a21b_a95657c0656e_mesh0SG
+g item_boomerang:node_053c038d_d9a3_4144_a21b_a95657c0656e_mesh0
+usemtl lambert2SG
 f 1/1/1 2/2/2 3/3/3
 f 1/1/4 3/3/5 4/4/6
 f 4/4/7 3/3/8 5/5/9
