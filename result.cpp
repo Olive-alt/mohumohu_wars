@@ -49,6 +49,66 @@ static BOOL	g_bPause = TRUE;	// ポーズON/OFF
 //=============================================================================
 // 初期化処理
 //=============================================================================
+// プレイヤーをスコアの降順で並べ替えて、表彰台の位置に配置する関数
+// 同点の場合はプレイヤー番号（インデックス）が小さい方を上位とする（0 > 1 > 2 > 3）
+static void PlacePlayersOnPodium(const XMFLOAT3& posRank1,
+	const XMFLOAT3& posRank2,
+	const XMFLOAT3& posRank3,
+	const XMFLOAT3& posRank4)
+{
+	// 対象プレイヤーの取得（最大4人想定）
+	PLAYER* players[4] = { GetPlayer(0), GetPlayer(1), GetPlayer(2), GetPlayer(3) };
+	// 現在のスコアを取得
+	int scores[4] = { GetScore(0),  GetScore(1),  GetScore(2),  GetScore(3) };
+
+	// 並べ替え用の一時配列
+	struct Entry { PLAYER* p; int score; int idx; };
+	Entry list[4];
+	int count = 0;
+
+	// 有効なプレイヤーのみをリストに詰める
+	for (int i = 0; i < 4; ++i)
+	{
+		if (players[i]) {
+			list[count].p = players[i];
+			list[count].score = scores[i];
+			list[count].idx = i;           // タイブレーク用の元インデックス
+			++count;
+		}
+	}
+
+	// 選択ソート（スコア降順、同点はインデックス昇順）で整列
+	for (int i = 0; i < count - 1; ++i)
+	{
+		int best = i;
+		for (int j = i + 1; j < count; ++j)
+		{
+			// より高スコア、または同点でインデックスが小さい方を優先
+			if (list[j].score > list[best].score ||
+				(list[j].score == list[best].score && list[j].idx < list[best].idx))
+			{
+				best = j;
+			}
+		}
+		// 見つかった最良要素を先頭側にスワップ
+		if (best != i) {
+			Entry tmp = list[i];
+			list[i] = list[best];
+			list[best] = tmp;
+		}
+	}
+
+	// 表彰台の配置（1位→2位→3位→4位）
+	const XMFLOAT3 podiumPos[4] = { posRank1, posRank2, posRank3, posRank4 };
+
+	// 有効人数分だけ位置を適用（最大4人）
+	for (int i = 0; i < count && i < 4; ++i)
+	{
+		list[i].p->pos = podiumPos[i];
+	}
+}
+
+
 HRESULT InitResult(void)
 {
 	g_ViewPortType_Game = TYPE_FULL_SCREEN;
@@ -86,6 +146,10 @@ HRESULT InitResult(void)
 	// プレイヤーの初期化
 	InitPlayer();
 
+	// スコアに基づき順位付けして配置
+	PlacePlayersOnPodium(posRank1, posRank2, posRank3, posRank4);
+
+
 	if (p1 && p2 && p3 && p4)
 	{
 		if (score1 >= score2)
@@ -112,13 +176,13 @@ HRESULT InitResult(void)
 		XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 16, 2, 80.0f, 80.0f);
 	InitMeshWall(XMFLOAT3(MAP_RIGHT, 0.0f, 0.0f), XMFLOAT3(0.0f, XM_PI * 0.50f, 0.0f),
 		XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 16, 2, 80.0f, 80.0f);
-	InitMeshWall(XMFLOAT3(0.0f, 0.0f, MAP_DOWN), XMFLOAT3(0.0f,  XM_PI, 0.0f),
+	InitMeshWall(XMFLOAT3(0.0f, 0.0f, MAP_DOWN), XMFLOAT3(0.0f, XM_PI, 0.0f),
 		XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 16, 2, 80.0f, 80.0f);
 
 	// 壁(裏側用の半透明)
-	InitMeshWall(XMFLOAT3(0.0f, 0.0f, MAP_TOP), XMFLOAT3(0.0f,    XM_PI, 0.0f),
+	InitMeshWall(XMFLOAT3(0.0f, 0.0f, MAP_TOP), XMFLOAT3(0.0f, XM_PI, 0.0f),
 		XMFLOAT4(1.0f, 1.0f, 1.0f, 0.25f), 16, 2, 80.0f, 80.0f);
-	InitMeshWall(XMFLOAT3(MAP_LEFT, 0.0f, 0.0f), XMFLOAT3(0.0f,   XM_PI * 0.50f, 0.0f),
+	InitMeshWall(XMFLOAT3(MAP_LEFT, 0.0f, 0.0f), XMFLOAT3(0.0f, XM_PI * 0.50f, 0.0f),
 		XMFLOAT4(1.0f, 1.0f, 1.0f, 0.25f), 16, 2, 80.0f, 80.0f);
 	InitMeshWall(XMFLOAT3(MAP_RIGHT, 0.0f, 0.0f), XMFLOAT3(0.0f, -XM_PI * 0.50f, 0.0f),
 		XMFLOAT4(1.0f, 1.0f, 1.0f, 0.25f), 16, 2, 80.0f, 80.0f);
@@ -128,8 +192,12 @@ HRESULT InitResult(void)
 	// 木を生やす
 	//InitTree();
 
-	// スコアの初期化
+	// スコアの初期化（UI等のために必要なら呼ぶ）しつつ値は元に戻す
 	InitScore();
+	AddScore(0, score1);
+	AddScore(1, score2);
+	AddScore(2, score3);
+	AddScore(3, score4);
 
 	// パーティクルの初期化
 	//InitParticle();
@@ -139,7 +207,6 @@ HRESULT InitResult(void)
 
 	return S_OK;
 }
-
 //=============================================================================
 // 終了処理
 //=============================================================================
