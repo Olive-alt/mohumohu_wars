@@ -847,6 +847,8 @@ void MovePlayers(void)
 //*****************************************************************************
 void AddPlayerHP(int index, float add)
 {
+    if (g_Player[index].enadori)add *= 2;
+
     g_Player[index].hp += add;
     if (g_Player[index].hp > PLAYER_HP_MAX)
     {

@@ -415,10 +415,11 @@ void BOMB::HitITbomb(int p_Index)
 	player->use = FALSE;  // プレイヤーを無効化（やられ判定など）
 
 	// ---- 爆弾のリセット ----
-	PlayerIndex = -1;     // 所有者をリセット（多重加点防止）
-	use = FALSE;          // 爆弾を無効化
-	to_throw = FALSE;     // 投げ状態解除
-	expUse = FALSE;       // 爆発状態解除
+	//PlayerIndex = -1;     // 所有者をリセット（多重加点防止）
+	//use = FALSE;          // 爆弾を無効化
+	//to_throw = FALSE;     // 投げ状態解除
+	//expUse = FALSE;       // 爆発状態解除
+	FinishITbomb();
 }
 
 
