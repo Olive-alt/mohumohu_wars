@@ -1,22 +1,22 @@
-newmtl lambert2SG
+newmtl item_invincible:lambert2SG
 illum 4
 Kd 1.00 0.93 0.15
 Ka 0.00 0.00 0.00
 Tf 1.00 1.00 1.00
 Ni 1.00
-newmtl lambert3SG
+newmtl item_invincible:lambert3SG
 illum 4
 Kd 0.50 0.31 0.13
 Ka 0.00 0.00 0.00
 Tf 1.00 1.00 1.00
 Ni 1.00
-newmtl lambert4SG
+newmtl item_invincible:lambert4SG
 illum 4
 Kd 1.00 0.48 0.10
 Ka 0.00 0.00 0.00
 Tf 1.00 1.00 1.00
 Ni 1.00
-newmtl phong2SG
+newmtl item_invincible:phong2SG
 illum 4
 Kd 0.45 0.45 0.45
 Ka 0.00 0.00 0.00
@@ -24,7 +24,7 @@ Tf 1.00 1.00 1.00
 Ni 1.00
 Ks 0.50 0.50 0.50
 Ns 18.00
-newmtl phong3SG
+newmtl item_invincible:phong3SG
 illum 4
 Kd 1.00 1.00 1.00
 Ka 0.00 0.00 0.00
@@ -32,7 +32,7 @@ Tf 1.00 1.00 1.00
 Ni 1.00
 Ks 0.50 0.50 0.50
 Ns 18.00
-newmtl phong4SG
+newmtl item_invincible:phong4SG
 illum 4
 Kd 0.27 0.13 0.00
 Ka 0.00 0.00 0.00
@@ -40,7 +40,7 @@ Tf 1.00 1.00 1.00
 Ni 1.00
 Ks 0.50 0.50 0.50
 Ns 18.00
-newmtl phong5SG
+newmtl item_invincible:phong5SG
 illum 4
 Kd 0.68 0.62 0.00
 Ka 0.00 0.00 0.00
@@ -48,7 +48,7 @@ Tf 1.00 1.00 1.00
 Ni 1.00
 Ks 0.50 0.50 0.50
 Ns 18.00
-newmtl phong6SG
+newmtl item_invincible:phong6SG
 illum 4
 Kd 0.20 0.21 0.21
 Ka 0.00 0.00 0.00
@@ -56,7 +56,7 @@ Tf 1.00 1.00 1.00
 Ni 1.00
 Ks 0.50 0.50 0.50
 Ns 18.00
-newmtl phong7SG
+newmtl item_invincible:phong7SG
 illum 4
 Kd 0.06 0.06 0.06
 Ka 0.00 0.00 0.00
@@ -64,7 +64,7 @@ Tf 1.00 1.00 1.00
 Ni 1.00
 Ks 0.50 0.50 0.50
 Ns 18.00
-newmtl phong8SG
+newmtl item_invincible:phong8SG
 illum 4
 Kd 0.15 0.15 0.19
 Ka 0.00 0.00 0.00
