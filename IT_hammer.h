@@ -56,6 +56,8 @@ private:
 	// ★追加：1スイング中に何度も得点しないようにする
     bool scoredThisSwing;
 
+    bool breakPending;
+    bool durabilityCountedThisSwing;
 
 public:
     HRESULT InitITHamr(void);

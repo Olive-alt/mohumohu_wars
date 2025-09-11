@@ -16,7 +16,7 @@
 #include "item.h"
 #include "player_select.h"
 #include "stageobject.h"
-
+#include "time.h"
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
@@ -279,6 +279,10 @@ HRESULT InitPlayer(void)
         roty = 0.0f;
         g_Player[i].parent = NULL;
 
+		g_Player[i].squished = false; // Initialize squished state
+		g_Player[i].squishTimer = 0.0f;
+		g_Player[i].originalScl = g_Player[i].scl; // Save original scale
+
         //安全地点の初期化（開始時の位置）
         g_LastSafePos[i] = g_Player[i].pos;
     }
@@ -353,6 +357,34 @@ void UpdatePlayer(void)
 
             // --- カプセル更新（最後に必ず） ---
             UpdateCollisionCapsule(i);
+
+
+            for (int i = 0; i < MAX_PLAYER; i++)
+            {
+                // プレイヤーごとのつぶれ効果を更新する
+                PLAYER& pl = g_Player[i];
+                bool& squished = pl.squished;          
+                float& squishTimer = pl.squishTimer;   
+                XMFLOAT3& originalScl = pl.originalScl;
+                XMFLOAT3& scl = pl.scl;                
+
+                if (squished) // プレイヤーがつぶれている状態なら
+                {
+                    
+                    squishTimer -= GetDeltaTime();
+
+                    // タイマーが0以下になったら → 元のサイズに戻す
+                    if (squishTimer <= 0.0f)
+                    {
+                        scl = originalScl;    
+                        squished = false;     
+                        squishTimer = 0.0f;   
+                    }
+                }
+            }
+
+
+
 
 #ifdef _DEBUG
             DebugPrintPlayer(i);
