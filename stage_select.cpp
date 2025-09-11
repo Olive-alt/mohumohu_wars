@@ -21,7 +21,7 @@ static ID3D11ShaderResourceView* g_Texture[4] = { NULL };
 
 // [0]=背景, [1]=ロード, [2]=ビーチ(水上アスレ), [3]=タイトル
 static const char* g_TexturName[4] = {
-    "data/TEXTURE/bg003.jpg",
+    "data/TEXTURE/bg004.jpg",
     "data/TEXTURE/Select_stage/stage3.png",
     "data/TEXTURE/Select_stage/stage4.png",
     "data/TEXTURE/Select_stage/stage_title.png"
