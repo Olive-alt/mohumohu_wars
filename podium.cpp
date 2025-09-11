@@ -5,7 +5,11 @@
 
 
 // モデルパス
-#define MODEL_PODIUM "data/MODEL/podium.obj"
+static const char* RESULT_OBJECT[MAX_PODIUM] = {
+	"data/MODEL/podium.obj",
+
+
+};
 
 static PODIUM		g_Podium[MAX_PODIUM];						// プレイヤー
 
@@ -18,11 +22,11 @@ HRESULT InitPodium(void)
 	for (int i = 0; i < MAX_PODIUM; i++)
 	{
 		g_Podium[i].load = TRUE;
-		LoadModel(MODEL_PODIUM, &g_Podium[i].model);
+		LoadModel(RESULT_OBJECT[i], &g_Podium[i].model);
 
-		g_Podium[i].pos = XMFLOAT3(20.0f, 0.0f, 0.0f);
+		g_Podium[i].pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
 		g_Podium[i].rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
-		g_Podium[i].scl = XMFLOAT3(4.0f, 4.0f, 4.0f);
+		g_Podium[i].scl = XMFLOAT3(0.0f, 0.0f, 0.0f);
 
 
 		// モデルのディフューズを保存しておく。色変え対応の為。
@@ -30,6 +34,9 @@ HRESULT InitPodium(void)
 		g_Podium[i].use = TRUE;
 
 	}
+	g_Podium[0].pos = XMFLOAT3(20.0f, 15.0f, 0.0f);
+	g_Podium[0].rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	g_Podium[0].scl = XMFLOAT3(4.0f, 4.0f, 4.0f);
 
 
 	return S_OK;

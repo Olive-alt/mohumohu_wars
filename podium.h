@@ -2,7 +2,7 @@
 
 #include "model.h"
 
-#define MAX_PODIUM		(2)					// プレイヤーの数
+#define MAX_PODIUM		(1)					// プレイヤーの数
 
 typedef struct
 {

@@ -114,10 +114,10 @@ HRESULT InitResult(void)
 	g_ViewPortType_Game = TYPE_FULL_SCREEN;
 
 	// 順位に応じた座標
-	XMFLOAT3 posRank1 = XMFLOAT3(20.0f, 60.0f, 0.0f);  // 1位の位置
-	XMFLOAT3 posRank2 = XMFLOAT3(-15.0f, 45.0f, 0.0f);  // 2位の位置
-	XMFLOAT3 posRank3 = XMFLOAT3(55.0f, 30.0f, 0.0f);  // 3位の位置
-	XMFLOAT3 posRank4 = XMFLOAT3(-50.0f, 15.0f, 0.0f);  // 4位の位置
+	XMFLOAT3 posRank1 = XMFLOAT3(20.0f, 75.0f, 0.0f);  // 1位の位置
+	XMFLOAT3 posRank2 = XMFLOAT3(-15.0f, 60.0f, 0.0f);  // 2位の位置
+	XMFLOAT3 posRank3 = XMFLOAT3(55.0f, 45.0f, 0.0f);  // 3位の位置
+	XMFLOAT3 posRank4 = XMFLOAT3(-50.0f, 30.0f, 0.0f);  // 4位の位置
 
 	// プレイヤー取得
 	PLAYER* p1 = GetPlayer(0);
