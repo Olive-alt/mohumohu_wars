@@ -141,6 +141,9 @@
     <ClInclude Include="mode_select.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="IT_muteki.h">
+      <Filter>ヘッダー ファイル\ITEM</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="input.cpp">
@@ -255,6 +258,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="IT_heal.cpp">
+      <Filter>ソース ファイル\ITEM</Filter>
+    </ClCompile>
+    <ClCompile Include="IT_muteki.cpp">
       <Filter>ソース ファイル\ITEM</Filter>
     </ClCompile>
   </ItemGroup>

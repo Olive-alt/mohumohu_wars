@@ -72,6 +72,10 @@ HRESULT HAMR::InitITHamr(void)
     // ★耐久
     swingCount = 0;
 
+    breakPending = false;
+
+    durabilityCountedThisSwing = false;
+
     // アイコン
     MakeVertexITHamrIcon();
     for (int i = 0; i < TEXTURE_MAX; i++)
@@ -158,6 +162,7 @@ void HAMR::UpdateITHamr(void)
             to_swing = TRUE;
             wantToSwing = false;
             scoredThisSwing = false; // <-- reset at start of swing
+            durabilityCountedThisSwing = false;
             PlaySound(SOUND_LABEL_SE_shot002);
         }
 
@@ -174,27 +179,7 @@ void HAMR::UpdateITHamr(void)
             swingAngle = swingMax;
             to_swing = FALSE;
 
-            // ★ここで1回消費（3回で壊れる）
-            swingCount++;
 
-            if (swingCount >= 3)
-            {
-                // 所持解除
-                if (pick && PlayerIndex >= 0)
-                {
-                    PLAYER* pl = GetPlayer(PlayerIndex);
-                    if (pl) pl->haveWeapon = FALSE; // プレイヤーの所持解除 :contentReference[oaicite:2]{index=2}
-                }
-
-                // アイテム破壊（非表示化）
-                use = FALSE;
-                pick = FALSE;
-                to_swing = FALSE;
-                PlayerIndex = -1;
-                swingCount = 0;
-                scl = XMFLOAT3(0, 0, 0);
-                return;
-            }
         }
     }
     else
@@ -205,6 +190,24 @@ void HAMR::UpdateITHamr(void)
             swingAngle -= returnSpeed;
             if (swingAngle < 0.0f) swingAngle = 0.0f;
         }
+    }
+    if (breakPending)
+    {
+        // now actually break after the swing has ended
+        if (pick && PlayerIndex >= 0)
+        {
+            PLAYER* pl = GetPlayer(PlayerIndex);
+            if (pl) pl->haveWeapon = FALSE;
+        }
+
+        use = FALSE;
+        pick = FALSE;
+        to_swing = FALSE;
+        PlayerIndex = -1;
+        swingCount = 0;
+        breakPending = false;
+        scl = XMFLOAT3(0, 0, 0);
+        return;
     }
 
     // アイコンなどの汎用更新があればここに（現状そのまま）
@@ -226,7 +229,7 @@ void HAMR::DrawITHamr(void)
     const float halfH = scl.y * 0.5f;
 
     // Scale
-    mtxWorld = XMMatrixMultiply(mtxWorld, XMMatrixScaling(scl.x, scl.y, scl.z));
+    mtxWorld = XMMatrixMultiply(mtxWorld, XMMatrixScaling(scl.x * 3, scl.y*3 , scl.z * 3));
     // ピボット移動（下端に回転中心）
     mtxWorld = XMMatrixMultiply(mtxWorld, XMMatrixTranslation(0.0f, halfH, 0.0f));
     // スイング回転（前方向へ倒す想定：-X）
@@ -279,6 +282,20 @@ void HAMR::HitITHamr(int p_Index)
     {
         AddScore(PlayerIndex, 100);  // ハンマーの所有者に100点を加算
         scoredThisSwing = true;      // フラグを立てて二重加算を防止
+
+
+        // ★ durability only decreases once per swing
+        if (!durabilityCountedThisSwing)
+        {
+            swingCount++;
+            durabilityCountedThisSwing = true;
+
+            if (swingCount >= 3)
+            {
+                // don’t break instantly, mark for later
+                breakPending = true;
+            }
+        }
     }
 
     // ---- つぶれ演出 ----
@@ -300,21 +317,29 @@ void HAMR::PickITHamr(int p_Index)
 {
     PLAYER* pl = GetPlayer(p_Index);
     if (!pl || !pl->use) return;
-    if (pl->haveWeapon)  return;         // 多重所持防止
+    if (pl->haveWeapon) return;   // 多重所持防止
 
+    use = TRUE;
     pick = TRUE;
-    pl->haveWeapon = TRUE;               // 所持開始 :contentReference[oaicite:3]{index=3}
+    pl->haveWeapon = TRUE;
     PlayerIndex = p_Index;
 
     // プレイヤー周りの装備位置にスナップ
     pos = pl->pos;
     rot = pl->rot;
 
-    // 耐久リセット
+    // 完全リセット
     swingCount = 0;
     swingAngle = 0.0f;
     wantToSwing = false;
+    to_swing = false;
+    scoredThisSwing = false;
+    durabilityCountedThisSwing = false;
+    breakPending = false;
+    scl = XMFLOAT3(1, 1, 1);   // restore scale
 }
+
+
 
 //=============================================================================
 // ハンマー頭のワールド座標（当たり判定用：装備中はこちらを使う）

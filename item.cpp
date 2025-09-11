@@ -18,11 +18,6 @@
 #include "collision.h"
 #include "debugproc.h"
 
-//アイテム用
-#include "IT_giant.h"
-#include "IT_invisible.h"
-#include "IT_heal.h"
-
 //デバッグ表示
 #include "debugline.h"
 
@@ -53,6 +48,8 @@ int SpownTime = 0;
 GIANT giant[ITEM_MAX];
 
 HEAL heal[ITEM_MAX];
+
+MUTEKI muteki[ITEM_MAX];
 
 INVISIBLE invisible[1];
 
@@ -96,6 +93,9 @@ HRESULT InitItem(void)
 		//回復アイテムの初期化
 		heal[i].InitITheal();
 
+		//無敵アイテムの初期化
+		muteki[i].InitITmuteki();
+
 		// [目的] ボールアイテムの初期化（全要素をInitITballで初期化する）
 		ball[i].InitITball();
 
@@ -134,6 +134,9 @@ void UninitItem(void)
 		// 回復アイテムの終了処理
 		heal[i].UninitITheal();
 
+		//無敵アイテムの終了処理
+		muteki[i].UninitITmuteki();
+
 		//ボールアイテムの終了処理
 		ball[i].UninitITball();
 
@@ -169,6 +172,18 @@ void UpdateItem(void)
 	if (GetKeyboardTrigger(DIK_P))
 	{
 		g_bPause = g_bPause ? FALSE : TRUE;
+	}
+
+	if (GetKeyboardTrigger(DIK_4))
+	{
+		for (int i = 0; i < 10; i++)
+		{
+			if (!muteki[i].IsUsedITmuteki())
+			{
+				muteki[i].SetITmuteki(XMFLOAT3(100.0f, 0.0f, 0.0f));
+				break;
+			}
+		}
 	}
 
 	if (GetKeyboardTrigger(DIK_5))
@@ -254,6 +269,9 @@ void UpdateItem(void)
 		// 回復アイテムの更新処理
 		heal[i].UpdateITheal();
 
+		//無敵アイテムの更新処理
+		muteki[i].UpdateITmuteki();
+
 		// [目的] ボールアイテムの更新（全要素をUpdateITballで更新する）
 		ball[i].UpdateITball();
 
@@ -286,6 +304,9 @@ void DrawItem(void)
 
 		// 回復アイテムの描画処理
 		heal[i].DrawITheal();
+
+		//無敵アイテムの描画処理
+		muteki[i].DrawITmuteki();
 
 		// [目的] ボールアイテムの描画（全要素をDrawITballで描画する）
 		ball[i].DrawITball();
@@ -365,6 +386,25 @@ void CheckHitItem(void)
 			}
 		}
 
+		// ===== 無敵アイテム =====
+		if (muteki[i].IsUsedITmuteki())
+		{
+			if (muteki[i].IsUsedITmuteki() && !muteki[i].IsPickedITmuteki())
+			{
+				XMFLOAT3 muteki_pos = muteki[i].GetPositionITmuteki();
+				for (int j = 0; j < MAX_PLAYER; j++)
+				{
+					PLAYER* pj = GetPlayer(j);
+					if (!pj || !pj->use) continue;
+
+					if (CollisionBC(pj->pos, muteki_pos, pj->size, MUTEKI_SIZE))
+					{
+						muteki[i].PickITmuteki(j);
+					}
+				}
+			}
+		}
+
 		// ===== ボール =====
 		if (ball[i].IsUsedITball())
 		{
@@ -394,6 +434,7 @@ void CheckHitItem(void)
 					PLAYER* pj = GetPlayer(j);
 					if (!pj || !pj->use) continue;
 					if (pj->invisible) continue;
+					if (pj->muteki) continue;
 					if (CollisionBC(pj->pos, ball_pos, pj->size, BALL_SIZE))
 					{
 						ball[i].HitITball(j); // 自己ヒットは側で弾いている実装です
@@ -433,6 +474,7 @@ void CheckHitItem(void)
 					PLAYER* pj = GetPlayer(j);
 					if (!pj || !pj->use) continue;
 					if (pj->invisible) continue;
+					if (pj->muteki) continue;
 					if (CollisionBC(pj->pos, bomb_pos, pj->size, expsize))
 					{
 						bomb[i].HitITbomb(j);
@@ -470,6 +512,7 @@ void CheckHitItem(void)
 					PLAYER* pj = GetPlayer(j);
 					if (!pj || !pj->use) continue;
 					if (pj->invisible) continue;
+					if (pj->muteki) continue;
 					if (CollisionBC(pj->pos, boom_pos, pj->size, BOOM_SIZE))
 					{
 						boom[i].HitITboom(j);
@@ -491,6 +534,7 @@ void CheckHitItem(void)
 				PLAYER* pj = GetPlayer(j);
 				if (!pj || !pj->use) continue;
 				if (pj->invisible) continue;
+				if (pj->muteki) continue;
 				if (CollisionBC(pj->pos, test_pos, pj->size, HAMR_SIZE))
 				{
 					if (!picked) hamr[i].PickITHamr(j);
@@ -611,6 +655,16 @@ void ItemSpown(void)
 			if (!heal[i].IsUsedITheal())
 			{
 				heal[i].SetITheal(SpawnPos);
+				break;
+			}
+		}
+		break;
+	case (7): // 無敵アイテム
+		for (int i = 0; i < ITEM_MAX; i++)
+		{
+			if (!muteki[i].IsUsedITmuteki())
+			{
+				muteki[i].SetITmuteki(SpawnPos);
 				break;
 			}
 		}

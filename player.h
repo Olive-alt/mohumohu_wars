@@ -56,6 +56,9 @@ struct PLAYER
     // 武器重複防止
     BOOL       haveWeapon;
 
+    // 無敵判定用
+    BOOL       muteki;
+
     BOOL       use;
 
     float      size;       // 当たりサイズ（半径と同値で運用）
@@ -126,6 +129,9 @@ void    DrawPlayerHpBar(void);
 // 入力/移動/攻撃
 void    MovePlayers(void);
 void    PlayerAttack(int playerIndex);
+
+// HP増減
+void    AddPlayerHP(int index, float add);
 
 // アニメ/被弾
 void    UpdatePlayerPartsAnimation(int playerIndex);

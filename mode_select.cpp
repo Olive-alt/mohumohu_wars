@@ -16,7 +16,7 @@ static ID3D11Buffer* g_VertexBuffer = NULL;
 static ID3D11ShaderResourceView* g_Texture[4] = { NULL }; // ”wŒi + 2 ƒ‚[ƒh
 
 static const char* g_TextureName[4] = {
-    "data/TEXTURE/bg003.jpg", // ”wŒi
+    "data/TEXTURE/bg004.jpg", // ”wŒi
     "data/TEXTURE/Select_mode/mode_score.png",
     "data/TEXTURE/Select_mode/mode_survival.png",
     "data/TEXTURE/Select_mode/title.png"
@@ -153,10 +153,10 @@ void DrawModeSelect(void)
     }
 
     {
-        float titleWidth = 500.0f;
-        float titleHeight = 100.0f;
-        float titlePosX = SCREEN_WIDTH / 2;
-        float titlePosY = 60.0f;
+        float titleWidth = 400.0f;
+        float titleHeight = 80.0f;
+        float titlePosX = SCREEN_WIDTH / 2 + 30.0f;
+        float titlePosY = 70.0f;
 
         GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[3]);  // ƒ^ƒCƒgƒ‹‚Íg_Texture[3]
         SetSprite(g_VertexBuffer,
