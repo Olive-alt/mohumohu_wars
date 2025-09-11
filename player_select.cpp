@@ -207,7 +207,7 @@ void DrawPlayerSelect(void)
 
     for (int i = 0; i < MAX_CHARACTERS; i++)
     {
-        float x = startX + i * (TEXTURE_WIDTH_PLAYER_ICON + 20);
+        float x = startX + i * (TEXTURE_WIDTH_PLAYER_ICON + 30);
 
         if (g_PlayerIcons[i])
         {
