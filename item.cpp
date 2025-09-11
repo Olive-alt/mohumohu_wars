@@ -182,6 +182,30 @@ void UpdateItem(void)
 		g_bPause = g_bPause ? FALSE : TRUE;
 	}
 
+	if (GetKeyboardTrigger(DIK_1))
+	{
+		for (int i = 0; i < 10; i++)
+		{
+			if (!boom[i].IsUsedITboom())
+			{
+				boom[i].SetITboomObject(XMFLOAT3(00.0f, 0.0f, 0.0f),-1);
+				break;
+			}
+		}
+	}
+
+	if (GetKeyboardTrigger(DIK_2))
+	{
+		for (int i = 0; i < 10; i++)
+		{
+			if (!hamr[i].IsUsedITHamr())
+			{
+				hamr[i].SetITHamrObject(XMFLOAT3(50.0f, 0.0f, 0.0f));
+				break;
+			}
+		}
+	}
+
 	if (GetKeyboardTrigger(DIK_3))
 	{
 		for (int i = 0; i < 10; i++)
