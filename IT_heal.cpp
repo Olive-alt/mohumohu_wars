@@ -122,14 +122,7 @@ void HEAL::PickITheal(int p_Index)
 {
 	PLAYER* player = GetPlayer(p_Index);
 
-	if (player->hp + HEAL_VALUE > PLAYER_HP_MAX)
-	{
-		player->hp = PLAYER_HP_MAX;
-	}
-	else
-	{
-		player->hp += HEAL_VALUE;
-	}
+	AddPlayerHP(p_Index, HEAL_VALUE);
 
 	PlayerIndex = p_Index;
 	FinishITheal();
