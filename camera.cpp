@@ -13,7 +13,7 @@
 // マクロ定義
 //*****************************************************************************
 #define	POS_X_CAM			(0.0f)			// カメラの初期位置(X座標)
-#define	POS_Y_CAM			(180.0f)			// カメラの初期位置(Y座標)
+#define	POS_Y_CAM			(320.0f)			// カメラの初期位置(Y座標)
 #define	POS_Z_CAM			(-160.0f)		// カメラの初期位置(Z座標)
 #define ORIGINAL_CAMERA_Y   (180.0f)
 
@@ -22,7 +22,7 @@
 //#define	POS_Z_CAM		(-400.0f)		// カメラの初期位置(Z座標)
 
 
-#define	VIEW_ANGLE		(XMConvertToRadians(60.0f))						// ビュー平面の視野角
+#define	VIEW_ANGLE		(XMConvertToRadians(30.0f))						// ビュー平面の視野角
 #define	VIEW_ASPECT		((float)SCREEN_WIDTH / (float)SCREEN_HEIGHT)	// ビュー平面のアスペクト比	
 #define	VIEW_NEAR_Z		(10.0f)											// ビュー平面のNearZ値
 #define	VIEW_FAR_Z		(10000.0f)										// ビュー平面のFarZ値
@@ -297,31 +297,31 @@ void SetCameraAT(XMFLOAT3 pos)
 //==============================================================================
 // ターゲットが画面外に出る前にカメラを上昇させる関数
 //==============================================================================
-// ==== Camera tuning (変更可能) ====
 struct CameraTuning {
-	float pitchDeg = 35.0f;     // ピッチ角(度)
-	float panLerp = 0.15f;     // 平行移動の追従
-	float zoomLerpOut = 0.20f;     // ズームアウト応答
-	float zoomLerpIn = 0.12f;     // ズームイン応答
-	float minRadius = 1.0f;      // 半径の下限
-	float minDist = 8.0f;      // 距離の下限
-	float maxY = 400.0f;    // 高さ上限
-	float minHeightY = ORIGINAL_CAMERA_Y - 2.0f; // 高さ下限
+	float pitchDeg = 35.0f;
+	float panLerp = 0.20f;       // faster center following (was 0.15)
+	float zoomLerpOut = 0.28f;   // faster zoom out (was 0.20)
+	float zoomLerpIn = 0.28f;    // slightly faster zoom in (was 0.12)
+	float minRadius = 1.0f;
+	float minDist = 0.0f;       // push min distance up a bit (was 8.0f)
+	float maxY = 450.0f;         // allow a bit more vertical headroom
+	float minHeightY = ORIGINAL_CAMERA_Y - 20.0f;
 
-	// 画面内判定(NDC)
-	float softInNDC = 0.72f;
-	float softOutNDC = 0.88f;
-	int   dwellFrames = 8;
+	// NDC thresholds tuned for 30° FOV
+	float softInNDC = 0.82f;    // react sooner when players shrink (was 0.65)
+	float softOutNDC = 0.82f;    // react sooner when players expand (was 0.85)
+	int   dwellFrames = 0;       // cut reaction delay in half (was 8)
 
-	// 近距離バイアス
-	float nudgeInNDC = 0.65f;
-	float nudgeHyst = 0.05f;
+	// Close bias
+	float nudgeInNDC = 0.68f;
+	float nudgeHyst = 0.04f;
 	float nudgeFactor = 0.85f;
-	float holdZoomInLerp = 0.15f;
+	float holdZoomInLerp = 0.20f;
 
-	// 1フレームでのズームアウト量上限(ワールド単位)
-	float maxZoomOutStep = 0.75f;
+	// Limit per-frame zoom out step
+	float maxZoomOutStep = 1.25f; // allow bigger jumps (was 0.75)
 };
+
 
 static CameraTuning g_CamTune{};
 inline void SetCameraTuning(const CameraTuning& t) { g_CamTune = t; }
