@@ -472,6 +472,7 @@ void DrawPlayer(void)
 
             SetWorldMatrix(&m);
             DrawModel(&g_Parts[i][j].model);
+            SetEdge(0);
         }
     }
 
