@@ -1051,10 +1051,20 @@ void PlayerAttack(int playerIndex)
     }
     // ブーメラン
     BOOM* boom = GetBoomerang();
-    boom->SetThrowFlag(true);
+    for (int k = 0; k < 10; k++) {
+        if (boom[k].IsUsedITboom() && boom[k].IsPickedITboom()) {
+            boom[k].SetThrowFlag(true);
+            break;
+        }
+    }
     // ハンマー
     HAMR* hamr = GetHammer();
-    hamr->SetSwingFlag(true);
+    for (int k = 0; k < 10; k++) {
+        if (hamr[k].IsUsedITHamr() && hamr[k].IsPickedITHamr()) {
+            hamr[k].SetSwingFlag(true);
+            break;
+        }
+    }
 }
 
 //*****************************************************************************
