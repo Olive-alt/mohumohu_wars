@@ -123,7 +123,7 @@ void DrawStageSelect(void)
 
     // タイトル
     GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[3]);
-    SetSprite(g_VertexBuffer, SCREEN_WIDTH / 2, 60.0f, 500.0f, 100.0f, 0, 0, 1, 1);
+    SetSprite(g_VertexBuffer, SCREEN_WIDTH / 2 + 30, 70, 400, 80, 0, 0, 1, 1);
     GetDeviceContext()->Draw(4, 0);
 
     // 左=ロード(1)・右=ビーチ(2)
