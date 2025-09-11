@@ -224,7 +224,7 @@ void DrawPlayerSelect(void)
             if (g_SelectedCharIndex[p] == i && g_SelectFrameTex[p])
             {
                 GetDeviceContext()->PSSetShaderResources(0, 1, &g_SelectFrameTex[p]);
-                SetSprite(g_VertexBuffer, x, yPos - 15, TEXTURE_WIDTH_PLAYER_ICON * 1.2f, TEXTURE_HEIGHT_PLAYER_ICON * 1.5f, 0, 0, 1, 1);
+                SetSprite(g_VertexBuffer, x, yPos - 15, TEXTURE_WIDTH_PLAYER_ICON * 1.2f, TEXTURE_HEIGHT_PLAYER_ICON * 1.7f, 0, 0, 1, 1);
                 GetDeviceContext()->Draw(4, 0);
             }
         }
