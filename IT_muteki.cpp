@@ -9,7 +9,7 @@
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
-#define	MODEL_MUTEKI		"data/MODEL/item/item_heal.obj"			// 読み込むモデル名
+#define	MODEL_MUTEKI		"data/MODEL/item/item_muteki.obj"			// 読み込むモデル名
 
 #define MUTEKI_SCL_RATE		(3.0f)							// 巨大化の倍率
 #define MUTEKI_TIME			(600.0f)							// 巨大化の倍率
