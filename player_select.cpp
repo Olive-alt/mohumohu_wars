@@ -193,12 +193,12 @@ void DrawPlayerSelect(void)
 
     // タイトル
     GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[2]);
-    SetSprite(g_VertexBuffer, SCREEN_WIDTH / 2 + 30, 90, 600, 100, 0, 0, 1, 1);
+    SetSprite(g_VertexBuffer, SCREEN_WIDTH / 2 + 30, 70, 400, 80, 0, 0, 1, 1);
     GetDeviceContext()->Draw(4, 0);
 
     // 操作説明
     GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[3]);
-    SetSprite(g_VertexBuffer, SCREEN_WIDTH / 2, 80, SCREEN_WIDTH, 180, 0, 0, 1, 1);
+    SetSprite(g_VertexBuffer, SCREEN_WIDTH / 2, 70, SCREEN_WIDTH, 150, 0, 0, 1, 1);
     GetDeviceContext()->Draw(4, 0);
 
     // キャラクターアイコン
@@ -207,7 +207,7 @@ void DrawPlayerSelect(void)
 
     for (int i = 0; i < MAX_CHARACTERS; i++)
     {
-        float x = startX + i * (TEXTURE_WIDTH_PLAYER_ICON + 20);
+        float x = startX + i * (TEXTURE_WIDTH_PLAYER_ICON + 30);
 
         if (g_PlayerIcons[i])
         {
@@ -224,7 +224,7 @@ void DrawPlayerSelect(void)
             if (g_SelectedCharIndex[p] == i && g_SelectFrameTex[p])
             {
                 GetDeviceContext()->PSSetShaderResources(0, 1, &g_SelectFrameTex[p]);
-                SetSprite(g_VertexBuffer, x, yPos - 15, TEXTURE_WIDTH_PLAYER_ICON * 1.2f, TEXTURE_HEIGHT_PLAYER_ICON * 1.5f, 0, 0, 1, 1);
+                SetSprite(g_VertexBuffer, x, yPos - 15, TEXTURE_WIDTH_PLAYER_ICON * 1.2f, TEXTURE_HEIGHT_PLAYER_ICON * 1.7f, 0, 0, 1, 1);
                 GetDeviceContext()->Draw(4, 0);
             }
         }

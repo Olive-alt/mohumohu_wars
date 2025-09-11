@@ -1,6 +1,6 @@
 #include "main.h"
 #include "input.h"
-#include "IT_heal.h"
+#include "IT_muteki.h"
 #include "renderer.h"
 #include "player.h"
 #include "camera.h"
@@ -9,15 +9,15 @@
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
-#define	MODEL_HEAL		"data/MODEL/item/item_heal.obj"			// 読み込むモデル名
+#define	MODEL_MUTEKI		"data/MODEL/item/item_muteki.obj"			// 読み込むモデル名
 
-#define HEAL_SCL_RATE		(3.0f)							// 巨大化の倍率
-#define HEAL_TIME			(600.0f)							// 巨大化の倍率
+#define MUTEKI_SCL_RATE		(3.0f)							// 巨大化の倍率
+#define MUTEKI_TIME			(600.0f)							// 巨大化の倍率
 
-#define HEAL_SHADOW_SIZE	(0.4f)							// 影の大きさ
-#define HEAL_OFFSET_Y		(7.0f)							// プレイヤーの足元をあわせる
+#define MUTEKI_SHADOW_SIZE	(0.4f)							// 影の大きさ
+#define MUTEKI_OFFSET_Y		(7.0f)							// プレイヤーの足元をあわせる
 
-#define HEAL_VALUE   		(7.0f)							// プレイヤーの足元をあわせる
+#define MUTEKI_VALUE   		(180.0f)							// 無敵時間(60フレーム　＊　秒)
 //*****************************************************************************
 // プロトタイプ宣言
 //*****************************************************************************
@@ -25,23 +25,26 @@
 //*****************************************************************************
 // グローバル変数
 //*****************************************************************************
-BOOL		heal_load = FALSE;
-DX11_MODEL	heal_model;				// モデル情報
+BOOL		muteki_load = FALSE;
+DX11_MODEL	muteki_model;				// モデル情報
 
 
 //=============================================================================
 // 初期化処理
 //=============================================================================
 
-HRESULT HEAL::InitITheal(void)
+HRESULT MUTEKI::InitITmuteki(void)
 {
-	if (!heal_load)
+	if (!muteki_load)
 	{
-		heal_load = TRUE;
-		LoadModel(MODEL_HEAL, &heal_model);
+		muteki_load = TRUE;
+		LoadModel(MODEL_MUTEKI, &muteki_model);
 	}
 
 	use = FALSE;
+	mutekiUse = FALSE;
+	pick = FALSE;
+	mutekiCount = 0;
 	pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	scl = XMFLOAT3(1.0f, 1.0f, 1.0f);
@@ -51,28 +54,35 @@ HRESULT HEAL::InitITheal(void)
 }
 
 
-void HEAL::UninitITheal(void)
+void MUTEKI::UninitITmuteki(void)
 {
 	use = FALSE;
 	// モデルの解放処理
-	if (heal_load == TRUE)
+	if (muteki_load == TRUE)
 	{
-		UnloadModel(&heal_model);
-		heal_load = FALSE;
+		UnloadModel(&muteki_model);
+		muteki_load = FALSE;
 	}
 }
 
-void HEAL::UpdateITheal(void)
+void MUTEKI::UpdateITmuteki(void)
 {
 	if (use)
 	{
-
+		if (mutekiUse)
+		{
+			if (mutekiCount > MUTEKI_VALUE)
+			{
+				FinishITmuteki();
+			}
+			mutekiCount++;
+		}
 	}
 }
 
-void HEAL::DrawITheal(void)
+void MUTEKI::DrawITmuteki(void)
 {
-	if (!use)return;
+	if (!use || pick)return;
 
 	XMMATRIX mtxScl, mtxRot, mtxTranslate, mtxWorld;
 
@@ -100,30 +110,36 @@ void HEAL::DrawITheal(void)
 	XMStoreFloat4x4(&m_mtxWorld, mtxWorld);
 
 	// モデル描画
-	DrawModel(&heal_model);
+	DrawModel(&muteki_model);
 
 	// カリング設定を戻す
 	SetCullingMode(CULL_MODE_BACK);
 }
 
-void HEAL::SetITheal(XMFLOAT3 set_pos)
+void MUTEKI::SetITmuteki(XMFLOAT3 set_pos)
 {
 	use = TRUE;
 	pos = set_pos;
 }
 
-void HEAL::FinishITheal(void)
+void MUTEKI::FinishITmuteki(void)
 {
 	use = FALSE;
+	mutekiUse = FALSE;
+	pick = FALSE;
+	mutekiCount = 0;
+
+	PLAYER* player = GetPlayer(PlayerIndex);
+	player->muteki = FALSE;
 	PlayerIndex = -1;
 }
 
-void HEAL::PickITheal(int p_Index)
+void MUTEKI::PickITmuteki(int p_Index)
 {
 	PLAYER* player = GetPlayer(p_Index);
 
-	AddPlayerHP(p_Index, HEAL_VALUE);
-
+	player->muteki = TRUE;
+	mutekiUse = TRUE;
+	pick = TRUE;
 	PlayerIndex = p_Index;
-	FinishITheal();
 }
