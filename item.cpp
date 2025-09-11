@@ -386,6 +386,25 @@ void CheckHitItem(void)
 			}
 		}
 
+		// ===== 無敵アイテム =====
+		if (muteki[i].IsUsedITmuteki())
+		{
+			if (muteki[i].IsUsedITmuteki() && !muteki[i].IsPickedITmuteki())
+			{
+				XMFLOAT3 muteki_pos = muteki[i].GetPositionITmuteki();
+				for (int j = 0; j < MAX_PLAYER; j++)
+				{
+					PLAYER* pj = GetPlayer(j);
+					if (!pj || !pj->use) continue;
+
+					if (CollisionBC(pj->pos, muteki_pos, pj->size, MUTEKI_SIZE))
+					{
+						muteki[i].PickITmuteki(j);
+					}
+				}
+			}
+		}
+
 		// ===== ボール =====
 		if (ball[i].IsUsedITball())
 		{
