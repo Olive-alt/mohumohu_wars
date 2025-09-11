@@ -255,6 +255,7 @@ HRESULT InitPlayer(void)
 
         g_Player[i].spd = 0.0f;
         g_Player[i].hp = PLAYER_HP_MAX;
+        g_Player[i].muteki = FALSE;
         g_Player[i].use = TRUE;
 
         g_Player[i].size = PLAYER_SIZE;
@@ -455,7 +456,7 @@ void DrawPlayer(void)
         SetWorldMatrix(&mtxWorld);
         XMStoreFloat4x4(&g_Player[i].mtxWorld, mtxWorld);
 
-        SetEdge(1);
+        if (g_Player[i].muteki)SetEdge(1);
         DrawModel(&g_Player[i].model);
 
         // パーツ
@@ -836,6 +837,18 @@ void MovePlayers(void)
                 g_PlayerIsMoving[i] = false;
             }
         }
+    }
+}
+
+//*****************************************************************************
+// HP増減
+//*****************************************************************************
+void AddPlayerHP(int index, float add)
+{
+    g_Player[index].hp += add;
+    if (g_Player[index].hp > PLAYER_HP_MAX)
+    {
+        g_Player[index].hp = PLAYER_HP_MAX;
     }
 }
 
