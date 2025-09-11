@@ -12,6 +12,7 @@
 #include "IT_hammer.h"
 #include "IT_heal.h"
 #include "IT_muteki.h"
+#include "IT_energydrink.h"
 
 
 #define ITEM_MAX	(10)
@@ -25,6 +26,8 @@ extern HAMR hamr[ITEM_MAX];
 extern BOMB bomb[ITEM_MAX];
 extern HEAL heal[ITEM_MAX];
 extern MUTEKI muteki[ITEM_MAX];
+extern ENADORI enadori[ITEM_MAX];
+
 
 //*****************************************************************************
 // プロトタイプ宣言

@@ -59,6 +59,9 @@ struct PLAYER
     // 無敵判定用
     BOOL       muteki;
 
+    // エナドリ判定用
+    BOOL       enadori;
+
     BOOL       use;
 
     float      size;       // 当たりサイズ（半径と同値で運用）

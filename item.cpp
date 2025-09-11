@@ -51,6 +51,8 @@ HEAL heal[ITEM_MAX];
 
 MUTEKI muteki[ITEM_MAX];
 
+ENADORI enadori[ITEM_MAX];
+
 INVISIBLE invisible[1];
 
 BALL ball[ITEM_MAX];
@@ -96,6 +98,9 @@ HRESULT InitItem(void)
 		//無敵アイテムの初期化
 		muteki[i].InitITmuteki();
 
+		//エナドリの初期化
+		enadori[i].InitITenadori();
+
 		// [目的] ボールアイテムの初期化（全要素をInitITballで初期化する）
 		ball[i].InitITball();
 
@@ -137,6 +142,9 @@ void UninitItem(void)
 		//無敵アイテムの終了処理
 		muteki[i].UninitITmuteki();
 
+		//エナドリの終了処理
+		enadori[i].UninitITenadori();
+
 		//ボールアイテムの終了処理
 		ball[i].UninitITball();
 
@@ -174,13 +182,25 @@ void UpdateItem(void)
 		g_bPause = g_bPause ? FALSE : TRUE;
 	}
 
+	if (GetKeyboardTrigger(DIK_3))
+	{
+		for (int i = 0; i < 10; i++)
+		{
+			if (!enadori[i].IsUsedITenadori())
+			{
+				enadori[i].SetITenadori(XMFLOAT3(-100.0f, 0.0f, 0.0f));
+				break;
+			}
+		}
+	}
+
 	if (GetKeyboardTrigger(DIK_4))
 	{
 		for (int i = 0; i < 10; i++)
 		{
 			if (!muteki[i].IsUsedITmuteki())
 			{
-				muteki[i].SetITmuteki(XMFLOAT3(100.0f, 0.0f, 0.0f));
+				muteki[i].SetITmuteki(XMFLOAT3(0.0f, 0.0f, 0.0f));
 				break;
 			}
 		}
@@ -272,6 +292,9 @@ void UpdateItem(void)
 		//無敵アイテムの更新処理
 		muteki[i].UpdateITmuteki();
 
+		//エナドリの更新処理
+		enadori[i].UpdateITenadori();
+
 		// [目的] ボールアイテムの更新（全要素をUpdateITballで更新する）
 		ball[i].UpdateITball();
 
@@ -307,6 +330,9 @@ void DrawItem(void)
 
 		//無敵アイテムの描画処理
 		muteki[i].DrawITmuteki();
+
+		//エナドリの描画処理
+		enadori[i].DrawITenadori();
 
 		// [目的] ボールアイテムの描画（全要素をDrawITballで描画する）
 		ball[i].DrawITball();
@@ -400,6 +426,25 @@ void CheckHitItem(void)
 					if (CollisionBC(pj->pos, muteki_pos, pj->size, MUTEKI_SIZE))
 					{
 						muteki[i].PickITmuteki(j);
+					}
+				}
+			}
+		}
+
+		// ===== エナドリ =====
+		if (enadori[i].IsUsedITenadori())
+		{
+			if (enadori[i].IsUsedITenadori() && !enadori[i].IsPickedITenadori())
+			{
+				XMFLOAT3 enadori_pos = enadori[i].GetPositionITenadori();
+				for (int j = 0; j < MAX_PLAYER; j++)
+				{
+					PLAYER* pj = GetPlayer(j);
+					if (!pj || !pj->use) continue;
+
+					if (CollisionBC(pj->pos, enadori_pos, pj->size, ENADORI_SIZE))
+					{
+						enadori[i].PickITenadori(j);
 					}
 				}
 			}
@@ -577,7 +622,7 @@ void CheckHitItem(void)
 void ItemSpown(void)
 {
 	//int itemNo = GetRand(0, ITEM_TOTAL_MAX - 1);//本来
-	int itemNo = GetRand(0, 6);//仮置き
+	int itemNo = GetRand(0, 8);//仮置き
 	XMFLOAT3 SpawnPos = XMFLOAT3(GetRandf(-500.0f, 500.0f), 0.0f, GetRandf(-500.0f, 500.0f));
 
 	switch (itemNo)
@@ -665,6 +710,16 @@ void ItemSpown(void)
 			if (!muteki[i].IsUsedITmuteki())
 			{
 				muteki[i].SetITmuteki(SpawnPos);
+				break;
+			}
+		}
+		break;
+	case (8): // エナドリ
+		for (int i = 0; i < ITEM_MAX; i++)
+		{
+			if (!enadori[i].IsUsedITenadori())
+			{
+				enadori[i].SetITenadori(SpawnPos);
 				break;
 			}
 		}

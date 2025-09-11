@@ -144,6 +144,9 @@
     <ClInclude Include="IT_muteki.h">
       <Filter>ヘッダー ファイル\ITEM</Filter>
     </ClInclude>
+    <ClInclude Include="IT_energydrink.h">
+      <Filter>ヘッダー ファイル\ITEM</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="input.cpp">
@@ -261,6 +264,9 @@
       <Filter>ソース ファイル\ITEM</Filter>
     </ClCompile>
     <ClCompile Include="IT_muteki.cpp">
+      <Filter>ソース ファイル\ITEM</Filter>
+    </ClCompile>
+    <ClCompile Include="IT_energydrink.cpp">
       <Filter>ソース ファイル\ITEM</Filter>
     </ClCompile>
   </ItemGroup>
