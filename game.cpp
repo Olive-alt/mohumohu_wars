@@ -45,7 +45,7 @@ static int  g_ViewPortType_Game = TYPE_FULL_SCREEN;
 static BOOL g_bPause = TRUE;
 
 WIND     wind;
-WARPGATE warpgate[2];
+WARPGATE warpgate[MAX_WG];
 
 //=============================================================================
 // 初期化
@@ -98,7 +98,7 @@ HRESULT InitGame(void)
 	// ワープゲート
 	for (int i = 0; i < MAX_WG; i++) {
 		warpgate[i].InitSGwarpgate();
-		warpgate[i].SetSGwarpgate(XMFLOAT3(0.0f + (300.0f * i), 0.0f, 0.0f),
+		warpgate[i].SetSGwarpgate(XMFLOAT3(GetRandf(-500.0f, 500.0f), 0.0f, GetRandf(-500.0f, 500.0f)),
 			XMFLOAT3(0, 0, 0), XMFLOAT3(1, 1, 1));
 	}
 

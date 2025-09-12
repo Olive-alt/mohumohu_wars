@@ -12,8 +12,9 @@
 
 #define	WG_WIDTH			(50.0f)			// 頂点サイズ
 #define	WG_HEIGHT			(50.0f)			// 頂点サイズ
-#define	WG_DEPTH			(50.0f)			// 頂点サイズ
+#define	WG_DEPTH			(5.0f)			// 頂点サイズ
 
+#define	WG_RESPAWNTIME			(240.0f)			// リスポーン時間
 //*****************************************************************************
 // プロトタイプ宣言
 //*****************************************************************************
@@ -57,6 +58,7 @@ HRESULT WARPGATE::InitSGwarpgate(void)
 	rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	scl = XMFLOAT3(1.0f, 1.0f, 1.0f);
 	hit_scl = XMFLOAT3(WG_WIDTH, WG_HEIGHT, WG_DEPTH);
+	RespawnCount = 0;
 
 	return S_OK;
 }
@@ -72,6 +74,14 @@ void WARPGATE::UpdateSGwarpgate(void)
 	if (use)
 	{
 		rot.z -= 0.01f;
+
+
+		if (RespawnCount > WG_RESPAWNTIME)
+		{
+			SetSGwarpgatePos(XMFLOAT3(GetRandf(-500.0f, 500.0f), 0.0f, GetRandf(-500.0f, 500.0f)));
+			RespawnCount = 0;
+		}
+		RespawnCount++;
 	}
 }
 
@@ -178,8 +188,15 @@ void WARPGATE::SetSGwarpgate(XMFLOAT3 set_pos, XMFLOAT3 set_rot, XMFLOAT3 set_sc
 {
 	use = TRUE;
 	pos = set_pos;
+	pos.y += WG_OFFSET_Y;
 	rot = set_rot;
 	scl = set_scl;
+}
+
+void WARPGATE::SetSGwarpgatePos(XMFLOAT3 set_pos)
+{
+	pos = set_pos;
+	pos.y += WG_OFFSET_Y;
 }
 
 
