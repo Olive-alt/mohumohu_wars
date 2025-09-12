@@ -10,13 +10,12 @@
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
-#define	MODEL_BALL  	"data/MODEL/item/sphere.obj"			// 読み込むモデル名
+#define	MODEL_BALL  	"data/MODEL/item/item_ball.obj"			// 読み込むモデル名
 
 #define	VALUE_MOVE		(10.0f)					// 移動量
 #define	VALUE_ROTATE	(XM_PI * 0.02f)			// 回転量
 
 #define BALL_SHADOW_SIZE	(0.4f)							// 影の大きさ
-#define BALL_OFFSET_Y		(7.0f)							// プレイヤーの足元をあわせる
 #define	BALL_DAMAGE			(5.0f)					// ダメージ量
 
 
@@ -62,7 +61,7 @@ HRESULT BALL::InitITball(void)
 	pick = FALSE;
 	pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	scl = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	scl = XMFLOAT3(1.2f, 1.2f, 1.2f);
 	move = XMFLOAT3(VALUE_MOVE, 1.0f, VALUE_MOVE);
 	size = BALL_SIZE;
 	count = 0.0f;

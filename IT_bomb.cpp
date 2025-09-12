@@ -20,7 +20,6 @@
 #define GRAVITY			(-9.8f)
 
 #define BOMB_SHADOW_SIZE	(0.4f)							// 影の大きさ
-#define BOMB_OFFSET_Y		(7.0f)							// プレイヤーの足元をあわせる
 #define	BOMB_DAMAGE			(5.0f)					// ダメージ量
 #define	EXP_SIZE			(10.0f)					// 移動量
 

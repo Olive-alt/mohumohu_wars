@@ -15,7 +15,6 @@
 #define MUTEKI_TIME			(600.0f)							// 巨大化の倍率
 
 #define MUTEKI_SHADOW_SIZE	(0.4f)							// 影の大きさ
-#define MUTEKI_OFFSET_Y		(7.0f)							// プレイヤーの足元をあわせる
 
 #define MUTEKI_VALUE   		(180.0f)							// 無敵時間(60フレーム　＊　秒)
 //*****************************************************************************

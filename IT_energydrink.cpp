@@ -15,7 +15,6 @@
 #define ENADORI_TIME			(600.0f)							// ‹‘å‰»‚Ì”{—¦
 
 #define ENADORI_SHADOW_SIZE	(0.4f)							// ‰e‚Ì‘å‚«‚³
-#define ENADORI_OFFSET_Y		(7.0f)							// ƒvƒŒƒCƒ„[‚Ì‘«Œ³‚ð‚ ‚í‚¹‚é
 
 #define ENADORI_VALUE   		(300.0f)							// –³“GŽžŠÔ(60ƒtƒŒ[ƒ€@–@•b)
 //*****************************************************************************
@@ -47,7 +46,7 @@ HRESULT ENADORI::InitITenadori(void)
 	enadoriCount = 0;
 	pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	scl = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	scl = XMFLOAT3(1.2f, 1.2f, 1.2f);
 	PlayerIndex = -1;
 
 	return S_OK;
@@ -138,7 +137,7 @@ void ENADORI::PickITenadori(int p_Index)
 {
 	PLAYER* player = GetPlayer(p_Index);
 
-	player->muteki = TRUE;
+	player->enadori = TRUE;
 	enadoriUse = TRUE;
 	pick = TRUE;
 	PlayerIndex = p_Index;

@@ -212,7 +212,7 @@ void UpdateItem(void)
 		{
 			if (!enadori[i].IsUsedITenadori())
 			{
-				enadori[i].SetITenadori(XMFLOAT3(-100.0f, 0.0f, 0.0f));
+				enadori[i].SetITenadori(XMFLOAT3(-100.0f, 0.0f + ENADORI_OFFSET_Y , 0.0f));
 				break;
 			}
 		}
@@ -224,7 +224,7 @@ void UpdateItem(void)
 		{
 			if (!muteki[i].IsUsedITmuteki())
 			{
-				muteki[i].SetITmuteki(XMFLOAT3(0.0f, 0.0f, 0.0f));
+				muteki[i].SetITmuteki(XMFLOAT3(0.0f, 0.0f + MUTEKI_OFFSET_Y, 0.0f));
 				break;
 			}
 		}
@@ -272,7 +272,7 @@ void UpdateItem(void)
 		{
 			if (!ball[i].IsUsedITball())
 			{
-				ball[i].SetITballObject(XMFLOAT3(400.0f, 0.0f, 0.0f));
+				ball[i].SetITballObject(XMFLOAT3(400.0f, 0.0f + BALL_OFFSET_Y, 0.0f));
 				break;
 			}
 		}
@@ -284,7 +284,7 @@ void UpdateItem(void)
 		{
 			if (!bomb[i].IsUsedITbomb())
 			{
-				bomb[i].SetITbombObject(XMFLOAT3(500.0f, 0.0f, 0.0f));
+				bomb[i].SetITbombObject(XMFLOAT3(500.0f, 0.0f + BOMB_OFFSET_Y, 0.0f));
 				break;
 			}
 		}
@@ -681,6 +681,7 @@ void ItemSpown(void)
 		{
 			if (!ball[i].IsUsedITball())
 			{
+				SpawnPos.y += BALL_OFFSET_Y;
 				ball[i].SetITballObject(SpawnPos);
 				break;
 			}
@@ -692,6 +693,7 @@ void ItemSpown(void)
 		{
 			if (!bomb[i].IsUsedITbomb())
 			{
+				SpawnPos.y += BOMB_OFFSET_Y;
 				bomb[i].SetITbombObject(SpawnPos);
 				break;
 			}
@@ -708,7 +710,7 @@ void ItemSpown(void)
 			}
 		}
 		break;
-	case (5): // ブーメラン
+	case (5): // ハンマー
 		for (int i = 0; i < ITEM_MAX; i++)
 		{
 			if (!hamr[i].IsUsedITHamr())
@@ -733,6 +735,7 @@ void ItemSpown(void)
 		{
 			if (!muteki[i].IsUsedITmuteki())
 			{
+				SpawnPos.y += MUTEKI_OFFSET_Y;
 				muteki[i].SetITmuteki(SpawnPos);
 				break;
 			}
@@ -743,6 +746,7 @@ void ItemSpown(void)
 		{
 			if (!enadori[i].IsUsedITenadori())
 			{
+				SpawnPos.y += ENADORI_OFFSET_Y;
 				enadori[i].SetITenadori(SpawnPos);
 				break;
 			}
