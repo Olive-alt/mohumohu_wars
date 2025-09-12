@@ -21,6 +21,7 @@
 #include "player_select.h"
 #include "stageobject.h"
 #include "stage_select.h"   // ★ 追加：g_SelectedStageFile
+#include "field.h"
 
 // ステージギミック
 #include "SG_wind.h"
@@ -46,7 +47,7 @@ static BOOL g_bPause = TRUE;
 
 WIND     wind;
 WARPGATE warpgate[MAX_WG];
-
+static bool gUseImageField = false; // true: beachで画像フィールド運用
 //=============================================================================
 // 初期化
 //=============================================================================
@@ -55,8 +56,26 @@ HRESULT InitGame(void)
 	g_ViewPortType_Game = TYPE_FULL_SCREEN;
 
 	// フィールド
-	InitMeshField(XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 0), 100, 100, 13.0f, 13.0f);
 
+	// どのフィールド方式を使うか判定
+	gUseImageField = (strstr(g_SelectedStageFile, "beach") != nullptr);
+
+	if (gUseImageField)
+	{
+		// 画像フィールドのみ（MeshFieldは使わない）
+		InitField();
+		// 減速マスクの読込み（PGM を使っている場合はここで指定）
+		Field_LoadMaskPGM("data/beach_mask.pgm");                                    // :contentReference[oaicite:3]{index=3}
+
+		// 水面高さの設定：beach のときだけ有効
+		SetWaterLevel(0.0f);                                                         // :contentReference[oaicite:4]{index=4}
+	}
+	else
+	{
+		// 通常ステージ：MeshFieldを使用（画像フィールドは未使用）
+		InitMeshField(XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 0), 100, 100, 13.0f, 13.0f);
+		SetWaterLevel(-1.0e9f); // 無効化                                                    // :contentReference[oaicite:5]{index=5}
+	}
 	// 影
 	InitShadow();
 
@@ -123,6 +142,7 @@ void UninitGame(void)
 	UninitTime();
 	UninitMeshWall();
 	UninitMeshField();
+	UninitField(); 
 	UninitPlayer();
 	UninitShadow();
 
@@ -146,7 +166,10 @@ void UpdateGame(void)
 #endif
 	if (g_bPause == FALSE) return;
 
-	UpdateMeshField();
+	// ★ フィールドはどちらか一方だけ更新
+	if (gUseImageField) { UpdateField(); }
+	else { UpdateMeshField(); }
+
 	UpdatePlayer();
 	UpdateMeshWall();
 	UpdateItem();
@@ -171,7 +194,15 @@ void UpdateGame(void)
 //=============================================================================
 void DrawGame0(void)
 {
-	DrawMeshField();
+	// ★ フィールドはどちらか一方だけ描画
+	if (gUseImageField)
+	{
+		DrawField();                                                                 // :contentReference[oaicite:8]{index=8}
+	}
+	else
+	{
+		DrawMeshField();                                                             // （もともとコメントアウトされていた箇所）
+	}
 	DrawShadow();
 	DrawStageObjects();
 	DrawPlayer();

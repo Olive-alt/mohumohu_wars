@@ -20,6 +20,7 @@
 #include <DirectXMath.h>
 #include <random>
 #include <fstream>
+#include <algorithm>
 
 
 // –{—ˆ‚Íƒwƒbƒ_‚É‘‚©‚È‚¢•û‚ª—Ç‚¢
@@ -29,7 +30,6 @@ using namespace DirectX;
 #define DIRECTINPUT_VERSION 0x0800		// Œx‘Îˆ
 #include "dinput.h"
 #include "mmsystem.h"
-
 #pragma warning(pop)
 
 

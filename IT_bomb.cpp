@@ -235,7 +235,7 @@ void BOMB::DrawITbomb(void)
 	{
 		PrintDebugProc("\nO\n");
 
-		XMMATRIX mtxScl, mtxRot, mtxTranslate, mtxWorld, quatMatrix;
+		XMMATRIX mtxScl, mtxRot, mtxTranslate, mtxWorld;
 
 		// カリング無効
 		SetCullingMode(CULL_MODE_NONE);
@@ -270,7 +270,7 @@ void BOMB::DrawITbomb(void)
 	{
 		PrintDebugProc("\nO\n");
 
-		XMMATRIX mtxScl, mtxRot, mtxTranslate, mtxWorld, quatMatrix;
+		XMMATRIX mtxScl, mtxRot, mtxTranslate, mtxWorld;
 
 		// カリング無効
 		SetCullingMode(CULL_MODE_NONE);

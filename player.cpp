@@ -17,6 +17,7 @@
 #include "player_select.h"
 #include "stageobject.h"
 #include "time.h"
+#include "field.h"
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
@@ -1076,6 +1077,42 @@ void AdjustYByTerrainAndUpdateShadow(int i, DirectX::XMFLOAT3& outNormal)
 {
     PLAYER* p = GetPlayer(i); if (!p) return;
 
+    // beach ステージ判定（g_SelectedStageFile 内に "beach" を含む）
+    auto isBeach = []() -> bool {
+        extern char g_SelectedStageFile[];
+        const char* s = g_SelectedStageFile;
+        if (!s) return false;
+        for (const char* p = s; *p; ++p) {
+            char c = *p;
+            if (c >= 'A' && c <= 'Z') c = char(c - 'A' + 'a'); // 小文字化
+            if (c == 'b' && p[1] == 'e' && p[2] == 'a' && p[3] == 'c' && p[4] == 'h') return true;
+        }
+        return false;
+        };
+
+    if (isBeach()) {
+        // 画像フィールドを使用：レイキャストなしの疑似吸着＋減速
+        // probe=40.0f, threshold=128, minScale=0.5f（水上での最小速度係数）, maxSink=3.0f（最大沈み込み）
+        Field_ApplyImageProbeSnapAndSlow(p, 40.0f, 128, 0.5f, 3.0f);
+
+        // 法線は上向き固定（段差や波打ちを考慮しない単純処理）
+        outNormal = DirectX::XMFLOAT3(0, 1, 0);
+
+        // 影は水面近くに配置（見やすさ用の微オフセット）
+        DirectX::XMFLOAT3 sh = p->pos;
+        const float waterY = GetWaterLevel();
+        if (waterY > -1.0e8f) {
+            sh.y = waterY + 0.05f;
+        }
+        else {
+            // 念のためフォールバック（通常の影オフセット）
+            sh.y -= (PLAYER_OFFSET_Y - 0.1f);
+        }
+        SetPositionShadow(p->shadowIdx, sh);
+        return;
+    }
+
+    // beach 以外（ロード/リザルト等）は従来どおり MeshField へレイキャスト
     XMFLOAT3 hitPos, normal;
     if (RayHitField(p->pos, &hitPos, &normal)) {
         p->pos.y = hitPos.y + PLAYER_OFFSET_Y;
@@ -1086,10 +1123,10 @@ void AdjustYByTerrainAndUpdateShadow(int i, DirectX::XMFLOAT3& outNormal)
         outNormal = XMFLOAT3(0, 1, 0);
     }
 
-    XMFLOAT3 sh = p->pos; sh.y -= (PLAYER_OFFSET_Y - 0.1f);
+    XMFLOAT3 sh = p->pos;
+    sh.y -= (PLAYER_OFFSET_Y - 0.1f);
     SetPositionShadow(p->shadowIdx, sh);
 }
-
 void UpdatePoseByGroundNormal(int i, const DirectX::XMFLOAT3& n)
 {
     PLAYER* p = GetPlayer(i); if (!p) return;

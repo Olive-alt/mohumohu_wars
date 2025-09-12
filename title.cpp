@@ -208,12 +208,12 @@ void DrawTitle(void)
 
     // タイトル背景描画
     GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[TEXTURE_BG]);
-    SetSprite(g_VertexBuffer, g_Pos.x, g_Pos.y, g_w, g_h, 0, 0, 1, 1);
+    SetSprite(g_VertexBuffer, g_Pos.x, g_Pos.y, g_w, g_h, 0.0f, 0.0f, 1.0f, 1.0f);
     GetDeviceContext()->Draw(4, 0);
 
     // タイトルロゴ
     GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[TEXTURE_TITLE]);
-    SetSprite(g_VertexBuffer, g_Pos.x * 1.48, g_Pos.y / 2.4, g_w / 2.2, g_h / 3.2, 0, 0, 1, 1);
+    SetSprite(g_VertexBuffer, g_Pos.x * 1.48f, g_Pos.y / 2.4f, g_w / 2.2f, g_h / 3.2f, 0.0f, 0.0f, 1.0f, 1.0f);
     GetDeviceContext()->Draw(4, 0);
 
     // メニュー項目（ボタン）描画
@@ -222,7 +222,7 @@ void DrawTitle(void)
         int texIdx = g_MenuBtnTex[i][selectedMenuItem == i ? 1 : 0];
         float y = g_Pos.y / 10 * g_MenuYRate[i];
         GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[texIdx]);
-        SetSprite(g_VertexBuffer, g_Pos.x / 3, y, 250.0f, 100.0f, 0, 0, 1, 1);
+        SetSprite(g_VertexBuffer, g_Pos.x / 3.0f, y, 250.0f, 100.0f, 0.0f, 0.0f, 1.0f, 1.0f);
         GetDeviceContext()->Draw(4, 0);
     }
 

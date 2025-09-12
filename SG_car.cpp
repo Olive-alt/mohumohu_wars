@@ -1,72 +1,68 @@
-#include "SG_car.h"
 #include "main.h"
+#include "SG_car.h"
 #include "renderer.h"
 #include "player.h"
 #include "debugproc.h"
 #include "collision.h"
 #include "sound.h"
+#include "stage_select.h"
+#include <string.h>
 
-// グローバルインスタンス
 CarSystem g_CarSystem;
 PLAYER* car_player = GetPlayer();
-// モデルファイル
-#define SG_CAR_MODEL_PATH "data/MODEL/car/car.obj"
 
-// -------------------------
-// Carメンバ関数
-// -------------------------
+// 見た目モデル
+static const char* CAR_MODEL[SG_CAR_KIND_MAX] = {
+    "data/MODEL/car/car.obj",
+    "data/MODEL/car/car2.obj",
+    "data/MODEL/car/car3.obj",
+    "data/MODEL/car/car4.obj",
+    "data/MODEL/car/car5.obj",
+};
 
-// 生成＆初期化
-void CarSystem::Car::Init(const XMFLOAT3& startPos, int lane_)
-{
+// roadステージのみ稼働
+static inline bool IsRoadStage() {
+    return (strcmp(g_SelectedStageFile, "stage_road.txt") == 0);
+}
+
+// ───────────── Car ─────────────
+void CarSystem::Car::Init(const XMFLOAT3& startPos, int lane_) {
     use = true;
     pos = startPos;
     lane = lane_;
     rot = XMFLOAT3(0, (lane == 0) ? +XM_PIDIV2 : -XM_PIDIV2, 0);
     scl = XMFLOAT3(1, 1, 1);
-    enteredScreen = false; // フラグ初期化
+    enteredScreen = false;
+    kind = GetRand(0, SG_CAR_KIND_MAX - 1);
 }
 
-// 位置更新・削除判定
-void CarSystem::Car::Update()
-{
+void CarSystem::Car::Update() {
     if (!use) return;
 
     pos.x += (lane == 0 ? +SG_CAR_SPEED : -SG_CAR_SPEED);
 
-    // 一度でも画面内に入ったか判定
     if (!enteredScreen) {
         if (pos.x >= MAP_LEFT && pos.x <= MAP_RIGHT &&
-            pos.z >= MAP_DOWN && pos.z <= MAP_TOP)
-        {
+            pos.z >= MAP_DOWN && pos.z <= MAP_TOP) {
             enteredScreen = true;
         }
     }
-    // 画面内に入った後、再び画面外に出たら消す
     else {
         if (pos.x < MAP_LEFT || pos.x > MAP_RIGHT ||
-            pos.z < MAP_DOWN || pos.z > MAP_TOP)
-        {
+            pos.z < MAP_DOWN || pos.z > MAP_TOP) {
             use = false;
         }
     }
 }
 
-// 描画
-void CarSystem::Car::Draw(const DX11_MODEL* model) const
-{
+void CarSystem::Car::Draw(const DX11_MODEL* model) const {
     if (!use) return;
-
-    // --- 走行演出：バウンド＆ローリング ---
     extern unsigned int dwFrameCount;
-    float t = dwFrameCount * (1.0f / 60.0f) + pos.x * 0.03f; // 個体ごとに揺れをズラす
+    float t = dwFrameCount * (1.0f / 60.0f) + pos.x * 0.03f;
 
-    // 上下バウンド（走行感アップ）
     float shakeY = sinf(t * 6.0f) * 0.8f;
-    // 左右ローリング
     float rollZ = sinf(t * 4.2f) * 0.09f;
 
-    // モデルワールド行列
     XMMATRIX mtxWorld =
         XMMatrixScaling(scl.x, scl.y, scl.z) *
         XMMatrixRotationRollPitchYaw(rot.x + shakeY * 0.03f, rot.y, rot.z + rollZ) *
@@ -76,9 +72,7 @@ void CarSystem::Car::Draw(const DX11_MODEL* model) const
     DrawModel((DX11_MODEL*)model);
 }
 
-// 当たり判定
-bool CarSystem::Car::CheckHit(const XMFLOAT3& targetPos, float radius) const
-{
+bool CarSystem::Car::CheckHit(const XMFLOAT3& targetPos, float radius) const {
     if (!use) return false;
     float dx = pos.x - targetPos.x;
     float dz = pos.z - targetPos.z;
@@ -87,161 +81,151 @@ bool CarSystem::Car::CheckHit(const XMFLOAT3& targetPos, float radius) const
     return distSq <= (minDist * minDist);
 }
 
-// -------------------------
-// CarSystem本体
-// -------------------------
+bool CarSystem::Car::CheckHitFront(const XMFLOAT3& targetPos, float radius) const {
+    if (!use) return false;
+    float dx = targetPos.x - pos.x;
+    float dz = targetPos.z - pos.z;
+    float dirX = (lane == 0) ? +1.0f : -1.0f;
+    float dot = dx * dirX + dz * 0.0f;
+    if (dot <= 0.0f) return false;
 
-// 初期化
-void CarSystem::Init()
-{
-    // モデルの読み込み
-    LoadModel(SG_CAR_MODEL_PATH, &carModel);
-
-    // 全車リセット
-    for (int i = 0; i < SG_CAR_MAX; ++i)
-        cars[i].use = false;
+    float distSq = dx * dx + dz * dz;
+    float minDist = SG_CAR_RADIUS + radius;
+    return distSq <= (minDist * minDist);
 }
 
-// 終了・モデル解放
-void CarSystem::Uninit()
-{
-    // 全車非アクティブ（万一描画などでアクセスされないよう）
-    for (int i = 0; i < SG_CAR_MAX; ++i)
+// ───────────── CarSystem ─────────────
+void CarSystem::Init() {
+    for (int k = 0; k < SG_CAR_KIND_MAX; ++k) {
+        LoadModel(CAR_MODEL[k], &carModel[k]);
+    }
+    for (int i = 0; i < SG_CAR_MAX; ++i) {
         cars[i].use = false;
-
-    // モデル解放
-    UnloadModel(&carModel);
-
-    // モデルデータの初期化（ダングリング防止）
-    ZeroMemory(&carModel, sizeof(carModel));
+    }
 }
 
-// 車生成（空いてるスロットにランダムで左右いずれか生成）
-void CarSystem::SpawnCar()
-{
-    for (int i = 0; i < SG_CAR_MAX; ++i)
-    {
-        if (!cars[i].use)
-        {
-            int lane = GetRand(0, 1); // 0:左→右 1:右→左
-            float spawnX = (lane == 0) ? SG_CAR_MAP_LEFT - 250.0f : SG_CAR_MAP_RIGHT + 250.0f;
-            float spawnZ = (lane == 0) ? SG_CAR_LANE_LEFT : SG_CAR_LANE_RIGHT;
-            cars[i].Init(XMFLOAT3(spawnX, 0.0f, spawnZ), lane);
+void CarSystem::Uninit() {
+    for (int i = 0; i < SG_CAR_MAX; ++i) cars[i].use = false;
+    for (int k = 0; k < SG_CAR_KIND_MAX; ++k) {
+        UnloadModel(&carModel[k]);
+        ZeroMemory(&carModel[k], sizeof(carModel[k]));
+    }
+}
+
+// 指定レーンに1台スポーン（上下2本の道路対応）
+void CarSystem::SpawnCar() {
+    if (!IsRoadStage()) return;
+
+    for (int i = 0; i < SG_CAR_MAX; ++i) {
+        if (!cars[i].use) {
+            // 進行方向（逆走あり）と、上下どちらの道路か
+            int dir = GetRand(0, 1);   // 0:左→右 / 1:右→左
+            int road = GetRand(0, 1);   // 0:下の道路 / 1:上の道路
+
+            float spawnX = (dir == 0) ? (SG_CAR_MAP_LEFT - 250.0f)
+                : (SG_CAR_MAP_RIGHT + 250.0f);
+
+            float spawnZ;
+            if (road == 0) {
+                // 下側
+                spawnZ = (dir == 0) ? SG_CAR_LANE_LEFT : SG_CAR_LANE_RIGHT;
+            }
+            else {
+                // 上側
+                spawnZ = (dir == 0) ? SG_CAR_LANE2_LEFT : SG_CAR_LANE2_RIGHT;
+            }
+
+            // 安全策：万一はみ出していてもMAP内へ収める
+            if (spawnZ < MAP_DOWN + 1.0f) spawnZ = MAP_DOWN + 1.0f;
+            if (spawnZ > MAP_TOP - 1.0f) spawnZ = MAP_TOP - 1.0f;
+
+            cars[i].Init(XMFLOAT3(spawnX, 0.0f, spawnZ), dir);
             break;
         }
     }
 }
 
-// 更新
-void CarSystem::Update()
-{
-    // 車の個別更新
-    for (int i = 0; i < SG_CAR_MAX; ++i)
-        cars[i].Update();
+void CarSystem::Update() {
+    if (!IsRoadStage()) {
+        for (int i = 0; i < SG_CAR_MAX; ++i) cars[i].use = false;
+        return;
+    }
 
-    // ランダムで車を出現させる（1/60フレームで約3秒に1回出現想定）
-    if (GetRand(0, 300) == 0)
-    {
-        // 台数制限
-        int active = 0;
-        for (int i = 0; i < SG_CAR_MAX; ++i)
-            if (cars[i].use) active++;
-        if (active < SG_CAR_MAX)
-            SpawnCar();
+    for (int i = 0; i < SG_CAR_MAX; ++i) cars[i].Update();
+
+    // 密度アップ：1フレームに複数回抽選
+    for (int t = 0; t < SG_CAR_SPAWN_TRIES; ++t) {
+        if (GetRand(0, SG_CAR_SPAWN_CHANCE) == 0) {
+            int active = 0;
+            for (int i = 0; i < SG_CAR_MAX; ++i) if (cars[i].use) active++;
+            if (active < SG_CAR_MAX) SpawnCar();
+        }
     }
 }
 
-// 描画
-void CarSystem::Draw()
-{
-    for (int i = 0; i < SG_CAR_MAX; ++i)
-        cars[i].Draw(&carModel);
+void CarSystem::Draw() {
+    if (!IsRoadStage()) return;
+    for (int i = 0; i < SG_CAR_MAX; ++i) {
+        if (cars[i].use) cars[i].Draw(&carModel[cars[i].kind]);
+    }
 }
 
-void CarSystem::CheckCarHitPlayers()
-{
-    for (int i = 0; i < SG_CAR_MAX; ++i)
-    {
+void CarSystem::CheckCarHitPlayers() {
+    if (!IsRoadStage()) return;
+
+    for (int i = 0; i < SG_CAR_MAX; ++i) {
         Car& car = cars[i];
         if (!car.use) continue;
 
-        for (int p = 0; p < MAX_PLAYER; ++p)
-        {
-            if (!car_player[p].use || car_player[p].stunTimer > 0.0f)
-                continue;
+        for (int p = 0; p < MAX_PLAYER; ++p) {
+            if (!car_player[p].use || car_player[p].stunTimer > 0.0f) continue;
 
-            // --------- 前方2D矩形（XZ）による吹っ飛ばし ---------
+            // 前方：吹っ飛ばし
             float offset = (SG_CAR_WALL_D / 2.0f) + (SG_CAR_FRONT_D / 2.0f);
             float frontX = car.pos.x + ((car.lane == 0) ? offset : -offset);
             XMFLOAT3 frontBoxPos = { frontX, car.pos.y, car.pos.z };
 
-            bool isFront = false;
-            if (car.lane == 0 && car_player[p].pos.x > car.pos.x) isFront = true;
-            if (car.lane == 1 && car_player[p].pos.x < car.pos.x) isFront = true;
+            bool isFront = (car.lane == 0)
+                ? (car_player[p].pos.x > car.pos.x)
+                : (car_player[p].pos.x < car.pos.x);
 
-            if (isFront &&
-                CollisionRect2D_XZ(frontBoxPos, car_player[p].pos, SG_CAR_FRONT_W, SG_CAR_FRONT_D))
+            if (isFront && CollisionRect2D_XZ(frontBoxPos, car_player[p].pos,
+                SG_CAR_FRONT_W, SG_CAR_FRONT_D))
             {
-                // 吹っ飛ばし処理（今のままでOK）
                 float baseDir = (car.lane == 0) ? 0.0f : XM_PI;
-                float angleOffset = GetRandf(-0.5f, 0.5f);
-                float angle = baseDir + angleOffset;
-                float knockbackSpeed = 12.0f;
-                car_player[p].knockbackVel.x = knockbackSpeed * cosf(angle);
-                car_player[p].knockbackVel.z = knockbackSpeed * sinf(angle);
+                float ang = baseDir + GetRandf(-0.5f, 0.5f);
+                float v = 12.0f;
+                car_player[p].knockbackVel.x = v * cosf(ang);
+                car_player[p].knockbackVel.z = v * sinf(ang);
                 car_player[p].stunTimer = 1.0f;
                 PrintDebugProc("車前方ヒット：吹っ飛ばし\n");
                 PlaySound(SOUND_LABEL_SE_shot004);
-
             }
-            // --------- 壁判定は「後ろ寄り＆短いボックス」 ---------
-            else
-            {
-                // 「車の後ろ寄り」に壁ボックスを配置
-                float wallBoxX = car.pos.x + ((car.lane == 0) ? -SG_CAR_WALL_D / 4.0f : SG_CAR_WALL_D / 4.0f);
+            else {
+                // 側面：押し戻し
+                float wallBoxX = car.pos.x + ((car.lane == 0)
+                    ? -SG_CAR_WALL_D / 4.0f : SG_CAR_WALL_D / 4.0f);
                 XMFLOAT3 wallBoxPos = { wallBoxX, car.pos.y, car.pos.z };
 
-                if (CollisionBB(
-                    wallBoxPos, car_player[p].pos,
+                if (CollisionBB(wallBoxPos, car_player[p].pos,
                     XMFLOAT3(SG_CAR_WALL_W, SG_CAR_WALL_H, SG_CAR_WALL_D),
                     XMFLOAT3(car_player[p].size, SG_CAR_WALL_H, car_player[p].size)))
                 {
-                    // 壁処理（押し戻し）
                     float dx = car_player[p].pos.x - car.pos.x;
                     float dz = car_player[p].pos.z - car.pos.z;
                     float len = sqrtf(dx * dx + dz * dz);
-
                     if (len > 0.0001f) {
-                        float pushBack = (SG_CAR_WALL_W / 2.0f) + car_player[p].size + 0.5f;
-                        dx /= len;
-                        dz /= len;
-                        car_player[p].pos.x = car.pos.x + dx * pushBack;
-                        car_player[p].pos.z = car.pos.z + dz * pushBack;
+                        float push = (SG_CAR_WALL_W / 2.0f) + car_player[p].size + 0.5f;
+                        dx /= len; dz /= len;
+                        car_player[p].pos.x = car.pos.x + dx * push;
+                        car_player[p].pos.z = car.pos.z + dz * push;
                     }
                     car_player[p].stunTimer = 0.0f;
                     car_player[p].knockbackVel = { 0,0,0 };
                     PrintDebugProc("車横ヒット：壁判定\n");
                     PlaySound(SOUND_LABEL_SE_shot004);
-
                 }
             }
         }
     }
-}
-
-bool CarSystem::Car::CheckHitFront(const XMFLOAT3& targetPos, float radius) const
-{
-    if (!use) return false;
-    float dx = targetPos.x - pos.x;
-    float dz = targetPos.z - pos.z;
-
-    // 車の進行方向ベクトル（X正かX負）
-    float dirX = (lane == 0) ? +1.0f : -1.0f;
-    float dirZ = 0.0f;
-    float dot = dx * dirX + dz * dirZ;
-    if (dot <= 0.0f) return false; // 後ろ・真横は判定しない
-
-    float distSq = dx * dx + dz * dz;
-    float minDist = SG_CAR_RADIUS + radius;
-    return distSq <= (minDist * minDist);
 }
